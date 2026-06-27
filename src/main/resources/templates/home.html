@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Trang chủ</title>
+</head>
+<body>
+    <h1>CarShowRoom</h1>
+
+    <div th:if="${currentUser == null}">
+        <a href="/auth/login"><button>Đăng nhập</button></a>
+        <a href="/auth/register"><button>Đăng ký</button></a>
+    </div>
+
+    <div th:if="${currentUser != null}">
+        <p>Xin chào, <span th:text="${currentUser.fullName}"></span></p>
+        <a href="/auth/logout"><button>Đăng xuất</button></a>
+    </div>
+</body>
+</html>

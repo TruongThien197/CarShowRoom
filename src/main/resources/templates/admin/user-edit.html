@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sửa người dùng</title>
+</head>
+<body>
+    <h1>Sửa người dùng</h1>
+    <a href="/admin/users">Quay lại danh sách</a>
+
+    <form th:action="@{/admin/users/edit/{id}(id=${user.id})}" method="post">
+        <div>
+            <label>Email:</label>
+            <span th:text="${user.email}">email@example.com</span>
+        </div>
+        <div>
+            <label>Họ tên:</label>
+            <input type="text" name="txtFullName" th:value="${user.fullName}" required/>
+        </div>
+        <div>
+            <label>Số điện thoại:</label>
+            <input type="text" name="txtPhone" th:value="${user.phone}"/>
+        </div>
+        <div>
+            <label>Địa chỉ:</label>
+            <input type="text" name="txtAddress" th:value="${user.address}"/>
+        </div>
+        <div>
+            <label>Vai trò:</label>
+            <select name="role">
+                <option value="CUSTOMER" th:selected="${user.role == 'CUSTOMER'}">CUSTOMER</option>
+                <option value="ADMIN" th:selected="${user.role == 'ADMIN'}">ADMIN</option>
+            </select>
+        </div>
+        <button type="submit">Cập nhật</button>
+    </form>
+</body>
+</html>

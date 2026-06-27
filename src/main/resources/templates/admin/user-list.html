@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý người dùng</title>
+</head>
+<body>
+    <h1>Danh sách người dùng</h1>
+    <a href="/admin/users/create"><button>Thêm người dùng</button></a>
+    <a href="/admin">Quay lại Dashboard</a>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Họ tên</th>
+                <th>Số điện thoại</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="user : ${users}">
+                <td th:text="${user.id}">1</td>
+                <td th:text="${user.email}">email@example.com</td>
+                <td th:text="${user.fullName}">Nguyễn Văn A</td>
+                <td th:text="${user.phone}">0123456789</td>
+                <td th:text="${user.role}">USER</td>
+                <td th:text="${user.status}">ACTIVE</td>
+                <td>
+                    <a th:href="@{/admin/users/{id}(id=${user.id})}">Xem</a>
+                    <a th:href="@{/admin/users/edit/{id}(id=${user.id})}">Sửa</a>
+                    <a th:href="@{/admin/users/{id}/change-status(id=${user.id})}" th:if="${user.status == 'ACTIVE'}">Khoá</a>
+                    <a th:href="@{/admin/users/{id}/change-status(id=${user.id})}" th:if="${user.status != 'ACTIVE'}">Mở khoá</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm người dùng</title>
+</head>
+<body>
+    <h1>Thêm người dùng</h1>
+    <a href="/admin/users">Quay lại danh sách</a>
+
+    <form th:action="@{/admin/users/create}" method="post">
+        <div>
+            <label>Email:</label>
+            <input type="email" name="txtEmail" required/>
+        </div>
+        <div>
+            <label>Mật khẩu:</label>
+            <input type="password" name="txtPassword" required/>
+        </div>
+        <div>
+            <label>Họ tên:</label>
+            <input type="text" name="txtFullName" required/>
+        </div>
+        <div>
+            <label>Số điện thoại:</label>
+            <input type="text" name="txtPhone"/>
+        </div>
+        <div>
+            <label>Địa chỉ:</label>
+            <input type="text" name="txtAddress"/>
+        </div>
+        <div>
+            <label>Vai trò:</label>
+            <select name="role">
+                <option value="CUSTOMER">CUSTOMER</option>
+                <option value="ADMIN">ADMIN</option>
+            </select>
+        </div>
+        <button type="submit">Thêm</button>
+    </form>
+</body>
+</html>

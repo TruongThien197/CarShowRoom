@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết người dùng</title>
+</head>
+<body>
+    <h1>Chi tiết người dùng</h1>
+    <a href="/admin/users">Quay lại danh sách</a>
+
+    <table border="1">
+        <tr>
+            <td>ID</td>
+            <td th:text="${user.id}">1</td>
+        </tr>
+        <tr>
+            <td>Email</td>
+            <td th:text="${user.email}">email@example.com</td>
+        </tr>
+        <tr>
+            <td>Họ tên</td>
+            <td th:text="${user.fullName}">Nguyễn Văn A</td>
+        </tr>
+        <tr>
+            <td>Số điện thoại</td>
+            <td th:text="${user.phone}">0123456789</td>
+        </tr>
+        <tr>
+            <td>Địa chỉ</td>
+            <td th:text="${user.address}">123 Đường ABC</td>
+        </tr>
+        <tr>
+            <td>Vai trò</td>
+            <td th:text="${user.role}">CUSTOMER</td>
+        </tr>
+        <tr>
+            <td>Trạng thái</td>
+            <td th:text="${user.status}">ACTIVE</td>
+        </tr>
+    </table>
+
+    <a th:href="@{/admin/users/edit/{id}(id=${user.id})}"><button>Sửa</button></a>
+</body>
+</html>
