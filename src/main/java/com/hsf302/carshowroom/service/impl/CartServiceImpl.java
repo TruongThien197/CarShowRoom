@@ -62,6 +62,21 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
+    public void clearCart(User user) {
+        cartItemRepository.deleteByUser(user);
+    }
+
+    private CartItem getOwnedCartItem(User user, Integer cartItemId) {
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+        if (!cartItem.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Cart item does not belong to current user");
+        }
+        return cartItem;
+    }
+
+    @Override
+    @Transactional
     public void removeItem(User user, Integer cartItemId) {
         cartItemRepository.delete(getOwnedCartItem(user, cartItemId));
     }
@@ -76,20 +91,6 @@ public class CartServiceImpl implements CartService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    @Override
-    @Transactional
-    public void clearCart(User user) {
-        cartItemRepository.deleteByUser(user);
-    }
-
-    private CartItem getOwnedCartItem(User user, Integer cartItemId) {
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
-        if (!cartItem.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Cart item does not belong to current user");
-        }
-        return cartItem;
-    }
 
     private void validateStock(Product product, int quantity) {
         if (product.getStockQuantity() < quantity) {
