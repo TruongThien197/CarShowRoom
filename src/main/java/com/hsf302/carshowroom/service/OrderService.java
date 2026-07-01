@@ -10,4 +10,10 @@ public interface OrderService {
     Order checkout(User user, CheckoutForm form);
 
     List<Order> getOrders(User user);
+
+    List<Order> getAllOrders();
+
+    Order getOrderById(Integer id);
+
+    void updateOrderStatus(Integer id, String status);
 }

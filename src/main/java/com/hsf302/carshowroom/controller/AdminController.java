@@ -11,6 +11,7 @@ import com.hsf302.carshowroom.repository.OrderDetailRepository;
 import com.hsf302.carshowroom.repository.OrderRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
 import com.hsf302.carshowroom.repository.ServiceRepository;
+import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -35,6 +36,7 @@ public class AdminController {
     private final BookingRepository bookingRepository;
     private final BookingDetailRepository bookingDetailRepository;
     private final ServiceRepository serviceRepository;
+    private  final OrderService orderService;
 
     @GetMapping
     public String dashboard(Model model) {
@@ -215,5 +217,33 @@ public class AdminController {
                 .flatMap(booking -> bookingDetailRepository.findByBookingId(booking.getId()).stream())
                 .map(detail -> detail.getActualPrice() == null ? BigDecimal.ZERO : detail.getActualPrice())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    @GetMapping("/orders")
+    public String listOrders(@RequestParam(value = "status", required = false) String status, Model model){
+        List<Order> orders;
+        if (status != null && !status.isEmpty()) {
+            // Lọc theo status và sắp xếp tăng dần theo ý bạn muốn
+            orders = orderRepository.findByStatusOrderByOrderDateAsc(status);
+        } else {
+            orders = orderRepository.findAllByOrderByOrderDateAsc();
+        }
+        model.addAttribute("orders", orders);
+        model.addAttribute("selectedStatus", status);
+        return "/order/list";
+    }
+
+
+
+    @GetMapping("/orders/{id}")
+    public String orderDetail(@PathVariable Integer id, Model model) {
+        model.addAttribute("order", orderService.getOrderById(id));
+        return "/order/detail";
+    }
+
+    @PostMapping("/orders/{id}/status")
+    public String updateStatus(@PathVariable Integer id, @RequestParam String status) {
+        orderService.updateOrderStatus(id, status);
+        return "redirect:/admin/orders/" + id;
     }
 }

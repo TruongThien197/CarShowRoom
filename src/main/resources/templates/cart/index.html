@@ -11,31 +11,47 @@
         Your cart is empty. <a th:href="@{/shop}">Continue shopping</a>.
     </div>
 
+    <div class="alert alert-light border text-danger" th:if="${errorMessage}" th:text="${errorMessage}">
+        Thông báo lỗi
+    </div>
+
+    <div class="alert alert-light border text-success" th:if="${successMessage}" th:text="${successMessage}">
+        Thành công!
+    </div>
+
     <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
         <div class="col-lg-8">
             <div class="surface-card p-4 mb-3" th:each="item : ${cartItems}">
                 <div class="d-flex gap-3 align-items-start">
-                    <div class="rounded bg-light d-flex align-items-center justify-content-center" style="width: 120px; height: 100px">
+                    <div class="rounded bg-light d-flex align-items-center justify-content-center"
+                         style="width: 120px; height: 100px">
                         <img class="rounded object-fit-cover" width="120" height="100"
                              th:if="${item.product.imageUrl != null and !#strings.isEmpty(item.product.imageUrl)}"
                              th:src="${item.product.imageUrl}" alt="Product image">
-                        <i class="bi bi-tools fs-2 text-secondary" th:if="${item.product.imageUrl == null or #strings.isEmpty(item.product.imageUrl)}"></i>
+                        <i class="bi bi-tools fs-2 text-secondary"
+                           th:if="${item.product.imageUrl == null or #strings.isEmpty(item.product.imageUrl)}"></i>
                     </div>
                     <div class="flex-grow-1">
                         <h5 class="fw-bold" th:text="${item.product.productName}">Product</h5>
                         <p class="text-secondary mb-2" th:text="${item.product.category.categoryName}">Category</p>
                         <form class="d-flex align-items-center gap-2" th:action="@{/cart/update}" method="post">
                             <input type="hidden" name="cartItemId" th:value="${item.id}">
-                            <input class="form-control form-control-sm" style="width: 88px" type="number" name="quantity"
+                            <input class="form-control form-control-sm" style="width: 88px" type="number"
+                                   name="quantity"
                                    th:value="${item.quantity}" min="0" th:max="${item.product.stockQuantity}">
                             <button class="btn btn-outline-secondary btn-sm" type="submit">Update</button>
                         </form>
                     </div>
+
                     <div class="text-end">
-                        <div class="price mb-3" th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity)), 0, 'COMMA', 2, 'POINT')}">$0</div>
+                        <div class="price mb-3"
+                             th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">
+                            $0
+                        </div>
                         <form th:action="@{/cart/remove}" method="post">
                             <input type="hidden" name="cartItemId" th:value="${item.id}">
-                            <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Remove</button>
+                            <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Remove
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -48,7 +64,8 @@
                     <span>Subtotal</span>
                     <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
                 </div>
-                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><strong>Calculated later</strong></div>
+                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><strong>Calculated later</strong>
+                </div>
                 <hr>
                 <div class="d-flex justify-content-between fs-5 mb-4">
                     <span>Total</span>

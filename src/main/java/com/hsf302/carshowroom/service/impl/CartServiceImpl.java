@@ -46,6 +46,7 @@ public class CartServiceImpl implements CartService {
         cartItemRepository.save(cartItem);
     }
 
+
     @Override
     @Transactional
     public void updateQuantity(User user, Integer cartItemId, Integer quantity) {
@@ -67,8 +68,11 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public BigDecimal calculateSubtotal(List<CartItem> items) {
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
         return items.stream()
-                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .map(item -> item.getProduct().getPrice().multiply(new BigDecimal(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -89,7 +93,8 @@ public class CartServiceImpl implements CartService {
 
     private void validateStock(Product product, int quantity) {
         if (product.getStockQuantity() < quantity) {
-            throw new RuntimeException("Not enough stock for " + product.getProductName());
+            throw new RuntimeException("Not enough stock for " + product.getProductName() +
+                    ". Please reduce quantity to " + product.getStockQuantity() + " or less.");
         }
     }
 }
