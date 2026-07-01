@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">GearShift Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/bootstrap.css}">
+    <link rel="stylesheet" th:href="@{/bootstrap-icons.css}">
+    <link rel="stylesheet" th:href="@{/apex.css}">
+</head>
+<body>
+<nav th:fragment="navbar(active)" class="navbar navbar-expand-lg bg-white border-bottom sticky-top shadow-sm"
+     th:with="role=${currentUser != null ? currentUser.role : 'GUEST'}">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary d-flex align-items-center gap-2" th:href="@{/}">
+            <i class="bi bi-speedometer2 fs-4"></i>
+            <span>GearShift Pro</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="mainNav" class="collapse navbar-collapse">
+            <ul class="navbar-nav mx-auto gap-lg-2">
+                <li class="nav-item">
+                    <a th:classappend="${active == 'home'} ? 'active fw-semibold'" class="nav-link" th:href="@{/}">Trang chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a th:classappend="${active == 'shop'} ? 'active fw-semibold'" class="nav-link" th:href="@{/shop}">Cửa hàng phụ tùng</a>
+                </li>
+                <li class="nav-item" th:if="${role == 'CUSTOMER'}">
+                    <a th:classappend="${active == 'booking'} ? 'active fw-semibold'" class="nav-link" th:href="@{/booking}">Đặt lịch sửa chữa</a>
+                </li>
+                <li class="nav-item" th:if="${role == 'CUSTOMER'}">
+                    <a th:classappend="${active == 'orders'} ? 'active fw-semibold'" class="nav-link" th:href="@{/orders}">Đơn hàng của tôi</a>
+                </li>
+                <li class="nav-item" th:if="${role == 'ADMIN'}">
+                    <a th:classappend="${active == 'admin'} ? 'active fw-semibold text-danger'" class="nav-link" th:href="@{/admin}">
+                        <i class="bi bi-shield-lock me-1"></i>Quản trị (Admin)
+                    </a>
+                </li>
+                <li class="nav-item" th:if="${role == 'STAFF'}">
+                    <a th:classappend="${active == 'staff'} ? 'active fw-semibold'" class="nav-link" th:href="@{/staff}">Quản lý (Staff)</a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center gap-2">
+                <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-primary btn-sm" th:href="@{/cart}">
+                    <i class="bi bi-cart3"></i>
+                </a>
+                <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-secondary btn-sm" th:href="@{/account}" title="Tài khoản">
+                    <i class="bi bi-person-circle"></i>
+                    <span class="ms-1 d-none d-md-inline" th:text="${currentUser.fullName}">User</span>
+                </a>
+                <a th:if="${currentUser == null}" class="btn btn-primary btn-sm px-3" th:href="@{/auth/login}">Đăng nhập</a>
+                <a th:if="${currentUser != null}" class="btn btn-outline-danger btn-sm" th:href="@{/auth/logout}" title="Đăng xuất">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

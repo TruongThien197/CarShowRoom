@@ -32,7 +32,7 @@ public class ProductController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
-        return "shop/index";
+        return "products/list";
     }
 
     @GetMapping("/products")
@@ -47,7 +47,7 @@ public class ProductController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
-        return "shop/index";
+        return "products/list";
     }
 
     @GetMapping("/products/category/{categoryId}")
@@ -64,12 +64,12 @@ public class ProductController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
-        return "shop/index";
+        return "products/list";
     }
 
     @GetMapping("/products/{id}")
     public String detail(@PathVariable Integer id, Model model) {
         model.addAttribute("product", productService.getProduct(id));
-        return "shop/detail";
+        return "products/detail";
     }
 }
