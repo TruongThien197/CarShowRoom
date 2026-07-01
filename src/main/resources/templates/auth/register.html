@@ -1,36 +1,48 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Đăng ký</title>
-</head>
+<head th:replace="~{fragments :: head('Register | GearShift Pro')}"></head>
 <body>
-    <h1>Đăng ký</h1>
+<div th:replace="~{fragments :: navbar('login')}"></div>
 
-    <form th:action="@{/auth/register}" method="post">
-        <div>
-            <label>Email:</label>
-            <input type="email" name="txtEmail" required/>
+<main class="auth-shell d-flex align-items-center py-5">
+    <div class="container">
+        <div class="row justify-content-end">
+            <div class="col-lg-6">
+                <form class="surface-card p-4 p-md-5" th:action="@{/auth/register}" method="post">
+                    <h1 class="section-title mb-2">Create your account</h1>
+                    <p class="text-secondary mb-4">Save vehicles, track orders, and book repairs faster.</p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Full name</label>
+                            <input class="form-control" type="text" name="txtfullName" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" type="email" name="txtEmail" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password</label>
+                            <input class="form-control" type="password" name="txtPassword" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input class="form-control" type="text" name="txtPhone">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Address</label>
+                            <input class="form-control" type="text" name="txtAddress">
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary btn-lg w-100" type="submit">Register</button>
+                        </div>
+                    </div>
+                    <p class="text-center mt-4 mb-0">Already have an account? <a th:href="@{/auth/login}">Login</a></p>
+                </form>
+            </div>
         </div>
-        <div>
-            <label>Mật khẩu:</label>
-            <input type="password" name="txtPassword" required/>
-        </div>
-        <div>
-            <label>Họ tên:</label>
-            <input type="text" name="txtfullName" required/>
-        </div>
-        <div>
-            <label>Số điện thoại:</label>
-            <input type="text" name="txtPhone"/>
-        </div>
-        <div>
-            <label>Địa chỉ:</label>
-            <input type="text" name="txtAddress"/>
-        </div>
-        <button type="submit">Đăng ký</button>
-    </form>
+    </div>
+</main>
 
-    <p>Đã có tài khoản? <a href="/auth/login">Đăng nhập</a></p>
+<div th:replace="~{fragments :: scripts}"></div>
 </body>
 </html>

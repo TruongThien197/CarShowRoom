@@ -1,0 +1,225 @@
+:root {
+    --apex-primary: #00236f;
+    --apex-primary-soft: #e8edff;
+    --apex-ink: #191c1e;
+    --apex-muted: #596373;
+    --apex-line: #d9dde7;
+    --apex-bg: #f5f7fb;
+    --apex-dark: #151a22;
+    --apex-accent: #16a3c7;
+}
+
+body {
+    background: var(--apex-bg);
+    color: var(--apex-ink);
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.navbar-brand {
+    color: var(--apex-primary);
+    font-weight: 800;
+    letter-spacing: .01em;
+}
+
+.nav-link {
+    font-weight: 600;
+}
+
+.nav-link.active,
+.nav-link:hover {
+    color: var(--apex-primary) !important;
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--apex-primary);
+    --bs-btn-border-color: var(--apex-primary);
+    --bs-btn-hover-bg: #1e3a8a;
+    --bs-btn-hover-border-color: #1e3a8a;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--apex-primary);
+    --bs-btn-border-color: var(--apex-primary);
+    --bs-btn-hover-bg: var(--apex-primary);
+    --bs-btn-hover-border-color: var(--apex-primary);
+}
+
+.hero {
+    min-height: 560px;
+    background:
+        linear-gradient(90deg, rgba(12, 18, 30, .92), rgba(12, 18, 30, .28)),
+        url("/images/hero-garage.jpg") center/cover;
+}
+
+.section-title {
+    color: var(--apex-primary);
+    font-weight: 800;
+}
+
+.surface-card {
+    background: #fff;
+    border: 1px solid var(--apex-line);
+    border-radius: .75rem;
+    box-shadow: 0 12px 32px rgba(18, 28, 45, .06);
+}
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: .75rem;
+    background: var(--apex-primary-soft);
+    color: var(--apex-primary);
+}
+
+.product-image {
+    height: 230px;
+    object-fit: cover;
+}
+
+.product-card {
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px rgba(18, 28, 45, .12);
+}
+
+.price {
+    color: var(--apex-primary);
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.badge-fit {
+    background: #e7faf2;
+    color: #047857;
+}
+
+.apex-sidebar {
+    background: #fff;
+    border-right: 1px solid var(--apex-line);
+}
+
+.apex-sidebar .list-group-item {
+    border: 0;
+    border-left: 4px solid transparent;
+    color: var(--apex-muted);
+    font-weight: 600;
+}
+
+.apex-sidebar .list-group-item.active {
+    background: var(--apex-primary);
+    border-left-color: var(--apex-accent);
+    color: #fff;
+}
+
+.auth-shell {
+    min-height: calc(100vh - 73px);
+    background:
+        linear-gradient(120deg, rgba(0, 35, 111, .92), rgba(21, 26, 34, .75)),
+        url("/images/auth-garage.jpg") center/cover;
+}
+
+.ops-shell {
+    background: #eef2f8;
+}
+
+.ops-sidebar {
+    min-height: calc(100vh - 73px);
+    background: #101722;
+    color: #dbe4f0;
+}
+
+.ops-sidebar a {
+    color: #cbd5e1;
+    border-radius: .65rem;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .75rem 1rem;
+    text-decoration: none;
+}
+
+.ops-sidebar a.active,
+.ops-sidebar a:hover {
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+}
+
+@media (min-width: 992px) {
+    .admin-fixed-shell .ops-sidebar {
+        position: fixed;
+        top: 73px;
+        bottom: 0;
+        left: 0;
+        overflow-y: auto;
+        z-index: 100;
+    }
+
+    .admin-fixed-shell main > .row > section {
+        margin-left: 25%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .admin-fixed-shell main > .row > section {
+        margin-left: 16.666667%;
+    }
+}
+
+.metric-card {
+    background: #fff;
+    border: 1px solid var(--apex-line);
+    border-radius: .75rem;
+    padding: 1.25rem;
+}
+
+.metric-card .metric-value {
+    color: var(--apex-primary);
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.table-action {
+    white-space: nowrap;
+}
+
+.step-pill {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--apex-primary-soft);
+    color: var(--apex-primary);
+    font-weight: 800;
+}
+
+.footer-dark {
+    background: var(--apex-dark);
+    color: #dbe4f0;
+}
+
+.footer-dark a {
+    color: #dbe4f0;
+    text-decoration: none;
+}
+
+.footer-dark a:hover {
+    color: #fff;
+}
+
+@media (max-width: 767.98px) {
+    .hero {
+        min-height: 520px;
+    }
+
+    .product-image {
+        height: 190px;
+    }
+}

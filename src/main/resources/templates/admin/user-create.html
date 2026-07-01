@@ -1,42 +1,57 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Thêm người dùng</title>
-</head>
-<body>
-    <h1>Thêm người dùng</h1>
-    <a href="/admin/users">Quay lại danh sách</a>
+<head th:replace="~{fragments :: head('Add User | GearShift Pro')}"></head>
+<body class="ops-shell">
+<div th:replace="~{fragments :: navbar('admin')}"></div>
 
-    <form th:action="@{/admin/users/create}" method="post">
+<main class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <label>Email:</label>
-            <input type="email" name="txtEmail" required/>
+            <h1 class="section-title mb-1">Add User</h1>
+            <p class="text-secondary mb-0">Create customer, staff, or admin accounts.</p>
         </div>
-        <div>
-            <label>Mật khẩu:</label>
-            <input type="password" name="txtPassword" required/>
+        <a class="btn btn-outline-secondary" th:href="@{/admin/users}">Back</a>
+    </div>
+
+    <form class="surface-card p-4 p-md-5" th:action="@{/admin/users/create}" method="post">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Full name</label>
+                <input class="form-control" type="text" name="txtFullName" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" name="txtEmail" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Password</label>
+                <input class="form-control" type="password" name="txtPassword" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Phone</label>
+                <input class="form-control" type="text" name="txtPhone">
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Address</label>
+                <input class="form-control" type="text" name="txtAddress">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Role</label>
+                <select class="form-select" name="role">
+                    <option value="CUSTOMER">CUSTOMER</option>
+                    <option value="STAFF">STAFF</option>
+                    <option value="ADMIN">ADMIN</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary btn-lg" type="submit">
+                    <i class="bi bi-person-plus me-2"></i>Create User
+                </button>
+            </div>
         </div>
-        <div>
-            <label>Họ tên:</label>
-            <input type="text" name="txtFullName" required/>
-        </div>
-        <div>
-            <label>Số điện thoại:</label>
-            <input type="text" name="txtPhone"/>
-        </div>
-        <div>
-            <label>Địa chỉ:</label>
-            <input type="text" name="txtAddress"/>
-        </div>
-        <div>
-            <label>Vai trò:</label>
-            <select name="role">
-                <option value="CUSTOMER">CUSTOMER</option>
-                <option value="ADMIN">ADMIN</option>
-            </select>
-        </div>
-        <button type="submit">Thêm</button>
     </form>
+</main>
+
+<div th:replace="~{fragments :: scripts}"></div>
 </body>
 </html>

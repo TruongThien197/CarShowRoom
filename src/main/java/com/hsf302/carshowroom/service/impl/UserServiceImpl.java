@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
                 .fullName(fullName)
                 .phone(phone)
                 .address(address)
-                .role(role)
+                .role(role.toUpperCase())
                 .status("ACTIVE")
                 .build();
         return userRepository.save(user);
@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
         user.setFullName(fullName);
         user.setPhone(phone);
         user.setAddress(address);
-        user.setRole(role);
+        user.setRole(role.toUpperCase());
         return userRepository.save(user);
     }
 

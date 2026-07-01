@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="navbar(active)" class="navbar navbar-expand-lg bg-white border-bottom sticky-top"
+     th:with="role=${currentUser != null ? currentUser.role : 'GUEST'}">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">GearShift Pro</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="mainNav" class="collapse navbar-collapse">
+            <ul class="navbar-nav mx-auto gap-lg-2">
+                <li class="nav-item"><a th:classappend="${active == 'home'} ? 'active'" class="nav-link" th:href="@{/}">Home</a></li>
+                <li class="nav-item"><a th:classappend="${active == 'shop'} ? 'active'" class="nav-link" th:href="@{/shop}">Shop</a></li>
+                <li class="nav-item" th:if="${role == 'CUSTOMER'}">
+                    <a th:classappend="${active == 'booking'} ? 'active'" class="nav-link" th:href="@{/booking}">Booking</a>
+                </li>
+                <li class="nav-item" th:if="${role == 'CUSTOMER'}">
+                    <a th:classappend="${active == 'orders'} ? 'active'" class="nav-link" th:href="@{/orders}">Orders</a>
+                </li>
+                <li class="nav-item" th:if="${role == 'ADMIN'}">
+                    <a th:classappend="${active == 'admin'} ? 'active'" class="nav-link" th:href="@{/admin}">Admin</a>
+                </li>
+                <li class="nav-item" th:if="${role == 'STAFF'}">
+                    <a th:classappend="${active == 'staff'} ? 'active'" class="nav-link" th:href="@{/staff}">Staff</a>
+                </li>
+            </ul>
+            <div class="d-flex gap-2">
+                <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-primary btn-sm" th:href="@{/cart}"><i class="bi bi-cart3"></i></a>
+                <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-secondary btn-sm" th:href="@{/account}"><i class="bi bi-person-circle"></i></a>
+                <a th:if="${currentUser == null}" class="btn btn-primary btn-sm" th:href="@{/auth/login}">Login</a>
+                <a th:if="${currentUser != null}" class="btn btn-outline-danger btn-sm" th:href="@{/auth/logout}">Logout</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<footer th:fragment="footer" class="footer-dark mt-5"
+        th:with="role=${currentUser != null ? currentUser.role : 'GUEST'}">
+    <div class="container py-5">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <h5 class="fw-bold text-white">GearShift Pro</h5>
+                <p class="mb-3">Premium automotive parts and professional service for performance enthusiasts.</p>
+                <div class="d-flex gap-3 fs-5">
+                    <i class="bi bi-globe"></i>
+                    <i class="bi bi-share"></i>
+                    <i class="bi bi-envelope"></i>
+                </div>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <h6 class="text-white">Services</h6>
+                <a class="d-block mb-2" th:if="${role == 'CUSTOMER'}" th:href="@{/booking}">Repair Booking</a>
+                <a class="d-block mb-2" th:href="@{/shop}">Performance Parts</a>
+                <a class="d-block mb-2" href="#">Diagnostics</a>
+            </div>
+            <div class="col-md-3 col-lg-2" th:if="${role == 'CUSTOMER'}">
+                <h6 class="text-white">Account</h6>
+                <a class="d-block mb-2" th:href="@{/account}">Profile</a>
+                <a class="d-block mb-2" th:href="@{/orders}">Order History</a>
+                <a class="d-block mb-2" th:href="@{/cart}">Shopping Cart</a>
+            </div>
+            <div class="col-md-3 col-lg-2" th:if="${role == 'ADMIN'}">
+                <h6 class="text-white">Admin</h6>
+                <a class="d-block mb-2" th:href="@{/admin}">Dashboard</a>
+                <a class="d-block mb-2" th:href="@{/admin/users}">Users</a>
+            </div>
+            <div class="col-md-3 col-lg-2" th:if="${role == 'STAFF'}">
+                <h6 class="text-white">Staff</h6>
+                <a class="d-block mb-2" th:href="@{/staff}">Workspace</a>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <h6 class="text-white">Contact</h6>
+                <p class="mb-1"><i class="bi bi-geo-alt me-2"></i>1200 Velocity Drive</p>
+                <p class="mb-1"><i class="bi bi-telephone me-2"></i>(555) 890-2342</p>
+                <p class="mb-0"><i class="bi bi-clock me-2"></i>Mon - Sat: 8AM - 6PM</p>
+            </div>
+        </div>
+    </div>
+    <div class="border-top border-secondary-subtle">
+        <div class="container py-3 small d-flex flex-column flex-md-row justify-content-between gap-2">
+            <span>Copyright 2026 GearShift Pro Automotive.</span>
+            <span>Privacy Policy · Terms of Service · Shipping Info</span>
+        </div>
+    </div>
+</footer>
+
+<div th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">GearShift Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/bootstrap.css}">
+    <link rel="stylesheet" th:href="@{/bootstrap-icons.css}">
+    <link rel="stylesheet" th:href="@{/apex.css}">
+</div>
+
+<div th:fragment="scripts">
+    <script th:src="@{/bootstrap.js}"></script>
+</div>
+</body>
+</html>
