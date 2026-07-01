@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Secure Checkout | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar('shop')}"></div>
+
+<main class="container py-5">
+    <h1 class="section-title mb-4">Secure Checkout</h1>
+
+    <div class="alert alert-light border" th:if="${#lists.isEmpty(cartItems)}">
+        Your cart is empty. <a th:href="@{/shop}">Continue shopping</a>.
+    </div>
+
+    <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
+        <div class="col-lg-8">
+            <form class="surface-card p-4" th:action="@{/orders/checkout}" th:object="${checkoutForm}" method="post">
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2">1</span>Contact & Shipping</h4>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Full name</label>
+                        <input class="form-control" type="text" th:value="${user.fullName}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input class="form-control" type="email" th:value="${user.email}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone</label>
+                        <input class="form-control" type="tel" th:field="*{phone}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Shipping address</label>
+                        <input class="form-control" type="text" th:field="*{shippingAddress}" required>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('shippingAddress')}" th:errors="*{shippingAddress}"></div>
+                    </div>
+                </div>
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2">2</span>Payment</h4>
+                <div class="alert alert-info mb-4">
+                    Payment is handled on delivery for this showroom flow.
+                </div>
+                <button class="btn btn-primary btn-lg" type="submit">Place Order</button>
+            </form>
+        </div>
+        <div class="col-lg-4">
+            <div class="surface-card p-4">
+                <h4 class="fw-bold">Your Order</h4>
+                <div class="d-flex justify-content-between my-3" th:each="item : ${cartItems}">
+                    <span th:text="${item.product.productName + ' x' + item.quantity}">Product</span>
+                    <strong th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity)), 0, 'COMMA', 2, 'POINT')}">$0</strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between fs-5 mb-4">
+                    <span>Total</span>
+                    <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: footer}"></div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

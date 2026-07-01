@@ -1,44 +1,59 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Chi tiết người dùng</title>
-</head>
-<body>
-    <h1>Chi tiết người dùng</h1>
-    <a href="/admin/users">Quay lại danh sách</a>
+<head th:replace="~{fragments :: head('User Detail | GearShift Pro')}"></head>
+<body class="ops-shell">
+<div th:replace="~{fragments :: navbar('admin')}"></div>
 
-    <table border="1">
-        <tr>
-            <td>ID</td>
-            <td th:text="${user.id}">1</td>
-        </tr>
-        <tr>
-            <td>Email</td>
-            <td th:text="${user.email}">email@example.com</td>
-        </tr>
-        <tr>
-            <td>Họ tên</td>
-            <td th:text="${user.fullName}">Nguyễn Văn A</td>
-        </tr>
-        <tr>
-            <td>Số điện thoại</td>
-            <td th:text="${user.phone}">0123456789</td>
-        </tr>
-        <tr>
-            <td>Địa chỉ</td>
-            <td th:text="${user.address}">123 Đường ABC</td>
-        </tr>
-        <tr>
-            <td>Vai trò</td>
-            <td th:text="${user.role}">CUSTOMER</td>
-        </tr>
-        <tr>
-            <td>Trạng thái</td>
-            <td th:text="${user.status}">ACTIVE</td>
-        </tr>
-    </table>
+<main class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="section-title mb-1">User Detail</h1>
+            <p class="text-secondary mb-0">Review account identity, role, and status.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" th:href="@{/admin/users}">Back</a>
+            <a class="btn btn-primary" th:href="@{/admin/users/edit/{id}(id=${user.id})}">
+                <i class="bi bi-pencil me-2"></i>Edit
+            </a>
+        </div>
+    </div>
 
-    <a th:href="@{/admin/users/edit/{id}(id=${user.id})}"><button>Sửa</button></a>
+    <div class="surface-card p-4 p-md-5">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="icon-box fs-4"><i class="bi bi-person"></i></div>
+            <div>
+                <h4 class="fw-bold mb-1" th:text="${user.fullName}">User</h4>
+                <div class="text-secondary" th:text="${user.email}">email@example.com</div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="small text-secondary">User ID</div>
+                <div class="fw-bold" th:text="${user.id}">1</div>
+            </div>
+            <div class="col-md-4">
+                <div class="small text-secondary">Role</div>
+                <span class="badge text-bg-light" th:text="${user.role}">CUSTOMER</span>
+            </div>
+            <div class="col-md-4">
+                <div class="small text-secondary">Status</div>
+                <span class="badge"
+                      th:classappend="${user.status == 'ACTIVE'} ? ' text-bg-success' : ' text-bg-secondary'"
+                      th:text="${user.status}">ACTIVE</span>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-secondary">Phone</div>
+                <div class="fw-bold" th:text="${user.phone ?: 'No phone'}">Phone</div>
+            </div>
+            <div class="col-md-6">
+                <div class="small text-secondary">Address</div>
+                <div class="fw-bold" th:text="${user.address ?: 'No address'}">Address</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: scripts}"></div>
 </body>
 </html>

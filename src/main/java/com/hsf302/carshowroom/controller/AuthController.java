@@ -39,12 +39,15 @@ public class AuthController {
                         HttpServletResponse response) {
         User user = authService.login(email, password);
         if (user != null) {
-            var auth = new UsernamePasswordAuthenticationToken(user, null, List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole())));
+            String role = user.getRole().toUpperCase();
+            user.setRole(role);
+            var auth = new UsernamePasswordAuthenticationToken(user, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
             SecurityContext context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(auth);
             SecurityContextHolder.setContext(context);
             scp.saveContext(context, request, response);
-            if ("ADMIN".equals(user.getRole())) return "redirect:/admin";
+            if ("ADMIN".equals(role)) return "redirect:/admin";
+            if ("STAFF".equals(role)) return "redirect:/staff";
         }
         return "redirect:/";
     }

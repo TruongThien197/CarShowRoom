@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Schedule Service Appointment | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar('booking')}"></div>
+
+<main class="container py-5">
+    <div class="row g-5 align-items-start">
+        <div class="col-lg-5">
+            <h1 class="section-title">Schedule Service Appointment</h1>
+            <p class="lead text-secondary">Book diagnostics, repair, maintenance, or performance tuning with the showroom team.</p>
+            <div class="surface-card p-4 mt-4">
+                <p class="mb-2"><i class="bi bi-check-circle text-primary me-2"></i>Service catalog is loaded from database</p>
+                <p class="mb-2"><i class="bi bi-check-circle text-primary me-2"></i>Appointment is linked to your account</p>
+                <p class="mb-0"><i class="bi bi-check-circle text-primary me-2"></i>Price is saved at booking time</p>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <form class="surface-card p-4" th:action="@{/booking}" th:object="${bookingForm}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Vehicle</label>
+                        <select class="form-select" th:field="*{vehicleId}">
+                            <option value="">No vehicle selected</option>
+                            <option th:each="vehicle : ${vehicles}"
+                                    th:value="${vehicle.id}"
+                                    th:text="${vehicle.carModel.brand + ' ' + vehicle.carModel.modelName + ' - ' + vehicle.licensePlate}">
+                                Vehicle
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Service type</label>
+                        <select class="form-select" th:field="*{serviceId}" required>
+                            <option value="">Select service</option>
+                            <option th:each="service : ${services}"
+                                    th:value="${service.id}"
+                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.price, 0, 'COMMA', 2, 'POINT')}">
+                                Service
+                            </option>
+                        </select>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('serviceId')}" th:errors="*{serviceId}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Preferred date</label>
+                        <input class="form-control" type="date" th:field="*{bookingDate}" required>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('bookingDate')}" th:errors="*{bookingDate}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Preferred time</label>
+                        <select class="form-select" th:field="*{timeSlot}" required>
+                            <option value="">Select time</option>
+                            <option value="08:00">08:00</option>
+                            <option value="09:30">09:30</option>
+                            <option value="11:00">11:00</option>
+                            <option value="13:30">13:30</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:30">16:30</option>
+                        </select>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('timeSlot')}" th:errors="*{timeSlot}"></div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" rows="4" th:field="*{notes}"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary btn-lg w-100" type="submit">Book Appointment</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <section class="mt-5">
+        <h2 class="h4 fw-bold mb-3">My Bookings</h2>
+        <div class="alert alert-light border" th:if="${#lists.isEmpty(bookings)}">
+            You have no bookings yet.
+        </div>
+        <div class="surface-card p-0 overflow-hidden" th:if="${!#lists.isEmpty(bookings)}">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Booking</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Service</th>
+                        <th>Vehicle</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="booking : ${bookings}">
+                        <td class="fw-bold" th:text="'#BK-' + ${booking.id}">#BK-1</td>
+                        <td th:text="${booking.bookingDate}">2026-07-01</td>
+                        <td th:text="${booking.timeSlot}">09:30</td>
+                        <td th:text="${bookingServices[booking.id]}">Service</td>
+                        <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}">Vehicle</td>
+                        <td><span class="badge text-bg-primary" th:text="${booking.status}">PENDING</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments :: footer}"></div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

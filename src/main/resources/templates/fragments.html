@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<head th:fragment="head(title)" th:replace="~{fragments/header :: head(${title})}"></head>
+<nav th:fragment="navbar(active)" th:replace="~{fragments/header :: navbar(${active})}"></nav>
+<footer th:fragment="footer" th:replace="~{fragments/footer :: footer}"></footer>
+<div th:fragment="scripts" th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

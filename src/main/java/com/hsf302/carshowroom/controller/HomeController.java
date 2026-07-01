@@ -9,4 +9,10 @@ public class HomeController {
     public String home() {
         return "home";
     }
+
+    @GetMapping("/checkout")
+    public String checkoutRedirect() {
+        return "redirect:/orders/checkout";
+    }
+
 }

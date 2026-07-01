@@ -1,0 +1,71 @@
+package com.hsf302.carshowroom.service.impl;
+
+import com.hsf302.carshowroom.dto.CheckoutForm;
+import com.hsf302.carshowroom.entity.CartItem;
+import com.hsf302.carshowroom.entity.Order;
+import com.hsf302.carshowroom.entity.OrderDetail;
+import com.hsf302.carshowroom.entity.Product;
+import com.hsf302.carshowroom.entity.User;
+import com.hsf302.carshowroom.repository.CartItemRepository;
+import com.hsf302.carshowroom.repository.OrderDetailRepository;
+import com.hsf302.carshowroom.repository.OrderRepository;
+import com.hsf302.carshowroom.repository.ProductRepository;
+import com.hsf302.carshowroom.service.CartService;
+import com.hsf302.carshowroom.service.OrderService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class OrderServiceImpl implements OrderService {
+    private final OrderRepository orderRepository;
+    private final OrderDetailRepository orderDetailRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ProductRepository productRepository;
+    private final CartService cartService;
+
+    @Override
+    @Transactional
+    public Order checkout(User user, CheckoutForm form) {
+        List<CartItem> cartItems = cartItemRepository.findByUser(user);
+        if (cartItems.isEmpty()) {
+            throw new RuntimeException("Cart is empty");
+        }
+
+        Order order = new Order();
+        order.setUser(user);
+        order.setOrderDate(Instant.now());
+        order.setShippingAddress(form.getShippingAddress());
+        order.setStatus("PENDING");
+        order.setTotalAmount(cartService.calculateSubtotal(cartItems));
+        Order savedOrder = orderRepository.save(order);
+
+        for (CartItem cartItem : cartItems) {
+            Product product = cartItem.getProduct();
+            if (product.getStockQuantity() < cartItem.getQuantity()) {
+                throw new RuntimeException("Not enough stock for " + product.getProductName());
+            }
+            product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
+            productRepository.save(product);
+
+            OrderDetail detail = new OrderDetail();
+            detail.setOrder(savedOrder);
+            detail.setProduct(product);
+            detail.setQuantity(cartItem.getQuantity());
+            detail.setUnitPrice(product.getPrice());
+            orderDetailRepository.save(detail);
+        }
+
+        cartItemRepository.deleteByUser(user);
+        return savedOrder;
+    }
+
+    @Override
+    public List<Order> getOrders(User user) {
+        return orderRepository.findByUserOrderByOrderDateDesc(user);
+    }
+}

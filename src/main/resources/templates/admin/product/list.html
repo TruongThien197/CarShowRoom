@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Quản Lý Sản Phẩm | GearShift Admin')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('admin')}"></div>
+
+<div class="container-fluid py-4">
+    <div class="row min-vh-100">
+        <aside th:replace="~{fragments/sidebar :: adminSidebar('products')}"></aside>
+
+        <main class="col-md-9 col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                <div>
+                    <h1 class="h2 fw-bold text-dark"><i class="bi bi-box-seam me-2 text-primary"></i>Quản Lý Sản Phẩm Phụ Tùng</h1>
+                    <p class="text-secondary small mb-0">Danh sách toàn bộ phụ tùng ô tô đang kinh doanh trong hệ thống.</p>
+                </div>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a th:href="@{/admin/products/create}" class="btn btn-primary shadow-sm d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Thêm Phụ Tùng Mới</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Bảng danh sách sản phẩm -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th class="py-3 ps-4" style="width: 60px;">ID</th>
+                                <th class="py-3" style="width: 80px;">Ảnh</th>
+                                <th class="py-3">Tên Phụ Tùng</th>
+                                <th class="py-3">Danh Mục</th>
+                                <th class="py-3">Giá Bán</th>
+                                <th class="py-3">Kho</th>
+                                <th class="py-3">Trạng Thái</th>
+                                <th class="py-3 text-end pe-4" style="width: 150px;">Thao Tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(products)}">
+                                <td colspan="8" class="text-center py-5 text-secondary">
+                                    <i class="bi bi-box display-4 d-block mb-2 text-muted opacity-50"></i>
+                                    Chưa có sản phẩm phụ tùng nào trong hệ thống.
+                                </td>
+                            </tr>
+                            <tr th:each="prod : ${products}">
+                                <td class="ps-4 fw-bold text-secondary" th:text="${prod.id}">1</td>
+                                <td>
+                                    <img th:if="${prod.imageUrl != null and !#strings.isEmpty(prod.imageUrl)}"
+                                         th:src="${prod.imageUrl}" alt="img" class="rounded object-fit-cover shadow-sm" style="width: 48px; height: 48px;">
+                                    <div th:if="${prod.imageUrl == null or #strings.isEmpty(prod.imageUrl)}"
+                                         class="bg-light rounded d-flex align-items-center justify-content-center border" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-tools text-secondary"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark" th:text="${prod.productName}">Product Name</div>
+                                    <small class="text-secondary d-block text-truncate" style="max-width: 200px;" th:text="${prod.description}">Mô tả</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border" th:text="${prod.category != null ? prod.category.categoryName : 'N/A'}">Category</span>
+                                </td>
+                                <td class="fw-bold text-primary" th:text="${#numbers.formatDecimal(prod.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">$0</td>
+                                <td>
+                                    <span class="fw-semibold" th:classappend="${prod.stockQuantity <= 5 ? 'text-danger' : 'text-dark'}" th:text="${prod.stockQuantity}">10</span>
+                                </td>
+                                <td>
+                                    <span class="badge" th:classappend="${'ACTIVE'.equalsIgnoreCase(prod.status) ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'}"
+                                          th:text="${prod.status}">ACTIVE</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a th:href="@{/admin/products/edit/{id}(id=${prod.id})}" class="btn btn-outline-primary btn-sm me-1" title="Chỉnh sửa">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a th:href="@{/admin/products/delete/{id}(id=${prod.id})}" 
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm phụ tùng này?');" 
+                                       class="btn btn-outline-danger btn-sm" title="Xóa">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

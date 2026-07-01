@@ -21,6 +21,15 @@ public class Booking {
     private Integer id;
 
     @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vehicle_id")
+    private Vehicle vehicle;
+
+    @NotNull
     @Column(name = "booking_date", nullable = false)
     private LocalDate bookingDate;
 
