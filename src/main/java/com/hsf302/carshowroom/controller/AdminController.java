@@ -63,14 +63,133 @@ public class AdminController {
         return "admin/dashboard";
     }
 
+    @GetMapping("/categories")
+    public String listCategories(Model model) {
+        model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
+        return "admin/category/list";
+    }
+
+    @GetMapping("/categories/create")
+    public String createCategoryForm() {
+        return "admin/category/create";
+    }
+
+    @PostMapping("/categories/create")
+    public String createCategorySubmit(@RequestParam("categoryName") String categoryName,
+                                       @RequestParam(value = "description", required = false) String description) {
+        Category category = new Category();
+        category.setCategoryName(categoryName);
+        category.setDescription(description);
+        categoryRepository.save(category);
+        return "redirect:/admin/categories";
+    }
+
     @PostMapping("/categories")
-    public String createCategory(@RequestParam("categoryName") String categoryName,
-                                 @RequestParam(value = "description", required = false) String description) {
+    public String createCategoryQuick(@RequestParam("categoryName") String categoryName,
+                                      @RequestParam(value = "description", required = false) String description) {
         Category category = new Category();
         category.setCategoryName(categoryName);
         category.setDescription(description);
         categoryRepository.save(category);
         return "redirect:/admin#products";
+    }
+
+    @GetMapping("/categories/edit/{id}")
+    public String editCategoryForm(@PathVariable Integer id, Model model) {
+        model.addAttribute("category", categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found")));
+        return "admin/category/edit";
+    }
+
+    @PostMapping("/categories/edit/{id}")
+    public String editCategorySubmit(@PathVariable Integer id,
+                                     @RequestParam("categoryName") String categoryName,
+                                     @RequestParam(value = "description", required = false) String description) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        category.setCategoryName(categoryName);
+        category.setDescription(description);
+        categoryRepository.save(category);
+        return "redirect:/admin/categories";
+    }
+
+    @GetMapping("/categories/delete/{id}")
+    public String deleteCategory(@PathVariable Integer id) {
+        categoryRepository.deleteById(id);
+        return "redirect:/admin/categories";
+    }
+
+    @GetMapping("/products")
+    public String listProducts(Model model) {
+        model.addAttribute("products", productRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
+        model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "categoryName")));
+        return "admin/product/list";
+    }
+
+    @GetMapping("/products/create")
+    public String createProductForm(Model model) {
+        model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "categoryName")));
+        return "admin/product/create";
+    }
+
+    @PostMapping("/products/create")
+    public String createProductSubmit(@RequestParam Integer categoryId,
+                                      @RequestParam String productName,
+                                      @RequestParam(required = false) String description,
+                                      @RequestParam BigDecimal price,
+                                      @RequestParam Integer stockQuantity,
+                                      @RequestParam(required = false) String imageUrl,
+                                      @RequestParam(defaultValue = "ACTIVE") String status) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        Product product = new Product();
+        product.setCategory(category);
+        product.setProductName(productName);
+        product.setDescription(description);
+        product.setPrice(price);
+        product.setStockQuantity(stockQuantity);
+        product.setImageUrl(imageUrl);
+        product.setStatus(status);
+        productRepository.save(product);
+        return "redirect:/admin/products";
+    }
+
+    @GetMapping("/products/edit/{id}")
+    public String editProductForm(@PathVariable Integer id, Model model) {
+        model.addAttribute("product", productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found")));
+        model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "categoryName")));
+        return "admin/product/edit";
+    }
+
+    @PostMapping("/products/edit/{id}")
+    public String editProductSubmit(@PathVariable Integer id,
+                                    @RequestParam Integer categoryId,
+                                    @RequestParam String productName,
+                                    @RequestParam(required = false) String description,
+                                    @RequestParam BigDecimal price,
+                                    @RequestParam Integer stockQuantity,
+                                    @RequestParam(required = false) String imageUrl,
+                                    @RequestParam(defaultValue = "ACTIVE") String status) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        product.setCategory(category);
+        product.setProductName(productName);
+        product.setDescription(description);
+        product.setPrice(price);
+        product.setStockQuantity(stockQuantity);
+        product.setImageUrl(imageUrl);
+        product.setStatus(status);
+        productRepository.save(product);
+        return "redirect:/admin/products";
+    }
+
+    @GetMapping("/products/delete/{id}")
+    public String deleteProduct(@PathVariable Integer id) {
+        productRepository.deleteById(id);
+        return "redirect:/admin/products";
     }
 
     @PostMapping("/products")
