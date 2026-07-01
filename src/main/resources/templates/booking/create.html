@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Đặt lịch sửa xe | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('booking')}"></div>
+
+<main class="container py-5">
+    <div class="row g-4">
+        <aside th:replace="~{fragments/sidebar :: accountSidebar('bookings')}"></aside>
+
+        <section class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="section-title mb-1">Đặt lịch sửa xe</h1>
+                    <p class="text-secondary mb-0">Chọn xe, dịch vụ, ngày giờ và ghi chú tình trạng xe.</p>
+                </div>
+                <a class="btn btn-outline-primary" th:href="@{/booking/my-bookings}">
+                    <i class="bi bi-clock-history me-2"></i>Lịch sử
+                </a>
+            </div>
+
+            <form class="surface-card p-4" th:action="@{/booking}" th:object="${bookingForm}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Xe của bạn</label>
+                        <select class="form-select" th:field="*{vehicleId}">
+                            <option value="">Chưa chọn xe</option>
+                            <option th:each="vehicle : ${vehicles}"
+                                    th:value="${vehicle.id}"
+                                    th:text="${vehicle.carModel.brand + ' ' + vehicle.carModel.modelName + ' - ' + vehicle.licensePlate}">
+                                Vehicle
+                            </option>
+                        </select>
+                        <div class="form-text"><a th:href="@{/vehicles/add}">Thêm xe mới</a> nếu chưa có trong danh sách.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Dịch vụ</label>
+                        <select class="form-select" th:field="*{serviceId}" required>
+                            <option value="">Chọn dịch vụ</option>
+                            <option th:each="service : ${services}"
+                                    th:value="${service.id}"
+                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.price, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">
+                                Service
+                            </option>
+                        </select>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('serviceId')}" th:errors="*{serviceId}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Ngày hẹn</label>
+                        <input class="form-control" type="date" th:field="*{bookingDate}" required>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('bookingDate')}" th:errors="*{bookingDate}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Khung giờ</label>
+                        <select class="form-select" th:field="*{timeSlot}" required>
+                            <option value="">Chọn giờ</option>
+                            <option value="08:00">08:00</option>
+                            <option value="09:30">09:30</option>
+                            <option value="11:00">11:00</option>
+                            <option value="13:30">13:30</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:30">16:30</option>
+                        </select>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('timeSlot')}" th:errors="*{timeSlot}"></div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea class="form-control" rows="4" th:field="*{notes}" placeholder="Mô tả lỗi, tiếng kêu, tình trạng xe..."></textarea>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary btn-lg" type="submit">
+                            <i class="bi bi-calendar-plus me-2"></i>Đặt lịch
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

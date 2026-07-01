@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Chi tiết lịch đặt | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('booking')}"></div>
+
+<main class="container py-5">
+    <div class="row g-4">
+        <aside th:replace="~{fragments/sidebar :: accountSidebar('bookings')}"></aside>
+
+        <section class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="section-title mb-1" th:text="'Booking BK-' + ${booking.id}">Booking</h1>
+                    <p class="text-secondary mb-0">Chi tiết lịch hẹn và dịch vụ đã chọn.</p>
+                </div>
+                <a class="btn btn-outline-secondary" th:href="@{/booking/my-bookings}">Quay lại</a>
+            </div>
+
+            <div class="surface-card p-4 mb-4">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="small text-secondary">Ngày giờ</div>
+                        <div class="fw-bold" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-secondary">Trạng thái</div>
+                        <span class="badge text-bg-primary" th:text="${booking.status}">PENDING</span>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-secondary">Xe</div>
+                        <div class="fw-bold" th:text="${booking.vehicle != null ? booking.vehicle.carModel.brand + ' ' + booking.vehicle.carModel.modelName + ' - ' + booking.vehicle.licensePlate : 'Chưa chọn xe'}">Vehicle</div>
+                    </div>
+                    <div class="col-12">
+                        <div class="small text-secondary">Ghi chú</div>
+                        <div th:text="${booking.notes ?: 'Không có ghi chú'}">Notes</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="surface-card p-4">
+                <h4 class="fw-bold mb-3">Dịch vụ</h4>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr><th>Dịch vụ</th><th>Mô tả</th><th class="text-end">Giá</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="detail : ${bookingDetails}">
+                            <td class="fw-bold" th:text="${detail.service.serviceName}">Service</td>
+                            <td th:text="${detail.service.description ?: 'Không có mô tả'}">Description</td>
+                            <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(detail.actualPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

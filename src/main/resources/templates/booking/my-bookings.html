@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Lịch đặt của tôi | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('booking')}"></div>
+
+<main class="container py-5">
+    <div class="row g-4">
+        <aside th:replace="~{fragments/sidebar :: accountSidebar('bookings')}"></aside>
+
+        <section class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="section-title mb-1">Lịch đặt của tôi</h1>
+                    <p class="text-secondary mb-0">Theo dõi trạng thái lịch sửa xe của bạn.</p>
+                </div>
+                <a class="btn btn-primary" th:href="@{/booking/create}">
+                    <i class="bi bi-plus-lg me-2"></i>Đặt lịch mới
+                </a>
+            </div>
+
+            <div class="alert alert-light border" th:if="${#lists.isEmpty(bookings)}">Bạn chưa có lịch đặt nào.</div>
+
+            <div class="surface-card p-0 overflow-hidden" th:if="${!#lists.isEmpty(bookings)}">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Mã</th>
+                            <th>Ngày</th>
+                            <th>Giờ</th>
+                            <th>Dịch vụ</th>
+                            <th>Xe</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="booking : ${bookings}">
+                            <td class="fw-bold" th:text="'BK-' + ${booking.id}">BK-1</td>
+                            <td th:text="${booking.bookingDate}">2026-07-01</td>
+                            <td th:text="${booking.timeSlot}">09:30</td>
+                            <td th:text="${bookingServices[booking.id]}">Service</td>
+                            <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Chưa chọn'}">Vehicle</td>
+                            <td><span class="badge text-bg-primary" th:text="${booking.status}">PENDING</span></td>
+                            <td class="text-end">
+                                <a class="btn btn-outline-primary btn-sm" th:href="@{/booking/{id}(id=${booking.id})}">
+                                    <i class="bi bi-eye me-1"></i>Chi tiết
+                                </a>
+                                <button class="btn btn-outline-danger btn-sm"
+                                        type="button"
+                                        th:if="${booking.status != 'CANCELLED' and booking.status != 'COMPLETED'}"
+                                        data-bs-toggle="modal"
+                                        th:attr="data-bs-target=${'#cancelBookingModal' + booking.id}">
+                                    Hủy
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div th:each="booking : ${bookings}"
+                 class="modal fade"
+                 th:id="${'cancelBookingModal' + booking.id}"
+                 tabindex="-1"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Xác nhận hủy booking</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-2">Bạn có chắc chắn muốn hủy lịch đặt này không?</p>
+                            <div class="small text-secondary">
+                                <div><strong>Mã booking:</strong> <span th:text="'BK-' + ${booking.id}">BK-1</span></div>
+                                <div><strong>Thời gian:</strong> <span th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</span></div>
+                                <div><strong>Dịch vụ:</strong> <span th:text="${bookingServices[booking.id]}">Service</span></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Không</button>
+                            <form th:action="@{/booking/{id}/cancel(id=${booking.id})}" method="post">
+                                <button class="btn btn-danger" type="submit">Xác nhận hủy</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

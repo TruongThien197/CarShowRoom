@@ -57,6 +57,45 @@ public class BookingServiceImpl implements BookingService {
         return bookingRepository.findByUserOrderByBookingDateDesc(user);
     }
 
+    @Override
+    public List<Booking> getAllBookings() {
+        return bookingRepository.findAllByOrderByBookingDateDesc();
+    }
+
+    @Override
+    public Booking getBookingDetail(User user, Integer bookingId) {
+        Booking booking = getBookingDetail(bookingId);
+        if (!booking.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Booking does not belong to current user");
+        }
+        return booking;
+    }
+
+    @Override
+    public Booking getBookingDetail(Integer bookingId) {
+        return bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+    }
+
+    @Override
+    @Transactional
+    public void cancelBooking(User user, Integer bookingId) {
+        Booking booking = getBookingDetail(user, bookingId);
+        if ("COMPLETED".equalsIgnoreCase(booking.getStatus())) {
+            throw new RuntimeException("Completed booking cannot be cancelled");
+        }
+        booking.setStatus("CANCELLED");
+        bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(Integer bookingId, String status) {
+        Booking booking = getBookingDetail(bookingId);
+        booking.setStatus(status);
+        bookingRepository.save(booking);
+    }
+
     private Vehicle resolveVehicle(User user, Integer vehicleId) {
         if (vehicleId == null) {
             return null;

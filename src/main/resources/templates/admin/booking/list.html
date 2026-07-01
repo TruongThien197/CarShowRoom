@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Quản lý lịch đặt | GearShift Admin')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('admin')}"></div>
+
+<div class="container-fluid py-4">
+    <div class="row min-vh-100">
+        <aside th:replace="~{fragments/sidebar :: adminSidebar('bookings')}"></aside>
+
+        <main class="col-md-9 col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-4 border-bottom">
+                <div>
+                    <h1 class="h2 fw-bold"><i class="bi bi-calendar-check me-2 text-primary"></i>Quản lý lịch đặt</h1>
+                    <p class="text-secondary small mb-0">Theo dõi và cập nhật trạng thái booking của khách hàng.</p>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Mã</th>
+                            <th>Khách hàng</th>
+                            <th>Xe</th>
+                            <th>Ngày giờ</th>
+                            <th>Dịch vụ</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(bookings)}">
+                            <td colspan="7" class="text-center py-5 text-secondary">Chưa có booking nào.</td>
+                        </tr>
+                        <tr th:each="booking : ${bookings}">
+                            <td class="ps-4 fw-bold" th:text="'BK-' + ${booking.id}">BK-1</td>
+                            <td>
+                                <div class="fw-semibold" th:text="${booking.user.fullName}">Customer</div>
+                                <small class="text-secondary" th:text="${booking.user.email}">email</small>
+                            </td>
+                            <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Chưa chọn'}">Vehicle</td>
+                            <td th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</td>
+                            <td th:text="${bookingServices[booking.id]}">Service</td>
+                            <td><span class="badge text-bg-primary" th:text="${booking.status}">PENDING</span></td>
+                            <td class="text-end pe-4">
+                                <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/bookings/{id}(id=${booking.id})}">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <form class="d-inline" th:action="@{/admin/bookings/status}" method="post">
+                                    <input type="hidden" name="bookingId" th:value="${booking.id}">
+                                    <input type="hidden" name="status" value="CONFIRMED">
+                                    <button class="btn btn-outline-success btn-sm" type="submit">Duyệt</button>
+                                </form>
+                                <form class="d-inline" th:action="@{/admin/bookings/status}" method="post">
+                                    <input type="hidden" name="bookingId" th:value="${booking.id}">
+                                    <input type="hidden" name="status" value="CANCELLED">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">Hủy</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

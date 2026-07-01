@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Quản lý dịch vụ | GearShift Admin')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('admin')}"></div>
+
+<div class="container-fluid py-4">
+    <div class="row min-vh-100">
+        <aside th:replace="~{fragments/sidebar :: adminSidebar('services')}"></aside>
+
+        <main class="col-md-9 col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-4 border-bottom">
+                <div>
+                    <h1 class="h2 fw-bold"><i class="bi bi-tools me-2 text-primary"></i>Quản lý dịch vụ sửa xe</h1>
+                    <p class="text-secondary small mb-0">Danh sách dịch vụ khách có thể chọn khi đặt lịch.</p>
+                </div>
+                <a class="btn btn-primary" th:href="@{/admin/services/create}">
+                    <i class="bi bi-plus-lg me-2"></i>Thêm dịch vụ
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Tên dịch vụ</th>
+                            <th>Mô tả</th>
+                            <th class="text-end">Giá</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(services)}">
+                            <td colspan="5" class="text-center py-5 text-secondary">Chưa có dịch vụ nào.</td>
+                        </tr>
+                        <tr th:each="service : ${services}">
+                            <td class="ps-4 fw-bold" th:text="${service.id}">1</td>
+                            <td class="fw-semibold" th:text="${service.serviceName}">Service</td>
+                            <td class="text-secondary" th:text="${service.description ?: 'Không có mô tả'}">Description</td>
+                            <td class="text-end fw-bold text-primary" th:text="${#numbers.formatDecimal(service.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</td>
+                            <td class="text-end pe-4">
+                                <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/services/edit/{id}(id=${service.id})}">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <a class="btn btn-outline-danger btn-sm" th:href="@{/admin/services/delete/{id}(id=${service.id})}"
+                                   onclick="return confirm('Xóa dịch vụ này?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

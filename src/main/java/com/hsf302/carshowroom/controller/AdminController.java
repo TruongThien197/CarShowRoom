@@ -4,6 +4,7 @@ import com.hsf302.carshowroom.entity.Booking;
 import com.hsf302.carshowroom.entity.Category;
 import com.hsf302.carshowroom.entity.Order;
 import com.hsf302.carshowroom.entity.Product;
+import com.hsf302.carshowroom.dto.ServiceForm;
 import com.hsf302.carshowroom.repository.BookingDetailRepository;
 import com.hsf302.carshowroom.repository.BookingRepository;
 import com.hsf302.carshowroom.repository.CategoryRepository;
@@ -17,6 +18,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -226,6 +229,82 @@ public class AdminController {
         return "redirect:/admin#services";
     }
 
+    @GetMapping("/services")
+    public String listServices(Model model) {
+        model.addAttribute("services", serviceRepository.findAllByOrderByServiceNameAsc());
+        return "admin/service/list";
+    }
+
+    @GetMapping("/services/create")
+    public String createServiceForm(Model model) {
+        model.addAttribute("serviceForm", new ServiceForm());
+        return "admin/service/create";
+    }
+
+    @PostMapping("/services/create")
+    public String createServiceSubmit(@Valid @ModelAttribute("serviceForm") ServiceForm form,
+                                      BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return "admin/service/create";
+        }
+        com.hsf302.carshowroom.entity.Service service = new com.hsf302.carshowroom.entity.Service();
+        fillService(service, form);
+        serviceRepository.save(service);
+        return "redirect:/admin/services";
+    }
+
+    @GetMapping("/services/edit/{id}")
+    public String editServiceForm(@PathVariable Integer id, Model model) {
+        com.hsf302.carshowroom.entity.Service service = serviceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Service not found"));
+        ServiceForm form = new ServiceForm();
+        form.setServiceName(service.getServiceName());
+        form.setDescription(service.getDescription());
+        form.setPrice(service.getPrice());
+        model.addAttribute("service", service);
+        model.addAttribute("serviceForm", form);
+        return "admin/service/edit";
+    }
+
+    @PostMapping("/services/edit/{id}")
+    public String editServiceSubmit(@PathVariable Integer id,
+                                    @Valid @ModelAttribute("serviceForm") ServiceForm form,
+                                    BindingResult bindingResult,
+                                    Model model) {
+        com.hsf302.carshowroom.entity.Service service = serviceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Service not found"));
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("service", service);
+            return "admin/service/edit";
+        }
+        fillService(service, form);
+        serviceRepository.save(service);
+        return "redirect:/admin/services";
+    }
+
+    @GetMapping("/services/delete/{id}")
+    public String deleteService(@PathVariable Integer id) {
+        serviceRepository.deleteById(id);
+        return "redirect:/admin/services";
+    }
+
+    @GetMapping("/bookings")
+    public String listBookings(Model model) {
+        List<Booking> bookings = bookingRepository.findAllByOrderByBookingDateDesc();
+        model.addAttribute("bookings", bookings);
+        model.addAttribute("bookingServices", buildBookingServices(bookings));
+        return "admin/booking/list";
+    }
+
+    @GetMapping("/bookings/{id}")
+    public String bookingDetail(@PathVariable Integer id, Model model) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        model.addAttribute("booking", booking);
+        model.addAttribute("bookingDetails", bookingDetailRepository.findByBookingId(id));
+        return "admin/booking/detail";
+    }
+
     @PostMapping("/products/status")
     public String updateProductStatus(@RequestParam Integer productId, @RequestParam String status) {
         Product product = productRepository.findById(productId)
@@ -334,5 +413,11 @@ public class AdminController {
                 .flatMap(booking -> bookingDetailRepository.findByBookingId(booking.getId()).stream())
                 .map(detail -> detail.getActualPrice() == null ? BigDecimal.ZERO : detail.getActualPrice())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private void fillService(com.hsf302.carshowroom.entity.Service service, ServiceForm form) {
+        service.setServiceName(form.getServiceName());
+        service.setDescription(form.getDescription());
+        service.setPrice(form.getPrice());
     }
 }
