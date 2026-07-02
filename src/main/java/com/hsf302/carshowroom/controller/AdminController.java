@@ -421,6 +421,7 @@ public class AdminController {
         service.setServiceName(form.getServiceName());
         service.setDescription(form.getDescription());
         service.setPrice(form.getPrice());
+    }
     @GetMapping("/orders")
     public String listOrders(@RequestParam(value = "status", required = false) String status, Model model){
         List<Order> orders;
