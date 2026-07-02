@@ -46,6 +46,7 @@ public class CartServiceImpl implements CartService {
         cartItemRepository.save(cartItem);
     }
 
+
     @Override
     @Transactional
     public void updateQuantity(User user, Integer cartItemId, Integer quantity) {
@@ -57,19 +58,6 @@ public class CartServiceImpl implements CartService {
         validateStock(cartItem.getProduct(), quantity);
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
-    }
-
-    @Override
-    @Transactional
-    public void removeItem(User user, Integer cartItemId) {
-        cartItemRepository.delete(getOwnedCartItem(user, cartItemId));
-    }
-
-    @Override
-    public BigDecimal calculateSubtotal(List<CartItem> items) {
-        return items.stream()
-                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
@@ -87,9 +75,27 @@ public class CartServiceImpl implements CartService {
         return cartItem;
     }
 
+    @Override
+    @Transactional
+    public void removeItem(User user, Integer cartItemId) {
+        cartItemRepository.delete(getOwnedCartItem(user, cartItemId));
+    }
+
+    @Override
+    public BigDecimal calculateSubtotal(List<CartItem> items) {
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return items.stream()
+                .map(item -> item.getProduct().getPrice().multiply(new BigDecimal(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+
     private void validateStock(Product product, int quantity) {
         if (product.getStockQuantity() < quantity) {
-            throw new RuntimeException("Not enough stock for " + product.getProductName());
+            throw new RuntimeException("Not enough stock for " + product.getProductName() +
+                    ". Please reduce quantity to " + product.getStockQuantity() + " or less.");
         }
     }
 }

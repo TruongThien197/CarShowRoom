@@ -68,4 +68,24 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getOrders(User user) {
         return orderRepository.findByUserOrderByOrderDateDesc(user);
     }
+
+    @Override
+    public List<Order> getAllOrders() {
+        return orderRepository.findAllByOrderByIdAsc();
+    }
+    
+    @Override
+    public Order getOrderById(Integer id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + id));
+    }
+
+    @Override
+    @Transactional
+    public void updateOrderStatus(Integer id, String status) {
+        Order order = getOrderById(id);
+        String upperStatus = status.toUpperCase();
+        order.setStatus(upperStatus);
+        orderRepository.save(order);
+    }
 }
