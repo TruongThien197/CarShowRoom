@@ -51,12 +51,17 @@
             </a>
         </li>
         <li class="nav-item">
+            <a class="nav-link text-white" th:classappend="${activeMenu == 'services'} ? 'active bg-primary'" th:href="@{/admin/services}">
+                <i class="bi bi-tools me-2"></i>Dịch vụ sửa xe
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link text-white" th:classappend="${activeMenu == 'orders'} ? 'active bg-primary'" th:href="@{/admin#orders}">
                 <i class="bi bi-cart-check me-2"></i>Đơn hàng
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-white" th:classappend="${activeMenu == 'bookings'} ? 'active bg-primary'" th:href="@{/admin#bookings}">
+            <a class="nav-link text-white" th:classappend="${activeMenu == 'bookings'} ? 'active bg-primary'" th:href="@{/admin/bookings}">
                 <i class="bi bi-calendar-check me-2"></i>Lịch đặt sửa
             </a>
         </li>
@@ -80,6 +85,9 @@
             </a>
             <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'bookings'} ? 'active fw-semibold'" th:href="@{/booking/my-bookings}">
                 <i class="bi bi-calendar3 me-2"></i>Lịch đặt sửa xe
+            </a>
+            <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'vehicles'} ? 'active fw-semibold'" th:href="@{/vehicles}">
+                <i class="bi bi-car-front me-2"></i>Xe của tôi
             </a>
         </div>
     </div>

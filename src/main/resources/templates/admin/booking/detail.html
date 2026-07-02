@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Chi tiết booking | GearShift Admin')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('admin')}"></div>
+
+<div class="container-fluid py-4">
+    <div class="row min-vh-100">
+        <aside th:replace="~{fragments/sidebar :: adminSidebar('bookings')}"></aside>
+
+        <main class="col-md-9 col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-4 border-bottom">
+                <div>
+                    <h1 class="h2 fw-bold" th:text="'Booking BK-' + ${booking.id}">Booking</h1>
+                    <p class="text-secondary small mb-0">Chi tiết khách hàng, xe và dịch vụ.</p>
+                </div>
+                <a class="btn btn-outline-secondary" th:href="@{/admin/bookings}">Quay lại</a>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">Thông tin booking</h5>
+                            <p><span class="text-secondary">Khách:</span> <strong th:text="${booking.user.fullName}">Customer</strong></p>
+                            <p><span class="text-secondary">Email:</span> <span th:text="${booking.user.email}">email</span></p>
+                            <p><span class="text-secondary">Xe:</span> <span th:text="${booking.vehicle != null ? booking.vehicle.carModel.brand + ' ' + booking.vehicle.carModel.modelName + ' - ' + booking.vehicle.licensePlate : 'Chưa chọn xe'}">Vehicle</span></p>
+                            <p><span class="text-secondary">Ngày giờ:</span> <strong th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</strong></p>
+                            <p><span class="text-secondary">Trạng thái:</span> <span class="badge text-bg-primary" th:text="${booking.status}">PENDING</span></p>
+                            <p class="mb-0"><span class="text-secondary">Ghi chú:</span> <span th:text="${booking.notes ?: 'Không có'}">Notes</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">Dịch vụ</h5>
+                            <table class="table align-middle">
+                                <thead class="table-light"><tr><th>Tên dịch vụ</th><th class="text-end">Giá</th></tr></thead>
+                                <tbody>
+                                <tr th:each="detail : ${bookingDetails}">
+                                    <td th:text="${detail.service.serviceName}">Service</td>
+                                    <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(detail.actualPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <form class="d-flex gap-2 justify-content-end" th:action="@{/admin/bookings/status}" method="post">
+                                <input type="hidden" name="bookingId" th:value="${booking.id}">
+                                <select class="form-select" name="status" style="max-width: 180px">
+                                    <option value="PENDING" th:selected="${booking.status == 'PENDING'}">PENDING</option>
+                                    <option value="CONFIRMED" th:selected="${booking.status == 'CONFIRMED'}">CONFIRMED</option>
+                                    <option value="IN_PROGRESS" th:selected="${booking.status == 'IN_PROGRESS'}">IN_PROGRESS</option>
+                                    <option value="COMPLETED" th:selected="${booking.status == 'COMPLETED'}">COMPLETED</option>
+                                    <option value="CANCELLED" th:selected="${booking.status == 'CANCELLED'}">CANCELLED</option>
+                                </select>
+                                <button class="btn btn-primary" type="submit">Cập nhật</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

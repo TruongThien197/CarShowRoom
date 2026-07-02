@@ -24,6 +24,7 @@ public class SecurityConfig {
                             .requestMatchers("/cart", "/cart/**").hasRole("CUSTOMER")
                             .requestMatchers("/orders", "/orders/**").hasRole("CUSTOMER")
                             .requestMatchers("/booking", "/booking/**").hasRole("CUSTOMER")
+                            .requestMatchers("/vehicles", "/vehicles/**").hasRole("CUSTOMER")
                             .requestMatchers("/account", "/account/**").hasRole("CUSTOMER")
                             .requestMatchers("/", "/shop", "/products/**", "/auth/**", "/bootstrap.css",
                                     "/bootstrap.js", "/bootstrap-icons.css", "/apex.css", "/fonts/**", "/images/**")

@@ -15,6 +15,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -39,7 +40,12 @@ public class BookingController {
             return "redirect:/auth/login";
         }
         populateModel(model, user, new BookingForm());
-        return "booking/form";
+        return "booking/create";
+    }
+
+    @GetMapping("/create")
+    public String createFormAlias(Model model) {
+        return form(model);
     }
 
     @PostMapping
@@ -52,25 +58,62 @@ public class BookingController {
         }
         if (bindingResult.hasErrors()) {
             populateModel(model, user, form);
-            return "booking/form";
+            return "booking/create";
         }
         bookingService.createBooking(user, form);
-        return "redirect:/booking";
+        return "redirect:/booking/my-bookings";
+    }
+
+    @GetMapping("/my-bookings")
+    public String myBookings(Model model) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            return "redirect:/auth/login";
+        }
+        List<Booking> bookings = bookingService.getBookings(user);
+        model.addAttribute("bookings", bookings);
+        model.addAttribute("bookingServices", buildBookingServices(bookings));
+        return "booking/my-bookings";
+    }
+
+    @GetMapping("/{id}")
+    public String detail(@PathVariable Integer id, Model model) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            return "redirect:/auth/login";
+        }
+        Booking booking = bookingService.getBookingDetail(user, id);
+        model.addAttribute("booking", booking);
+        model.addAttribute("bookingDetails", bookingDetailRepository.findByBookingId(booking.getId()));
+        return "booking/detail";
+    }
+
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable Integer id) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            return "redirect:/auth/login";
+        }
+        bookingService.cancelBooking(user, id);
+        return "redirect:/booking/my-bookings";
     }
 
     private void populateModel(Model model, User user, BookingForm form) {
         List<Booking> bookings = bookingService.getBookings(user);
-        Map<Integer, String> bookingServices = bookings.stream().collect(Collectors.toMap(
+        model.addAttribute("bookingForm", form);
+        model.addAttribute("services", serviceRepository.findAll());
+        model.addAttribute("vehicles", vehicleRepository.findByUser(user));
+        model.addAttribute("bookings", bookings);
+        model.addAttribute("bookingServices", buildBookingServices(bookings));
+    }
+
+    private Map<Integer, String> buildBookingServices(List<Booking> bookings) {
+        return bookings.stream().collect(Collectors.toMap(
                 Booking::getId,
                 booking -> bookingDetailRepository.findByBookingId(booking.getId()).stream()
                         .map(detail -> detail.getService().getServiceName())
                         .collect(Collectors.joining(", "))
         ));
-        model.addAttribute("bookingForm", form);
-        model.addAttribute("services", serviceRepository.findAll());
-        model.addAttribute("vehicles", vehicleRepository.findByUser(user));
-        model.addAttribute("bookings", bookings);
-        model.addAttribute("bookingServices", bookingServices);
     }
 
     private User currentUserOrNull() {

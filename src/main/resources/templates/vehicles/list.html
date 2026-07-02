@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Xe của tôi | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('account')}"></div>
+
+<main class="container py-5">
+    <div class="row g-4">
+        <aside th:replace="~{fragments/sidebar :: accountSidebar('vehicles')}"></aside>
+
+        <section class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="section-title mb-1">Xe của tôi</h1>
+                    <p class="text-secondary mb-0">Quản lý xe dùng cho lịch đặt sửa chữa.</p>
+                </div>
+                <a class="btn btn-primary" th:href="@{/vehicles/add}">
+                    <i class="bi bi-plus-lg me-2"></i>Thêm xe
+                </a>
+            </div>
+
+            <div class="alert alert-light border" th:if="${#lists.isEmpty(vehicles)}">Bạn chưa thêm xe nào.</div>
+
+            <div class="row g-3" th:if="${!#lists.isEmpty(vehicles)}">
+                <div class="col-md-6" th:each="vehicle : ${vehicles}">
+                    <div class="surface-card p-4 h-100">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div>
+                                <h5 class="fw-bold mb-1" th:text="${vehicle.carModel.brand + ' ' + vehicle.carModel.modelName}">Car</h5>
+                                <div class="text-secondary" th:text="${vehicle.carModel.year}">2024</div>
+                            </div>
+                            <span class="badge text-bg-light align-self-start" th:text="${vehicle.licensePlate}">Plate</span>
+                        </div>
+                        <form class="mt-4" th:action="@{/vehicles/{id}/delete(id=${vehicle.id})}" method="post">
+                            <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Xóa xe này?')">
+                                <i class="bi bi-trash me-1"></i>Xóa
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>
