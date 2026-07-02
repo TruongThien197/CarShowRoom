@@ -24,50 +24,35 @@
     </div>
 </aside>
 
-<!-- 2. Sidebar điều hướng cho Admin Panel -->
-<aside th:fragment="adminSidebar(activeMenu)" class="col-md-3 col-lg-2 d-md-block bg-dark text-white sidebar collapse min-vh-100 p-3">
-    <div class="text-center pb-3 mb-3 border-bottom border-secondary">
-        <h6 class="fw-bold text-uppercase text-primary mb-0"><i class="bi bi-shield-lock me-2"></i>Admin Panel</h6>
+<!-- 2. Unified sidebar for Admin Panel -->
+<aside th:fragment="adminSidebar(activeMenu)" class="col-lg-3 col-xl-2 ops-sidebar p-3 p-lg-4">
+    <div class="admin-brand fw-bold">
+        <i class="bi bi-shield-lock me-2"></i>Admin Panel
     </div>
-    <ul class="nav nav-pills flex-column gap-1">
-        <li class="nav-item">
-            <a class="nav-link text-white" th:classappend="${activeMenu == 'dashboard'} ? 'active bg-primary'" th:href="@{/admin}">
-                <i class="bi bi-speedometer2 me-2"></i>Tổng quan
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white" th:classappend="${activeMenu == 'users'} ? 'active bg-primary'" th:href="@{/admin/users}">
-                <i class="bi bi-people me-2"></i>Người dùng
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white" th:classappend="${activeMenu == 'categories'} ? 'active bg-primary'" th:href="@{/admin#categories}">
-                <i class="bi bi-tags me-2"></i>Danh mục
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white" th:classappend="${activeMenu == 'products'} ? 'active bg-primary'" th:href="@{/admin#products}">
-                <i class="bi bi-box-seam me-2"></i>Sản phẩm
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white" th:classappend="${activeMenu == 'services'} ? 'active bg-primary'" th:href="@{/admin/services}">
-                <i class="bi bi-tools me-2"></i>Dịch vụ sửa xe
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white" th:classappend="${activeMenu == 'orders'} ? 'active bg-primary'" th:href="@{/admin#orders}">
-                <i class="bi bi-cart-check me-2"></i>Đơn hàng
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-white" th:classappend="${activeMenu == 'bookings'} ? 'active bg-primary'" th:href="@{/admin/bookings}">
-                <i class="bi bi-calendar-check me-2"></i>Lịch đặt sửa
-            </a>
-        </li>
-    </ul>
+    <nav class="d-grid gap-2">
+        <a th:classappend="${activeMenu == 'dashboard'} ? 'active'" th:href="@{/admin}">
+            <i class="bi bi-speedometer2"></i>Tổng quan
+        </a>
+        <a th:classappend="${activeMenu == 'users'} ? 'active'" th:href="@{/admin/users}">
+            <i class="bi bi-people"></i>Người dùng
+        </a>
+        <a th:classappend="${activeMenu == 'categories'} ? 'active'" th:href="@{/admin#products}">
+            <i class="bi bi-tags"></i>Danh mục
+        </a>
+        <a th:classappend="${activeMenu == 'products'} ? 'active'" th:href="@{/admin#products}">
+            <i class="bi bi-box-seam"></i>Sản phẩm
+        </a>
+        <a th:classappend="${activeMenu == 'services'} ? 'active'" th:href="@{/admin/services}">
+            <i class="bi bi-tools"></i>Dịch vụ sửa xe
+        </a>
+        <a th:classappend="${activeMenu == 'orders'} ? 'active'" th:href="@{/admin/orders}">
+            <i class="bi bi-cart-check"></i>Đơn hàng
+        </a>
+        <a th:classappend="${activeMenu == 'bookings'} ? 'active'" th:href="@{/admin/bookings}">
+            <i class="bi bi-calendar-check"></i>Lịch đặt sửa
+        </a>
+    </nav>
 </aside>
-
 <!-- 3. Sidebar điều hướng cho Account Khách hàng -->
 <aside th:fragment="accountSidebar(activeTab)" class="col-lg-3 mb-4">
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">

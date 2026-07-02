@@ -2,11 +2,15 @@ package com.hsf302.carshowroom.config;
 
 import com.hsf302.carshowroom.entity.CarModel;
 import com.hsf302.carshowroom.entity.Category;
+import com.hsf302.carshowroom.entity.Order;
+import com.hsf302.carshowroom.entity.OrderDetail;
 import com.hsf302.carshowroom.entity.Product;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.repository.CarModelRepository;
 import com.hsf302.carshowroom.repository.CategoryRepository;
+import com.hsf302.carshowroom.repository.OrderDetailRepository;
+import com.hsf302.carshowroom.repository.OrderRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
 import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.repository.UserRepository;
@@ -17,6 +21,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Component
@@ -24,6 +30,8 @@ import java.util.List;
 public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final OrderRepository orderRepository;
+    private final OrderDetailRepository orderDetailRepository;
     private final ProductRepository productRepository;
     private final ServiceRepository serviceRepository;
     private final CarModelRepository carModelRepository;
@@ -35,6 +43,7 @@ public class DataSeeder implements CommandLineRunner {
         seedUsers();
         List<Category> categories = seedCategories();
         seedProducts(categories);
+        seedDemoOrders();
         seedServices();
         seedCustomerVehicle();
     }
@@ -128,6 +137,39 @@ public class DataSeeder implements CommandLineRunner {
         return product;
     }
 
+
+    private void seedDemoOrders() {
+        if (orderRepository.count() > 0) {
+            return;
+        }
+        User customer = userRepository.findByEmail("customer@gearshift.local");
+        List<Product> products = productRepository.findAll();
+        if (customer == null || products.isEmpty()) {
+            return;
+        }
+
+        String[] statuses = {"PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "DELIVERED", "PENDING", "PROCESSING"};
+        for (int i = 0; i < statuses.length; i++) {
+            Product product = products.get(i % products.size());
+            int quantity = (i % 3) + 1;
+            BigDecimal total = product.getPrice().multiply(BigDecimal.valueOf(quantity));
+
+            Order order = new Order();
+            order.setUser(customer);
+            order.setOrderDate(Instant.now().minus(20L * i, ChronoUnit.DAYS));
+            order.setShippingAddress(customer.getAddress() == null ? "123 Demo Street" : customer.getAddress());
+            order.setStatus(statuses[i]);
+            order.setTotalAmount(total);
+            Order savedOrder = orderRepository.save(order);
+
+            OrderDetail detail = new OrderDetail();
+            detail.setOrder(savedOrder);
+            detail.setProduct(product);
+            detail.setQuantity(quantity);
+            detail.setUnitPrice(product.getPrice());
+            orderDetailRepository.save(detail);
+        }
+    }
     private void seedServices() {
         if (serviceRepository.count() > 0) {
             return;

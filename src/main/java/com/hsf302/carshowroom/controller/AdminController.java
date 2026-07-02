@@ -15,6 +15,9 @@ import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,6 +26,10 @@ import jakarta.validation.Valid;
 import org.springframework.validation.BindingResult;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,9 +67,17 @@ public class AdminController {
         model.addAttribute("bookingRevenue", bookingRevenue);
         model.addAttribute("totalRevenue", orderRevenue.add(bookingRevenue));
         model.addAttribute("usersCount", userService.getAllUsers().size());
+        model.addAttribute("totalUsers", userService.getAllUsers().size());
+        model.addAttribute("totalProducts", products.size());
+        model.addAttribute("totalOrders", orders.size());
+        model.addAttribute("totalBookings", bookings.size());
         model.addAttribute("activeProducts", products.stream().filter(product -> "ACTIVE".equalsIgnoreCase(product.getStatus())).count());
         model.addAttribute("pendingOrders", orders.stream().filter(order -> "PENDING".equalsIgnoreCase(order.getStatus())).count());
         model.addAttribute("pendingBookings", bookings.stream().filter(booking -> "PENDING".equalsIgnoreCase(booking.getStatus())).count());
+        model.addAttribute("monthlyOrderLabels", buildMonthlyOrderLabels());
+        model.addAttribute("monthlyOrderCounts", buildMonthlyOrderCounts(orders));
+        model.addAttribute("recentOrders", orders.stream().limit(5).collect(Collectors.toList()));
+        model.addAttribute("recentBookings", bookings.stream().limit(5).collect(Collectors.toList()));
         model.addAttribute("orderItems", buildOrderItems(orders));
         model.addAttribute("bookingServices", buildBookingServices(bookings));
         return "admin/dashboard";
@@ -335,8 +350,21 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public String listUsers(Model model) {
-        model.addAttribute("users", userService.getAllUsers());
+    public String listUsers(@RequestParam(value = "keyword", required = false) String keyword,
+                            @RequestParam(value = "role", required = false) String role,
+                            @RequestParam(value = "status", required = false) String status,
+                            @RequestParam(value = "page", defaultValue = "0") int page,
+                            Model model) {
+        int safePage = Math.max(page, 0);
+        int pageSize = 10;
+        Pageable pageable = PageRequest.of(safePage, pageSize, Sort.by(Sort.Direction.ASC, "id"));
+        Page<com.hsf302.carshowroom.entity.User> userPage = userService.searchUsers(keyword, role, status, pageable);
+
+        model.addAttribute("userPage", userPage);
+        model.addAttribute("users", userPage.getContent());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedRole", role);
+        model.addAttribute("selectedStatus", status);
         return "admin/user-list";
     }
 
@@ -402,6 +430,31 @@ public class AdminController {
         ));
     }
 
+
+    private List<String> buildMonthlyOrderLabels() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM yyyy");
+        List<String> labels = new ArrayList<>();
+        YearMonth currentMonth = YearMonth.now();
+        for (int i = 5; i >= 0; i--) {
+            labels.add(currentMonth.minusMonths(i).format(formatter));
+        }
+        return labels;
+    }
+
+    private List<Long> buildMonthlyOrderCounts(List<Order> orders) {
+        List<Long> counts = new ArrayList<>();
+        YearMonth currentMonth = YearMonth.now();
+        ZoneId zoneId = ZoneId.systemDefault();
+        for (int i = 5; i >= 0; i--) {
+            YearMonth month = currentMonth.minusMonths(i);
+            counts.add(orders.stream()
+                    .filter(order -> order.getOrderDate() != null)
+                    .filter(order -> YearMonth.from(order.getOrderDate().atZone(zoneId)).equals(month))
+                    .count());
+        }
+        return counts;
+    }
+
     private BigDecimal calculateOrderRevenue(List<Order> orders) {
         return orders.stream()
                 .filter(order -> "DELIVERED".equalsIgnoreCase(order.getStatus()))
@@ -423,29 +476,28 @@ public class AdminController {
         service.setPrice(form.getPrice());
     }
     @GetMapping("/orders")
-    public String listOrders(@RequestParam(value = "status", required = false) String status, Model model){
-        List<Order> orders;
-        if (status != null && !status.isEmpty()) {
-            // Lọc theo status và sắp xếp tăng dần theo ý bạn muốn
-            orders = orderRepository.findByStatusOrderByOrderDateAsc(status);
-        } else {
-            orders = orderRepository.findAllByOrderByOrderDateAsc();
+    public String listOrders(@RequestParam(value = "status", required = false) String status, Model model) {
+        List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "orderDate"));
+        if (status != null && !status.isBlank()) {
+            orders = orders.stream()
+                    .filter(order -> status.equalsIgnoreCase(order.getStatus()))
+                    .collect(Collectors.toList());
         }
         model.addAttribute("orders", orders);
         model.addAttribute("selectedStatus", status);
-        return "/order/list";
+        model.addAttribute("orderItems", buildOrderItems(orders));
+        return "admin/order/list";
     }
-
-
 
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Integer id, Model model) {
         model.addAttribute("order", orderService.getOrderById(id));
-        return "/order/detail";
+        model.addAttribute("orderDetails", orderDetailRepository.findByOrderId(id));
+        return "admin/order/detail";
     }
 
     @PostMapping("/orders/{id}/status")
-    public String updateStatus(@PathVariable Integer id, @RequestParam String status) {
+    public String updateOrderDetailStatus(@PathVariable Integer id, @RequestParam String status) {
         orderService.updateOrderStatus(id, status);
         return "redirect:/admin/orders/" + id;
     }

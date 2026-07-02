@@ -6,71 +6,58 @@
 
 <main class="container-fluid">
     <div class="row">
-        <aside class="col-lg-3 col-xl-2 ops-sidebar p-4">
-            <h5 class="text-white fw-bold mb-4">Admin Panel</h5>
-            <nav class="d-grid gap-2">
-                <a class="active" href="#overview"><i class="bi bi-speedometer2"></i>Overview</a>
-                <a href="#products"><i class="bi bi-box-seam"></i>Products</a>
-                <a href="#services"><i class="bi bi-tools"></i>Booking Services</a>
-                <a href="#bookings"><i class="bi bi-calendar-check"></i>Bookings</a>
-                <a th:href="@{/admin/orders}"><i class="bi bi-receipt"></i>Orders</a>
-<!--                <a href="#orders"><i class="bi bi-receipt"></i>Orders</a>-->
-                <a th:href="@{/admin/users}"><i class="bi bi-people"></i>Users</a>
-            </nav>
-        </aside>
+        <aside th:replace="~{fragments/sidebar :: adminSidebar('dashboard')}"></aside>
 
-        <section class="col-lg-9 col-xl-10 p-4 p-lg-5">
+        <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div>
-                    <h1 class="section-title mb-1">Admin Dashboard</h1>
-                    <p class="text-secondary mb-0">Manage catalog, bookings, orders, and user operations.</p>
+                    <h1 class="admin-page-title mb-1">Tổng quan quản trị</h1>
+                    <p class="text-secondary mb-0">Theo dõi chỉ số chính, doanh thu, đơn hàng và lịch đặt trong một màn hình.</p>
                 </div>
                 <a class="btn btn-outline-danger align-self-start" th:href="@{/auth/logout}">
                     <i class="bi bi-box-arrow-right me-2"></i>Logout
                 </a>
             </div>
 
-            <div id="overview" class="row g-4 mb-4">
-                <div class="col-md-6 col-xl-2">
-                    <div class="metric-card">
-                        <div class="text-secondary">Active Products</div>
-                        <div class="metric-value" th:text="${activeProducts}">0</div>
-                        <span class="badge text-bg-success">Catalog live</span>
+            <div id="overview" class="row g-3 mb-4">
+                <div class="col-sm-6 col-xl-3">
+                    <div class="metric-card d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="text-secondary small">Người dùng</div>
+                            <div class="metric-value" th:text="${totalUsers}">0</div>
+                            <div class="small text-success fw-semibold">Tất cả vai trò</div>
+                        </div>
+                        <div class="metric-icon"><i class="bi bi-people"></i></div>
                     </div>
                 </div>
-                <div class="col-md-6 col-xl-2">
-                    <div class="metric-card">
-                        <div class="text-secondary">Pending Orders</div>
-                        <div class="metric-value" th:text="${pendingOrders}">0</div>
-                        <span class="badge text-bg-primary">Needs processing</span>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="metric-card d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="text-secondary small">Sản phẩm</div>
+                            <div class="metric-value" th:text="${totalProducts}">0</div>
+                            <div class="small text-success fw-semibold">Danh mục đang bán</div>
+                        </div>
+                        <div class="metric-icon"><i class="bi bi-box-seam"></i></div>
                     </div>
                 </div>
-                <div class="col-md-6 col-xl-2">
-                    <div class="metric-card">
-                        <div class="text-secondary">Pending Bookings</div>
-                        <div class="metric-value" th:text="${pendingBookings}">0</div>
-                        <span class="badge text-bg-warning">Needs approval</span>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="metric-card d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="text-secondary small">Đơn hàng</div>
+                            <div class="metric-value" th:text="${totalOrders}">0</div>
+                            <div class="small text-primary fw-semibold"><span th:text="${pendingOrders}">0</span> đang chờ</div>
+                        </div>
+                        <div class="metric-icon"><i class="bi bi-cart-check"></i></div>
                     </div>
                 </div>
-                <div class="col-md-6 col-xl-2">
-                    <div class="metric-card">
-                        <div class="text-secondary">Users</div>
-                        <div class="metric-value" th:text="${usersCount}">0</div>
-                        <span class="badge text-bg-light">All roles</span>
-                    </div>
-                </div>
-                <div class="col-md-6 col-xl-2">
-                    <div class="metric-card">
-                        <div class="text-secondary">Order Revenue</div>
-                        <div class="metric-value fs-3" th:text="${#numbers.formatDecimal(orderRevenue, 0, 'COMMA', 2, 'POINT')}">0</div>
-                        <span class="badge text-bg-success">Delivered</span>
-                    </div>
-                </div>
-                <div class="col-md-6 col-xl-2">
-                    <div class="metric-card">
-                        <div class="text-secondary">Total Revenue</div>
-                        <div class="metric-value fs-3" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 2, 'POINT')}">0</div>
-                        <span class="badge text-bg-primary">Orders + service</span>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="metric-card d-flex justify-content-between gap-3">
+                        <div>
+                            <div class="text-secondary small">Lịch đặt</div>
+                            <div class="metric-value" th:text="${totalBookings}">0</div>
+                            <div class="small text-warning fw-semibold"><span th:text="${pendingBookings}">0</span> cần duyệt</div>
+                        </div>
+                        <div class="metric-icon"><i class="bi bi-calendar-check"></i></div>
                     </div>
                 </div>
             </div>
@@ -78,8 +65,8 @@
             <div class="surface-card p-4 mb-4">
                 <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
                     <div>
-                        <h4 class="fw-bold mb-1">Platform Revenue</h4>
-                        <p class="text-secondary mb-0">Revenue is counted from delivered orders and completed service bookings.</p>
+                        <h4 class="fw-bold mb-1">Doanh thu nền tảng</h4>
+                        <p class="text-secondary mb-0">Doanh thu chỉ tính từ đơn hàng đã giao và booking dịch vụ đã hoàn tất.</p>
                     </div>
                     <div class="row g-3 flex-grow-1">
                         <div class="col-md-4">
@@ -104,6 +91,31 @@
                 </div>
             </div>
 
+            <div class="surface-card admin-chart-card p-4 mb-4">
+                <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 mb-3">
+                    <div>
+                        <h4 class="fw-bold mb-1">Đơn hàng theo tháng</h4>
+                        <p class="text-secondary mb-0">Biểu đồ 6 tháng gần nhất. Cột càng cao nghĩa là tháng đó có nhiều đơn hơn.</p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="chart-stat">
+                            <div class="small text-secondary">Tổng đơn</div>
+                            <div class="fs-5 fw-bold" th:text="${totalOrders}">0</div>
+                        </div>
+                        <div class="chart-stat">
+                            <div class="small text-secondary">Đang chờ</div>
+                            <div class="fs-5 fw-bold text-primary" th:text="${pendingOrders}">0</div>
+                        </div>
+                        <div class="chart-stat">
+                            <div class="small text-secondary">Doanh thu đơn giao</div>
+                            <div class="fs-5 fw-bold text-success" th:text="${#numbers.formatDecimal(orderRevenue, 0, 'COMMA', 2, 'POINT')}">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 250px">
+                    <canvas id="monthlyOrdersChart" aria-label="Monthly orders chart"></canvas>
+                </div>
+            </div>
             <div id="products" class="row g-4 mb-4">
                 <div class="col-xl-4">
                     <form class="surface-card p-4 h-100" th:action="@{/admin/categories}" method="post">
@@ -316,8 +328,7 @@
                             <td><span class="badge text-bg-primary" th:text="${order.status}">PENDING</span></td>
                             <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 2, 'POINT')}">0</td>
                             <td class="text-end">
-                                <form class="d-flex gap-2 justify-content-end" th:action="@{/admin/orders/status}" method="post">
-                                    <input type="hidden" name="orderId" th:value="${order.id}">
+                                <form class="d-flex gap-2 justify-content-end" th:action="@{/admin/orders/{id}/status(id=${order.id})}" method="post">
                                     <select class="form-select form-select-sm" name="status" style="max-width: 150px">
                                         <option value="PENDING" th:selected="${order.status == 'PENDING'}">PENDING</option>
                                         <option value="PROCESSING" th:selected="${order.status == 'PROCESSING'}">PROCESSING</option>
@@ -338,5 +349,42 @@
 </main>
 
 <div th:replace="~{fragments :: scripts}"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+    const monthlyOrderLabels = [[${monthlyOrderLabels}]];
+    const monthlyOrderCounts = [[${monthlyOrderCounts}]];
+    const monthlyOrdersCanvas = document.getElementById('monthlyOrdersChart');
+    if (monthlyOrdersCanvas && window.Chart) {
+        new Chart(monthlyOrdersCanvas, {
+            type: 'bar',
+            data: {
+                labels: monthlyOrderLabels,
+                datasets: [{
+                    label: 'Số đơn hàng',
+                    data: monthlyOrderCounts,
+                    backgroundColor: 'rgba(63, 160, 78, 0.9)',
+                    borderColor: 'rgba(63, 160, 78, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    maxBarThickness: 46
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (context) => context.parsed.y + ' đơn hàng' } }
+                }
+            }
+        });
+    }
+</script>
 </body>
 </html>

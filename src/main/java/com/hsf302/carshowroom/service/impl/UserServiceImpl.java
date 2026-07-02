@@ -4,6 +4,8 @@ import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.repository.UserRepository;
 import com.hsf302.carshowroom.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    @Override
+    public Page<User> searchUsers(String keyword, String role, String status, Pageable pageable) {
+        return userRepository.searchUsers(normalize(keyword), normalize(role), normalize(status), pageable);
     }
 
     @Override
@@ -57,5 +64,12 @@ public class UserServiceImpl implements UserService {
         User user = getUserByid(id);
         user.setStatus("ACTIVE".equals(user.getStatus()) ? "INACTIVE" : "ACTIVE");
         userRepository.save(user);
+    }
+
+    private String normalize(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
     }
 }
