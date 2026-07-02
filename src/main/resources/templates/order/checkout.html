@@ -46,7 +46,7 @@
                 <h4 class="fw-bold">Your Order</h4>
                 <div class="d-flex justify-content-between my-3" th:each="item : ${cartItems}">
                     <span th:text="${item.product.productName + ' x' + item.quantity}">Product</span>
-                    <strong th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity)), 0, 'COMMA', 2, 'POINT')}">$0</strong>
+                    <strong th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">$0</strong>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between fs-5 mb-4">
