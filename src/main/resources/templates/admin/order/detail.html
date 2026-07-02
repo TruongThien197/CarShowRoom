@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Order Detail | GearShift Pro')}"></head>
+<body class="ops-shell admin-fixed-shell">
+<div th:replace="~{fragments :: navbar('admin')}"></div>
+
+<main class="container-fluid">
+    <div class="row">
+        <aside th:replace="~{fragments/sidebar :: adminSidebar('orders')}"></aside>
+
+        <section class="col-lg-9 col-xl-10 admin-content">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+                <div>
+                    <a class="btn btn-link p-0 text-secondary text-decoration-none mb-2" th:href="@{/admin/orders}">
+                        <i class="bi bi-arrow-left"></i> Quay lại đơn hàng
+                    </a>
+                    <h1 class="admin-page-title mb-1" th:text="${'Order ORD-' + order.id}">Order ORD-1</h1>
+                    <p class="text-secondary mb-0">Kiểm tra thông tin giao hàng, sản phẩm và trạng thái xử lý.</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-xl-8">
+                    <div class="surface-card p-4 mb-4">
+                        <h4 class="fw-bold mb-3"><i class="bi bi-truck me-2 text-primary"></i>Thông tin giao hàng</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="small text-secondary">Customer</div>
+                                <div class="fw-bold" th:text="${order.user.fullName}">Name</div>
+                                <div class="small text-secondary" th:text="${order.user.email}">email</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="small text-secondary">Phone</div>
+                                <div class="fw-bold" th:text="${order.user.phone ?: 'No phone'}">Phone</div>
+                            </div>
+                            <div class="col-12">
+                                <div class="small text-secondary">Shipping Address</div>
+                                <div class="fw-bold" th:text="${order.shippingAddress}">Address</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="surface-card p-0 overflow-hidden">
+                        <div class="p-4 border-bottom">
+                            <h4 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>Sản phẩm trong đơn</h4>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Line Total</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(orderDetails)}">
+                                    <td colspan="4" class="text-center text-secondary py-5">No items found.</td>
+                                </tr>
+                                <tr th:each="item : ${orderDetails}">
+                                    <td>
+                                        <div class="fw-bold" th:text="${item.product.productName}">Product</div>
+                                        <div class="small text-secondary" th:text="${item.product.category.categoryName}">Category</div>
+                                    </td>
+                                    <td class="text-center" th:text="${item.quantity}">1</td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 2, 'POINT')}">0</td>
+                                    <td class="text-end fw-bold text-primary" th:text="${#numbers.formatDecimal(item.unitPrice.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">0</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4">
+                    <div class="surface-card p-4 mb-4">
+                        <h4 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2 text-primary"></i>Trạng thái đơn hàng</h4>
+                        <form th:action="@{/admin/orders/{id}/status(id=${order.id})}" method="post">
+                            <div class="mb-3">
+                                <label class="form-label" for="status">Fulfillment status</label>
+                                <select id="status" name="status" class="form-select">
+                                    <option value="PENDING" th:selected="${order.status == 'PENDING'}">PENDING</option>
+                                    <option value="PROCESSING" th:selected="${order.status == 'PROCESSING'}">PROCESSING</option>
+                                    <option value="SHIPPED" th:selected="${order.status == 'SHIPPED'}">SHIPPED</option>
+                                    <option value="DELIVERED" th:selected="${order.status == 'DELIVERED'}">DELIVERED</option>
+                                    <option value="CANCELLED" th:selected="${order.status == 'CANCELLED'}">CANCELLED</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary w-100" type="submit">
+                                <i class="bi bi-check2-circle me-2"></i>Cập nhật trạng thái
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="surface-card p-4">
+                        <h4 class="fw-bold mb-3"><i class="bi bi-receipt me-2 text-primary"></i>Tóm tắt</h4>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Order Date</span>
+                            <span class="fw-bold" th:text="${#temporals.format(order.orderDate, 'dd-MM-yyyy HH:mm')}">Date</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Status</span>
+                            <span class="badge text-bg-primary" th:text="${order.status}">PENDING</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fs-5 fw-bold text-success">
+                            <span>Total</span>
+                            <span th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 2, 'POINT')}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>
