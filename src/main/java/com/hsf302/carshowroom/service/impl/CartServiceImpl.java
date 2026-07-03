@@ -24,15 +24,18 @@ public class CartServiceImpl implements CartService {
         return cartItemRepository.findByUser(user);
     }
 
+
     @Override
     @Transactional
     public void addToCart(User user, Integer productId, Integer quantity) {
+
         int requestedQuantity = quantity == null || quantity < 1 ? 1 : quantity;
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
         if (!"ACTIVE".equalsIgnoreCase(product.getStatus())) {
-            throw new RuntimeException("Product is not available");
+            throw new RuntimeException("Sản phẩm hiện không khả dụng.");
         }
+
         CartItem cartItem = cartItemRepository.findByUserAndProduct(user, product).orElseGet(() -> {
             CartItem item = new CartItem();
             item.setUser(user);
@@ -40,12 +43,12 @@ public class CartServiceImpl implements CartService {
             item.setQuantity(0);
             return item;
         });
+
         int newQuantity = cartItem.getQuantity() + requestedQuantity;
         validateStock(product, newQuantity);
         cartItem.setQuantity(newQuantity);
         cartItemRepository.save(cartItem);
     }
-
 
     @Override
     @Transactional
@@ -55,10 +58,14 @@ public class CartServiceImpl implements CartService {
             cartItemRepository.delete(cartItem);
             return;
         }
-        validateStock(cartItem.getProduct(), quantity);
+        Product product = productRepository.findById(cartItem.getProduct().getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm liên kết."));
+
+        validateStock(product, quantity);
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
     }
+
 
     @Override
     @Transactional
@@ -68,9 +75,10 @@ public class CartServiceImpl implements CartService {
 
     private CartItem getOwnedCartItem(User user, Integer cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm trong giỏ hàng."));
+
         if (!cartItem.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Cart item does not belong to current user");
+            throw new RuntimeException("Sản phẩm này không thuộc giỏ hàng của bạn.");
         }
         return cartItem;
     }
@@ -94,8 +102,11 @@ public class CartServiceImpl implements CartService {
 
     private void validateStock(Product product, int quantity) {
         if (product.getStockQuantity() < quantity) {
-            throw new RuntimeException("Not enough stock for " + product.getProductName() +
-                    ". Please reduce quantity to " + product.getStockQuantity() + " or less.");
+            throw new RuntimeException(
+                    "Số lượng sản phẩm " + product.getProductName() +
+                            " trong kho không đủ. Vui lòng giảm số lượng xuống còn " +
+                            product.getStockQuantity() + " hoặc ít hơn."
+            );
         }
     }
 }

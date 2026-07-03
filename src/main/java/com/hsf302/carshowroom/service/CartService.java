@@ -11,6 +11,8 @@ public interface CartService {
 
     void addToCart(User user, Integer productId, Integer quantity);
 
+//    void updateQuantity(User user, Integer cartItemId, Integer quantity);
+
     void updateQuantity(User user, Integer cartItemId, Integer quantity);
 
     void removeItem(User user, Integer cartItemId);

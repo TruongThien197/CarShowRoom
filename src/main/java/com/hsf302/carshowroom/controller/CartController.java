@@ -44,7 +44,7 @@ public class CartController {
         }
         try{
             cartService.addToCart(user, productId, quantity);
-            redirectAttributes.addFlashAttribute("successMessage", "Added to cart!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm vào giỏ hàng thành công.");
         }catch (RuntimeException ex){
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
@@ -63,12 +63,17 @@ public class CartController {
     }
 
     @PostMapping("/remove")
-    public String remove(@RequestParam Integer cartItemId) {
+    public String remove(@RequestParam Integer cartItemId,
+                         RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
             return "redirect:/auth/login";
         }
         cartService.removeItem(user, cartItemId);
+        redirectAttributes.addFlashAttribute(
+                "successMessage",
+                "Xóa sản phẩm khỏi giỏ hàng thành công."
+        );
         return "redirect:/cart";
     }
 
