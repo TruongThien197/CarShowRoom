@@ -69,10 +69,6 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findByUserOrderByOrderDateDesc(user);
     }
 
-    @Override
-    public List<Order> getAllOrders() {
-        return orderRepository.findAllByOrderByIdAsc();
-    }
     
     @Override
     public Order getOrderById(Integer id) {
