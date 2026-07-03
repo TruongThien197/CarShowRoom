@@ -6,7 +6,6 @@ import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.repository.CartItemRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
 import com.hsf302.carshowroom.service.CartService;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +27,14 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void addToCart(User user, Integer productId, Integer quantity){
+    public void addToCart(User user, Integer productId, Integer quantity) {
         int requestedQuantity = quantity == null || quantity < 1 ? 1 : quantity;
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         if (!"ACTIVE".equalsIgnoreCase(product.getStatus())) {
             throw new RuntimeException("Product is not available");
         }
+
         CartItem cartItem = cartItemRepository.findByUserAndProduct(user, product).orElseGet(() -> {
             CartItem item = new CartItem();
             item.setUser(user);
@@ -42,24 +42,26 @@ public class CartServiceImpl implements CartService {
             item.setQuantity(0);
             return item;
         });
+
         int newQuantity = cartItem.getQuantity() + requestedQuantity;
         validateStock(product, newQuantity);
         cartItem.setQuantity(newQuantity);
         cartItemRepository.save(cartItem);
     }
 
-
     @Override
-    public void updateQuantity(User user, Integer cartItemId, Integer quantity){
+    public void updateQuantity(User user, Integer cartItemId, Integer quantity) {
         CartItem cartItem = getOwnedCartItem(user, cartItemId);
         if (quantity == null || quantity <= 0) {
             cartItemRepository.delete(cartItem);
             return;
         }
+
         validateStock(cartItem.getProduct(), quantity);
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
     }
+
 
     @Override
     @Transactional
@@ -78,8 +80,8 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void removeItem(User user, Integer cartItemId){
-        cartItemRepository.delete(getOwnedCartItem(user,cartItemId));
+    public void removeItem(User user, Integer cartItemId) {
+        cartItemRepository.delete(getOwnedCartItem(user, cartItemId));
     }
 
     @Override
