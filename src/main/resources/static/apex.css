@@ -124,66 +124,6 @@ body {
         url("/images/auth-garage.jpg") center/cover;
 }
 
-.ops-shell {
-    background: #eef2f8;
-}
-
-.ops-sidebar {
-    min-height: calc(100vh - 73px);
-    background: #101722;
-    color: #dbe4f0;
-}
-
-.ops-sidebar a {
-    color: #cbd5e1;
-    border-radius: .65rem;
-    display: flex;
-    align-items: center;
-    gap: .65rem;
-    padding: .75rem 1rem;
-    text-decoration: none;
-}
-
-.ops-sidebar a.active,
-.ops-sidebar a:hover {
-    background: rgba(255, 255, 255, .1);
-    color: #fff;
-}
-
-@media (min-width: 992px) {
-    .admin-fixed-shell .ops-sidebar {
-        position: fixed;
-        top: 73px;
-        bottom: 0;
-        left: 0;
-        overflow-y: auto;
-        z-index: 100;
-    }
-
-    .admin-fixed-shell main > .row > section {
-        margin-left: 25%;
-    }
-}
-
-@media (min-width: 1200px) {
-    .admin-fixed-shell main > .row > section {
-        margin-left: 16.666667%;
-    }
-}
-
-.metric-card {
-    background: #fff;
-    border: 1px solid var(--apex-line);
-    border-radius: .75rem;
-    padding: 1.25rem;
-}
-
-.metric-card .metric-value {
-    color: var(--apex-primary);
-    font-size: 2rem;
-    font-weight: 800;
-}
-
 .table-action {
     white-space: nowrap;
 }
@@ -221,6 +161,14 @@ body {
 
     .product-image {
         height: 190px;
+    }
+
+    .cart-item-row {
+        text-align: left;
+    }
+
+    .cart-item-row .text-end {
+        text-align: left !important;
     }
 }
 

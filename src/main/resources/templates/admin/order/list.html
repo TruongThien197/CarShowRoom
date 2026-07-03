@@ -44,8 +44,13 @@
             </form>
 
             <div class="surface-card p-0 overflow-hidden">
+                <div class="p-3 border-bottom">
+                    <input type="search" class="form-control" style="max-width: 320px"
+                           placeholder="Tìm theo khách hàng, sản phẩm..."
+                           data-table-filter="#ordersTable" aria-label="Tìm đơn hàng">
+                </div>
                 <div class="table-responsive">
-                    <table class="table align-middle mb-0">
+                    <table id="ordersTable" class="table align-middle mb-0">
                         <thead class="table-light">
                         <tr>
                             <th>Mã</th>
@@ -90,5 +95,6 @@
 </main>
 
 <div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/admin.js}"></script>
 </body>
 </html>

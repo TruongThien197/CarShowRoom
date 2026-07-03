@@ -11,18 +11,12 @@
         Your cart is empty. <a th:href="@{/shop}">Continue shopping</a>.
     </div>
 
-    <div class="alert alert-light border text-danger" th:if="${errorMessage}" th:text="${errorMessage}">
-        Thông báo lỗi
-    </div>
-
-    <div class="alert alert-light border text-success" th:if="${successMessage}" th:text="${successMessage}">
-        Thành công!
-    </div>
+    <!-- successMessage / errorMessage are now shown as a toast (see fragments/footer :: scripts) -->
 
     <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
         <div class="col-lg-8">
             <div class="surface-card p-4 mb-3" th:each="item : ${cartItems}">
-                <div class="d-flex gap-3 align-items-start">
+                <div class="d-flex flex-wrap flex-sm-nowrap gap-3 align-items-start cart-item-row">
                     <div class="rounded bg-light d-flex align-items-center justify-content-center"
                          style="width: 120px; height: 100px">
                         <img class="rounded object-fit-cover" width="120" height="100"
@@ -43,12 +37,12 @@
                         </form>
                     </div>
 
-                    <div class="text-end">
+                    <div class="text-end text-sm-end w-100 w-sm-auto">
                         <div class="price mb-3"
                              th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">
                             $0
                         </div>
-                        <form th:action="@{/cart/remove}" method="post">
+                        <form th:action="@{/cart/remove}" method="post" data-confirm="Xóa sản phẩm này khỏi giỏ hàng?">
                             <input type="hidden" name="cartItemId" th:value="${item.id}">
                             <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Remove
                             </button>

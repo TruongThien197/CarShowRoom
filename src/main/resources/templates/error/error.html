@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Đã có lỗi xảy ra | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar('error')}"></div>
+
+<!-- Generic fallback for any status code not covered by error/404.html or error/500.html
+     (Spring Boot's BasicErrorController resolves error/<status>.html first, then falls
+     back to this file). -->
+<main class="container py-5 text-center">
+    <div class="py-5">
+        <div class="display-1 fw-bold text-primary mb-3" th:text="${status != null ? status : '!'}">!</div>
+        <h1 class="section-title mb-3">Đã có lỗi xảy ra</h1>
+        <p class="text-secondary mb-4 mx-auto" style="max-width: 480px" th:text="${message != null and !#strings.isEmpty(message)} ? ${message} : 'Vui lòng quay lại trang chủ hoặc thử lại thao tác vừa rồi.'">
+            Vui lòng quay lại trang chủ hoặc thử lại thao tác vừa rồi.
+        </p>
+        <a class="btn btn-primary btn-lg" th:href="@{/}"><i class="bi bi-house-door me-2"></i>Về trang chủ</a>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: footer}"></div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

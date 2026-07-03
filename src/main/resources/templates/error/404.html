@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Không tìm thấy trang | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar('error')}"></div>
+
+<main class="container py-5 text-center">
+    <div class="py-5">
+        <div class="display-1 fw-bold text-primary mb-3">404</div>
+        <h1 class="section-title mb-3">Không tìm thấy trang bạn yêu cầu</h1>
+        <p class="text-secondary mb-4 mx-auto" style="max-width: 480px">
+            Trang có thể đã bị xóa, đổi địa chỉ, hoặc đường dẫn bạn nhập không chính xác.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a class="btn btn-primary btn-lg" th:href="@{/}"><i class="bi bi-house-door me-2"></i>Về trang chủ</a>
+            <a class="btn btn-outline-primary btn-lg" th:href="@{/shop}"><i class="bi bi-bag me-2"></i>Xem cửa hàng</a>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: footer}"></div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

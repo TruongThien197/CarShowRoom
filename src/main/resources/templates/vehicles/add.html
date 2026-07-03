@@ -17,7 +17,7 @@
                 <a class="btn btn-outline-secondary" th:href="@{/vehicles}">Quay lại</a>
             </div>
 
-            <form class="surface-card p-4" th:action="@{/vehicles/add}" th:object="${vehicleForm}" method="post">
+            <form class="surface-card p-4 needs-validation" th:action="@{/vehicles/add}" th:object="${vehicleForm}" method="post">
                 <div class="row g-3">
                     <div class="col-md-8">
                         <label class="form-label">Model xe</label>

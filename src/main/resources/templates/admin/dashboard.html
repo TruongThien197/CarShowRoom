@@ -350,41 +350,13 @@
 
 <div th:replace="~{fragments :: scripts}"></div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:src="@{/js/admin.js}"></script>
 <script th:inline="javascript">
     const monthlyOrderLabels = [[${monthlyOrderLabels}]];
     const monthlyOrderCounts = [[${monthlyOrderCounts}]];
-    const monthlyOrdersCanvas = document.getElementById('monthlyOrdersChart');
-    if (monthlyOrdersCanvas && window.Chart) {
-        new Chart(monthlyOrdersCanvas, {
-            type: 'bar',
-            data: {
-                labels: monthlyOrderLabels,
-                datasets: [{
-                    label: 'Số đơn hàng',
-                    data: monthlyOrderCounts,
-                    backgroundColor: 'rgba(63, 160, 78, 0.9)',
-                    borderColor: 'rgba(63, 160, 78, 1)',
-                    borderWidth: 1,
-                    borderRadius: 5,
-                    maxBarThickness: 46
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: (context) => context.parsed.y + ' đơn hàng' } }
-                }
-            }
-        });
-    }
+    document.addEventListener('DOMContentLoaded', function () {
+        window.initOrdersChart('monthlyOrdersChart', monthlyOrderLabels, monthlyOrderCounts);
+    });
 </script>
 </body>
 </html>

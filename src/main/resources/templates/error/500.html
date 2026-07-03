@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Lỗi hệ thống | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar('error')}"></div>
+
+<main class="container py-5 text-center">
+    <div class="py-5">
+        <div class="display-1 fw-bold text-danger mb-3">500</div>
+        <h1 class="section-title mb-3">Đã có lỗi xảy ra phía máy chủ</h1>
+        <p class="text-secondary mb-4 mx-auto" style="max-width: 480px">
+            Rất tiếc, hệ thống gặp sự cố khi xử lý yêu cầu của bạn. Đội ngũ kỹ thuật đã được ghi nhận.
+            Vui lòng thử lại sau ít phút.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a class="btn btn-primary btn-lg" th:href="@{/}"><i class="bi bi-house-door me-2"></i>Về trang chủ</a>
+            <a class="btn btn-outline-primary btn-lg" href="javascript:location.reload()"><i class="bi bi-arrow-clockwise me-2"></i>Thử lại</a>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: footer}"></div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>
