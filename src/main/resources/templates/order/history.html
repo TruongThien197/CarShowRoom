@@ -6,12 +6,12 @@
 
 <main class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="section-title mb-0">Order History</h1>
+        <h1 class="section-title mb-0">Lịch sử đơn hàng</h1>
         <a class="btn btn-outline-primary" th:href="@{/shop}"><i class="bi bi-bag-plus me-2"></i>Shop More</a>
     </div>
 
     <div class="alert alert-light border" th:if="${#lists.isEmpty(orders)}">
-        You have not placed any orders yet.
+        Bạn không có bất kỳ đơn đặt hàng nào.
     </div>
 
     <div class="surface-card p-0 overflow-hidden" th:if="${!#lists.isEmpty(orders)}">
