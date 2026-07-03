@@ -28,13 +28,16 @@ public class VehicleServiceImpl implements VehicleService {
         List<CarModel> existing = carModelRepository
                 .findByBrandIgnoreCaseAndModelNameIgnoreCaseAndYear(
                         form.getBrand(), form.getModelName(), form.getYear());
-        CarModel carModel = existing.isEmpty()
-                ? carModelRepository.save(new CarModel() {{
-                    setBrand(form.getBrand());
-                    setModelName(form.getModelName());
-                    setYear(form.getYear());
-                }})
-                : existing.get(0);
+        CarModel carModel;
+        if (existing.isEmpty()) {
+            carModel = new CarModel();
+            carModel.setBrand(form.getBrand());
+            carModel.setModelName(form.getModelName());
+            carModel.setYear(form.getYear());
+            carModel = carModelRepository.save(carModel);
+        } else {
+            carModel = existing.get(0);
+        }
 
         Vehicle vehicle = new Vehicle();
         vehicle.setUser(user);
