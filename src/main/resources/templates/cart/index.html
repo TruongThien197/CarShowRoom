@@ -5,7 +5,7 @@
 <div th:replace="~{fragments :: navbar('shop')}"></div>
 
 <main class="container py-5">
-    <h1 class="section-title mb-4">Shopping Cart</h1>
+    <h1 class="section-title mb-4">Giỏ hàng</h1>
 
     <div class="alert alert-light border" th:if="${#lists.isEmpty(cartItems)}">
         Giỏ hàng của bạn đang trống. <a th:href="@{/shop}">Tiếp tục mua sắm</a>.
