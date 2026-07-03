@@ -3,7 +3,6 @@ package com.hsf302.carshowroom.controller;
 import com.hsf302.carshowroom.dto.VehicleForm;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.service.AuthService;
-import com.hsf302.carshowroom.service.CarModelService;
 import com.hsf302.carshowroom.service.VehicleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class VehicleController {
     private final AuthService authService;
     private final VehicleService vehicleService;
-    private final CarModelService carModelService;
 
     @GetMapping
     public String list(Model model) {
@@ -40,7 +38,7 @@ public class VehicleController {
         if (user == null) {
             return "redirect:/auth/login";
         }
-        populateFormModel(model, new VehicleForm());
+        model.addAttribute("vehicleForm", new VehicleForm());
         return "vehicles/add";
     }
 
@@ -53,7 +51,7 @@ public class VehicleController {
             return "redirect:/auth/login";
         }
         if (bindingResult.hasErrors()) {
-            populateFormModel(model, form);
+            model.addAttribute("vehicleForm", form);
             return "vehicles/add";
         }
         vehicleService.addVehicle(user, form);
@@ -68,11 +66,6 @@ public class VehicleController {
         }
         vehicleService.deleteVehicle(user, id);
         return "redirect:/vehicles";
-    }
-
-    private void populateFormModel(Model model, VehicleForm form) {
-        model.addAttribute("vehicleForm", form);
-        model.addAttribute("carModels", carModelService.getAllCarModels());
     }
 
     private User currentUserOrNull() {

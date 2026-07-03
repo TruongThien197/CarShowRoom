@@ -25,8 +25,17 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     @Transactional
     public Vehicle addVehicle(User user, VehicleForm form) {
-        CarModel carModel = carModelRepository.findById(form.getCarModelId())
-                .orElseThrow(() -> new RuntimeException("Car model not found"));
+        List<CarModel> existing = carModelRepository
+                .findByBrandIgnoreCaseAndModelNameIgnoreCaseAndYear(
+                        form.getBrand(), form.getModelName(), form.getYear());
+        CarModel carModel = existing.isEmpty()
+                ? carModelRepository.save(new CarModel() {{
+                    setBrand(form.getBrand());
+                    setModelName(form.getModelName());
+                    setYear(form.getYear());
+                }})
+                : existing.get(0);
+
         Vehicle vehicle = new Vehicle();
         vehicle.setUser(user);
         vehicle.setCarModel(carModel);
