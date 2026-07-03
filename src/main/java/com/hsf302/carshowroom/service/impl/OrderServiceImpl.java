@@ -33,7 +33,7 @@ public class OrderServiceImpl implements OrderService {
     public Order checkout(User user, CheckoutForm form) {
         List<CartItem> cartItems = cartItemRepository.findByUser(user);
         if (cartItems.isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+            throw new RuntimeException("Giỏ hàng của bạn đang trống.");
         }
 
         Order order = new Order();
@@ -45,10 +45,11 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
 
         for (CartItem cartItem : cartItems) {
-            Product product = cartItem.getProduct();
+            Product product = productRepository.findByIdForUpdate(cartItem.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
             if (product.getStockQuantity() < cartItem.getQuantity()) {
-                throw new RuntimeException("Not enough stock for " + product.getProductName());
-            }
+                throw new RuntimeException(
+                        "Sản phẩm " + product.getProductName() + " không đủ số lượng trong kho."); }
             product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
             productRepository.save(product);
 
@@ -74,7 +75,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order getOrderById(Integer id) {
         return orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found with ID: " + id));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với id: " + id));
     }
 
     @Override
