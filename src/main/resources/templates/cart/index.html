@@ -8,7 +8,7 @@
     <h1 class="section-title mb-4">Shopping Cart</h1>
 
     <div class="alert alert-light border" th:if="${#lists.isEmpty(cartItems)}">
-        Your cart is empty. <a th:href="@{/shop}">Continue shopping</a>.
+        Giỏ hàng của bạn đang trống. <a th:href="@{/shop}">Tiếp tục mua sắm</a>.
     </div>
 
     <!-- successMessage / errorMessage are now shown as a toast (see fragments/footer :: scripts) -->
@@ -53,7 +53,7 @@
         </div>
         <div class="col-lg-4">
             <div class="surface-card p-4 position-sticky" style="top: 92px">
-                <h4 class="fw-bold mb-3">Order Summary</h4>
+                <h4 class="fw-bold mb-3">Tóm tắt đơn hàng</h4>
                 <div class="d-flex justify-content-between mb-2">
                     <span>Subtotal</span>
                     <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
@@ -65,7 +65,7 @@
                     <span>Total</span>
                     <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
                 </div>
-                <a class="btn btn-primary w-100 btn-lg" th:href="@{/orders/checkout}">Proceed to Checkout</a>
+                <a class="btn btn-primary w-100 btn-lg" th:href="@{/orders/checkout}">Tiến hành thanh toán</a>
             </div>
         </div>
     </div>

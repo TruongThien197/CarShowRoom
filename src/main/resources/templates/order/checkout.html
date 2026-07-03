@@ -5,7 +5,7 @@
 <div th:replace="~{fragments :: navbar('shop')}"></div>
 
 <main class="container py-5">
-    <h1 class="section-title mb-4">Secure Checkout</h1>
+    <h1 class="section-title mb-4">Xác nhận đơn hàng</h1>
 
     <div class="alert alert-light border" th:if="${#lists.isEmpty(cartItems)}">
         Your cart is empty. <a th:href="@{/shop}">Continue shopping</a>.
@@ -14,7 +14,7 @@
     <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
         <div class="col-lg-8">
             <form class="surface-card p-4 needs-validation" th:action="@{/orders/checkout}" th:object="${checkoutForm}" method="post">
-                <h4 class="fw-bold mb-3"><span class="step-pill me-2">1</span>Contact & Shipping</h4>
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2">1</span>Thông tin liên hệ & giao hàng</h4>
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label class="form-label">Full name</label>
@@ -34,16 +34,16 @@
                         <div class="text-danger small" th:if="${#fields.hasErrors('shippingAddress')}" th:errors="*{shippingAddress}"></div>
                     </div>
                 </div>
-                <h4 class="fw-bold mb-3"><span class="step-pill me-2">2</span>Payment</h4>
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2">2</span>Thanh toán</h4>
                 <div class="alert alert-info mb-4">
-                    Payment is handled on delivery for this showroom flow.
+                    Hiện tại hệ thống hỗ trợ thanh toán khi nhận hàng (COD).
                 </div>
-                <button class="btn btn-primary btn-lg" type="submit">Place Order</button>
+                <button class="btn btn-primary btn-lg" type="submit">Đặt hàng</button>
             </form>
         </div>
         <div class="col-lg-4">
             <div class="surface-card p-4">
-                <h4 class="fw-bold">Your Order</h4>
+                <h4 class="fw-bold">Đơn hàng của bạn</h4>
                 <div class="d-flex justify-content-between my-3" th:each="item : ${cartItems}">
                     <span th:text="${item.product.productName + ' x' + item.quantity}">Product</span>
                     <strong th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">$0</strong>
