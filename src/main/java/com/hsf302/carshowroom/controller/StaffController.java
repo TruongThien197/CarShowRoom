@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Map;
@@ -56,20 +57,32 @@ public class StaffController {
     }
 
     @PostMapping("/orders/status")
-    public String updateOrderStatus(@RequestParam Integer orderId, @RequestParam String status) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        order.setStatus(status);
-        orderRepository.save(order);
+    public String updateOrderStatus(@RequestParam Integer orderId, @RequestParam String status,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
+            order.setStatus(status);
+            orderRepository.save(order);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
+        }
         return "redirect:/staff#orders";
     }
 
     @PostMapping("/bookings/status")
-    public String updateBookingStatus(@RequestParam Integer bookingId, @RequestParam String status) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
-        booking.setStatus(status);
-        bookingRepository.save(booking);
+    public String updateBookingStatus(@RequestParam Integer bookingId, @RequestParam String status,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            Booking booking = bookingRepository.findById(bookingId)
+                    .orElseThrow(() -> new RuntimeException("Booking not found"));
+            booking.setStatus(status);
+            bookingRepository.save(booking);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái lịch hẹn thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
+        }
         return "redirect:/staff#bookings";
     }
 

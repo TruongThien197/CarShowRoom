@@ -9,4 +9,6 @@ public interface CarModelRepository extends JpaRepository<CarModel, Integer> {
     List<CarModel> findByBrandIgnoreCaseOrderByModelNameAsc(String brand);
 
     List<CarModel> findAllByOrderByBrandAscModelNameAscYearDesc();
+
+    List<CarModel> findByBrandIgnoreCaseAndModelNameIgnoreCaseAndYear(String brand, String modelName, Integer year);
 }
