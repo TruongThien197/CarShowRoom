@@ -1,42 +1,55 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Order History | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Lich su don hang | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('orders')}"></div>
 
 <main class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="section-title mb-0">Lịch sử đơn hàng</h1>
-        <a class="btn btn-outline-primary" th:href="@{/shop}"><i class="bi bi-bag-plus me-2"></i>Shop More</a>
-    </div>
+    <div class="row g-4">
+        <aside th:replace="~{fragments/sidebar :: accountSidebar('orders')}"></aside>
 
-    <div class="alert alert-light border" th:if="${#lists.isEmpty(orders)}">
-        Bạn không có bất kỳ đơn đặt hàng nào.
-    </div>
+        <section class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h1 class="section-title mb-1">Lich su don hang</h1>
+                    <p class="text-secondary mb-0">Theo doi don mua phu tung va lich sua xe cua ban trong cung mot khu vuc.</p>
+                </div>
+                <a class="btn btn-outline-primary" th:href="@{/shop}">
+                    <i class="bi bi-bag-plus me-2"></i>Mua them
+                </a>
+            </div>
 
-    <div class="surface-card p-0 overflow-hidden" th:if="${!#lists.isEmpty(orders)}">
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead class="table-light">
-                <tr>
-                    <th>Order</th>
-                    <th>Date</th>
-                    <th>Items</th>
-                    <th>Status</th>
-                    <th class="text-end">Total</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="order : ${orders}">
-                    <td class="fw-bold" th:text="'#GS-' + ${order.id}">#GS-1000</td>
-                    <td th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}">2026-06-28</td>
-                    <td th:text="${orderItems[order.id]}">Items</td>
-                    <td><span class="badge text-bg-primary" th:text="${order.status}">PENDING</span></td>
-                    <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 2, 'POINT')}">$0</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+            <div th:replace="~{fragments/sidebar :: historyTabs('orders')}"></div>
+
+            <div class="alert alert-light border" th:if="${#lists.isEmpty(orders)}">
+                Ban khong co don dat hang nao.
+            </div>
+
+            <div class="surface-card p-0 overflow-hidden" th:if="${!#lists.isEmpty(orders)}">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Order</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Status</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="order : ${orders}">
+                            <td class="fw-bold" th:text="'#GS-' + ${order.id}">#GS-1000</td>
+                            <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}">2026-06-28</td>
+                            <td th:text="${orderItems[order.id]}">Items</td>
+                            <td><span class="badge text-bg-primary" th:text="${order.orderStatus}">PENDING</span></td>
+                            <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 2, 'POINT')}">0</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </div>
 </main>
 

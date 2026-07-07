@@ -25,7 +25,7 @@
                             <option value="">No vehicle selected</option>
                             <option th:each="vehicle : ${vehicles}"
                                     th:value="${vehicle.id}"
-                                    th:text="${vehicle.carModel.brand + ' ' + vehicle.carModel.modelName + ' - ' + vehicle.licensePlate}">
+                                    th:text="${vehicle.brand + ' ' + vehicle.modelName + ' ' + vehicle.year + ' - ' + vehicle.licensePlate}">
                                 Vehicle
                             </option>
                         </select>
@@ -36,7 +36,7 @@
                             <option value="">Select service</option>
                             <option th:each="service : ${services}"
                                     th:value="${service.id}"
-                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.price, 0, 'COMMA', 2, 'POINT')}">
+                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 2, 'POINT')}">
                                 Service
                             </option>
                         </select>
@@ -97,7 +97,7 @@
                         <td th:text="${booking.timeSlot}">09:30</td>
                         <td th:text="${bookingServices[booking.id]}">Service</td>
                         <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}">Vehicle</td>
-                        <td><span class="badge text-bg-primary" th:text="${booking.status}">PENDING</span></td>
+                        <td><span class="badge text-bg-primary" th:text="${booking.bookingStatus}">PENDING</span></td>
                     </tr>
                     </tbody>
                 </table>

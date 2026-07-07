@@ -34,9 +34,45 @@
                         <div class="text-danger small" th:if="${#fields.hasErrors('shippingAddress')}" th:errors="*{shippingAddress}"></div>
                     </div>
                 </div>
-                <h4 class="fw-bold mb-3"><span class="step-pill me-2">2</span>Thanh toán</h4>
+                <div th:if="${needsWorkshop}" class="mb-4">
+                    <h4 class="fw-bold mb-3"><span class="step-pill me-2">2</span>Lich lap dat tai xuong</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Xe</label>
+                            <select class="form-select" th:field="*{vehicleId}" required>
+                                <option value="">Chon xe</option>
+                                <option th:each="vehicle : ${vehicles}"
+                                        th:value="${vehicle.id}"
+                                        th:text="${vehicle.brand + ' ' + vehicle.modelName + ' ' + vehicle.year + ' - ' + vehicle.licensePlate}">Vehicle</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Dich vu</label>
+                            <select class="form-select" th:field="*{serviceId}" required>
+                                <option value="">Chon dich vu</option>
+                                <option th:each="service : ${services}"
+                                        th:value="${service.id}"
+                                        th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}">Service</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ngay hen</label>
+                            <input class="form-control" type="date" th:field="*{bookingDate}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Gio bat dau</label>
+                            <input class="form-control" type="time" th:field="*{startTime}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ghi chu</label>
+                            <textarea class="form-control" rows="3" th:field="*{notes}"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${needsWorkshop ? 3 : 2}">2</span>Thanh toán</h4>
                 <div class="alert alert-info mb-4">
-                    Hiện tại hệ thống hỗ trợ thanh toán khi nhận hàng (COD).
+                    He thong tao giao dich coc 20% va giu kho/slot trong 15 phut. PayOS se duoc cau hinh sau khi co API.
                 </div>
                 <button class="btn btn-primary btn-lg" type="submit">Đặt hàng</button>
             </form>

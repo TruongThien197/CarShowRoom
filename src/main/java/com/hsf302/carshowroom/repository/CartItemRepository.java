@@ -1,5 +1,6 @@
 package com.hsf302.carshowroom.repository;
 
+import com.hsf302.carshowroom.common.Enums.FulfillmentType;
 import com.hsf302.carshowroom.entity.CartItem;
 import com.hsf302.carshowroom.entity.Product;
 import com.hsf302.carshowroom.entity.User;
@@ -11,7 +12,7 @@ import java.util.Optional;
 public interface CartItemRepository extends JpaRepository<CartItem, Integer> {
     List<CartItem> findByUser(User user);
 
-    Optional<CartItem> findByUserAndProduct(User user, Product product);
+    Optional<CartItem> findByUserAndProductAndFulfillmentType(User user, Product product, FulfillmentType fulfillmentType);
 
     void deleteByUser(User user);
 }

@@ -28,6 +28,8 @@
                     <div class="flex-grow-1">
                         <h5 class="fw-bold" th:text="${item.product.productName}">Product</h5>
                         <p class="text-secondary mb-2" th:text="${item.product.category.categoryName}">Category</p>
+                        <span class="badge text-bg-info mb-2"
+                              th:text="${item.fulfillmentType.name() == 'AT_WORKSHOP' ? 'Lap dat tai xuong' : 'Giao hang'}">Fulfillment</span>
                         <form class="d-flex align-items-center gap-2" th:action="@{/cart/update}" method="post">
                             <input type="hidden" name="cartItemId" th:value="${item.id}">
                             <input class="form-control form-control-sm" style="width: 88px" type="number"

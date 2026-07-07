@@ -31,7 +31,7 @@
                 <li class="nav-item">
                     <a th:classappend="${active == 'shop'} ? 'active fw-semibold'" class="nav-link" th:href="@{/shop}">Cửa hàng phụ tùng</a>
                 </li>
-                <li class="nav-item" th:if="${role == 'CUSTOMER'}">
+                <li class="nav-item" th:if="${role == 'GUEST' or role == 'CUSTOMER'}">
                     <a th:classappend="${active == 'booking'} ? 'active fw-semibold'" class="nav-link" th:href="@{/booking}">Đặt lịch sửa chữa</a>
                 </li>
                 <li class="nav-item" th:if="${role == 'CUSTOMER'}">

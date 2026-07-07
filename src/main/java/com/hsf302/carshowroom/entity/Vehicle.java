@@ -22,10 +22,25 @@ public class Vehicle {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "car_model_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "car_model_id")
     private CarModel carModel;
+
+    @Size(max = 100)
+    @NotNull
+    @Nationalized
+    @Column(name = "brand", nullable = false, length = 100)
+    private String brand;
+
+    @Size(max = 100)
+    @NotNull
+    @Nationalized
+    @Column(name = "model_name", nullable = false, length = 100)
+    private String modelName;
+
+    @NotNull
+    @Column(name = "\"year\"", nullable = false)
+    private Integer year;
 
     @Size(max = 30)
     @NotNull
@@ -33,5 +48,9 @@ public class Vehicle {
     @Column(name = "license_plate", nullable = false, length = 30)
     private String licensePlate;
 
+    @Transient
+    public String getDisplayName() {
+        return brand + " " + modelName + " " + year;
+    }
 
 }

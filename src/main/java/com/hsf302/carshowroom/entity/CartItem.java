@@ -1,5 +1,6 @@
 package com.hsf302.carshowroom.entity;
 
+import com.hsf302.carshowroom.common.Enums.FulfillmentType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -33,6 +34,9 @@ public class CartItem {
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
- 
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "fulfillment_type", nullable = false)
+    private FulfillmentType fulfillmentType = FulfillmentType.SHIPPING;
 
 }

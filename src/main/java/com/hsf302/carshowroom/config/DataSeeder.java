@@ -1,20 +1,8 @@
 package com.hsf302.carshowroom.config;
 
-import com.hsf302.carshowroom.entity.CarModel;
-import com.hsf302.carshowroom.entity.Category;
-import com.hsf302.carshowroom.entity.Order;
-import com.hsf302.carshowroom.entity.OrderDetail;
-import com.hsf302.carshowroom.entity.Product;
-import com.hsf302.carshowroom.entity.User;
-import com.hsf302.carshowroom.entity.Vehicle;
-import com.hsf302.carshowroom.repository.CarModelRepository;
-import com.hsf302.carshowroom.repository.CategoryRepository;
-import com.hsf302.carshowroom.repository.OrderDetailRepository;
-import com.hsf302.carshowroom.repository.OrderRepository;
-import com.hsf302.carshowroom.repository.ProductRepository;
-import com.hsf302.carshowroom.repository.ServiceRepository;
-import com.hsf302.carshowroom.repository.UserRepository;
-import com.hsf302.carshowroom.repository.VehicleRepository;
+import com.hsf302.carshowroom.common.Enums;
+import com.hsf302.carshowroom.entity.*;
+import com.hsf302.carshowroom.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -31,10 +20,9 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final OrderRepository orderRepository;
-    private final OrderDetailRepository orderDetailRepository;
+    private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final ServiceRepository serviceRepository;
-    private final CarModelRepository carModelRepository;
     private final VehicleRepository vehicleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -98,22 +86,22 @@ public class DataSeeder implements CommandLineRunner {
         Category suspension = findCategory(categories, "Suspension");
         Category fluids = findCategory(categories, "Oil & Fluids");
 
-        productRepository.save(createProduct(engine, "Hybrid Series Turbocharger",
+        productRepository.save(createProduct(engine, "Hybrid Series Turbocharger","SKU001",
                 "Direct bolt-on turbo upgrade for high horsepower builds.",
                 "2850.00", 8, "/images/turbocharger.jpg"));
-        productRepository.save(createProduct(brakes, "Stage 2 Performance Brake Kit",
+        productRepository.save(createProduct(brakes, "Stage 2 Performance Brake Kit","SKU002",
                 "Street and track brake kit with upgraded rotors and pads.",
                 "1249.99", 12, "/images/suspension-service.jpg"));
-        productRepository.save(createProduct(wheels, "Forged Alloy Rims",
+        productRepository.save(createProduct(wheels, "Forged Alloy Rims","SKU003",
                 "Lightweight satin black forged wheel set.",
                 "2450.00", 6, "/images/forged-rims.jpg"));
-        productRepository.save(createProduct(wheels, "Track-Ready Tire Set",
+        productRepository.save(createProduct(wheels, "Track-Ready Tire Set","SKU004",
                 "High-grip tire set for daily performance and weekend track use.",
                 "1280.00", 16, "/images/track-tire.jpg"));
-        productRepository.save(createProduct(suspension, "Track-Spec Coilover Kit",
+        productRepository.save(createProduct(suspension, "Track-Spec Coilover Kit","SKU005",
                 "Adjustable coilover kit for sharper handling and ride control.",
                 "1890.00", 10, "/images/suspension-service.jpg"));
-        productRepository.save(createProduct(fluids, "0W-30 Full Synthetic Oil",
+        productRepository.save(createProduct(fluids, "0W-30 Full Synthetic Oil","SKU006",
                 "Premium engine oil for modern turbocharged engines.",
                 "74.99", 50, "/images/turbocharger.jpg"));
     }
@@ -125,18 +113,18 @@ public class DataSeeder implements CommandLineRunner {
                 .orElse(categories.get(0));
     }
 
-    private Product createProduct(Category category, String name, String description, String price, Integer stock, String imageUrl) {
+    private Product createProduct(Category category, String name, String sku, String description, String price, Integer stock, String imageUrl) {
         Product product = new Product();
         product.setCategory(category);
-        product.setProductName(name);
+        product.setName(name);
+        product.setSku(sku);
         product.setDescription(description);
         product.setPrice(new BigDecimal(price));
-        product.setStockQuantity(stock);
+        product.setPhysicalStock(stock);
         product.setImageUrl(imageUrl);
-        product.setStatus("ACTIVE");
+        product.setStatus(Enums.ProductStatus.ACTIVE);
         return product;
     }
-
 
     private void seedDemoOrders() {
         if (orderRepository.count() > 0) {
@@ -148,7 +136,7 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
 
-        String[] statuses = {"PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "DELIVERED", "PENDING", "PROCESSING"};
+        Enums.OrderStatus[] statuses = {Enums.OrderStatus.PENDING_DEPOSIT, Enums.OrderStatus.PROCESSING, Enums.OrderStatus.SHIPPING, Enums.OrderStatus.COMPLETED, Enums.OrderStatus.CANCELED, Enums.OrderStatus.COMPLETED, Enums.OrderStatus.PENDING_DEPOSIT, Enums.OrderStatus.PROCESSING};
         for (int i = 0; i < statuses.length; i++) {
             Product product = products.get(i % products.size());
             int quantity = (i % 3) + 1;
@@ -156,35 +144,42 @@ public class DataSeeder implements CommandLineRunner {
 
             Order order = new Order();
             order.setUser(customer);
-            order.setOrderDate(Instant.now().minus(20L * i, ChronoUnit.DAYS));
+            order.setCreatedAt(LocalDateTime.now().minus(20L * i, ChronoUnit.DAYS));
             order.setShippingAddress(customer.getAddress() == null ? "123 Demo Street" : customer.getAddress());
-            order.setStatus(statuses[i]);
-            order.setTotalAmount(total);
+            order.setOrderStatus(statuses[i]);
+            order.setProductTotal(total);
+            order.setOrderType(Enums.OrderType.SHIPPING);
+            order.setPaymentStatus(Enums.PaymentStatus.PAID);
             Order savedOrder = orderRepository.save(order);
 
-            OrderDetail detail = new OrderDetail();
+            OrderItem detail = new OrderItem();
             detail.setOrder(savedOrder);
             detail.setProduct(product);
             detail.setQuantity(quantity);
             detail.setUnitPrice(product.getPrice());
-            orderDetailRepository.save(detail);
+            detail.setLineTotal(total);
+            detail.setFulfillmentType(Enums.FulfillmentType.SHIPPING);
+            orderItemRepository.save(detail);
         }
     }
     private void seedServices() {
         if (serviceRepository.count() > 0) {
             return;
         }
-        serviceRepository.save(createService("Digital Diagnostics", "Full electronic scan and health report.", "120.00"));
-        serviceRepository.save(createService("Brake & Chassis Inspection", "Brake, suspension, and underbody inspection.", "280.00"));
-        serviceRepository.save(createService("Engine Performance Tuning", "ECU check, calibration review, and tuning session.", "450.00"));
-        serviceRepository.save(createService("Regular Maintenance", "Oil, fluids, filters, and general maintenance check.", "180.00"));
+        serviceRepository.save(createService("Digital Diagnostics", "Full electronic scan and health report.", "120.00", "150.00", 30));
+        serviceRepository.save(createService("Brake & Chassis Inspection", "Brake, suspension, and underbody inspection.", "280.00", "350.00", 60));
+        serviceRepository.save(createService("Engine Performance Tuning", "ECU check, calibration review, and tuning session.", "450.00", "600.00", 90));
+        serviceRepository.save(createService("Regular Maintenance", "Oil, fluids, filters, and general maintenance check.", "180.00", "250.00", 45));
     }
 
-    private com.hsf302.carshowroom.entity.Service createService(String name, String description, String price) {
+    private com.hsf302.carshowroom.entity.Service createService(String name, String description, String minPrice, String maxPrice, int duration) {
         com.hsf302.carshowroom.entity.Service service = new com.hsf302.carshowroom.entity.Service();
         service.setServiceName(name);
         service.setDescription(description);
-        service.setPrice(new BigDecimal(price));
+        service.setMinPrice(new BigDecimal(minPrice));
+        service.setMaxPrice(new BigDecimal(maxPrice));
+        service.setDurationMinutes(duration);
+        service.setStatus(Enums.ServiceStatus.ACTIVE);
         return service;
     }
 
@@ -193,15 +188,11 @@ public class DataSeeder implements CommandLineRunner {
         if (customer == null || !vehicleRepository.findByUser(customer).isEmpty()) {
             return;
         }
-        CarModel carModel = new CarModel();
-        carModel.setBrand("BMW");
-        carModel.setModelName("M4 G82");
-        carModel.setYear(2024);
-        CarModel savedModel = carModelRepository.save(carModel);
-
         Vehicle vehicle = new Vehicle();
         vehicle.setUser(customer);
-        vehicle.setCarModel(savedModel);
+        vehicle.setBrand("BMW");
+        vehicle.setModelName("M4 G82");
+        vehicle.setYear(2024);
         vehicle.setLicensePlate("DEMO-302");
         vehicleRepository.save(vehicle);
     }

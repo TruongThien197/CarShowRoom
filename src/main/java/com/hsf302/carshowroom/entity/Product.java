@@ -1,61 +1,91 @@
 package com.hsf302.carshowroom.entity;
 
+import com.hsf302.carshowroom.common.Enums.ProductStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.Nationalized;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
+@Entity
+@Table(name = "products")
 @Getter
 @Setter
-@Entity
-@Table(name = "product")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "product_id", nullable = false)
     private Integer id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "category_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
     private Category category;
 
-    @Size(max = 150)
-    @NotNull
-    @Nationalized
-    @Column(name = "product_name", nullable = false, length = 150)
-    private String productName;
+    @Column(nullable = false)
+    private String name;
 
-    @Nationalized
-    @Lob
-    @Column(name = "description")
-    private String description;
+    @Column(unique = true, nullable = false)
+    private String sku;
 
-    @NotNull
-    @Column(name = "price", nullable = false, precision = 18, scale = 2)
+    @Column(nullable = false)
     private BigDecimal price;
 
-    @NotNull
-    @ColumnDefault("0")
-    @Column(name = "stock_quantity", nullable = false)
-    private Integer stockQuantity;
+    @Column(name = "physical_stock", nullable = false)
+    private Integer physicalStock = 0;
 
-    @Size(max = 500)
-    @Nationalized
-    @Column(name = "image_url", length = 500)
+    @Column(name = "reserved_stock", nullable = false)
+    private Integer reservedStock = 0;
+
+    @Column(name = "image_url")
     private String imageUrl;
 
-    @Size(max = 50)
-    @NotNull
-    @Nationalized
-    @ColumnDefault("'ACTIVE'")
-    @Column(name = "status", nullable = false, length = 50)
-    private String status;
+    @Lob
+    private String description;
 
+    @ManyToMany
+    @JoinTable(
+            name = "product_car_models",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "car_model_id")
+    )
+    private Set<CarModel> compatibleCarModels = new HashSet<>();
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProductStatus status;
+
+    @Version
+    private Long version;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Transient
+    public int getAvailableStock() {
+        return physicalStock - reservedStock;
+    }
+
+    @Transient
+    public String getProductName() {
+        return name;
+    }
+
+    @Transient
+    public Integer getStockQuantity() {
+        return getAvailableStock();
+    }
 }

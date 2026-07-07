@@ -25,11 +25,11 @@
                         <label class="form-label" for="status">Trạng thái</label>
                         <select class="form-select" id="status" name="status">
                             <option value="">Tất cả trạng thái</option>
-                            <option value="PENDING" th:selected="${selectedStatus == 'PENDING'}">PENDING</option>
+                            <option value="PENDING_DEPOSIT" th:selected="${selectedStatus == 'PENDING_DEPOSIT'}">PENDING_DEPOSIT</option>
                             <option value="PROCESSING" th:selected="${selectedStatus == 'PROCESSING'}">PROCESSING</option>
-                            <option value="SHIPPED" th:selected="${selectedStatus == 'SHIPPED'}">SHIPPED</option>
-                            <option value="DELIVERED" th:selected="${selectedStatus == 'DELIVERED'}">DELIVERED</option>
-                            <option value="CANCELLED" th:selected="${selectedStatus == 'CANCELLED'}">CANCELLED</option>
+                            <option value="SHIPPING" th:selected="${selectedStatus == 'SHIPPING'}">SHIPPING</option>
+                            <option value="COMPLETED" th:selected="${selectedStatus == 'COMPLETED'}">COMPLETED</option>
+                            <option value="CANCELED" th:selected="${selectedStatus == 'CANCELED'}">CANCELED</option>
                         </select>
                     </div>
                     <div class="col-md-4 col-lg-2 d-flex gap-2">
@@ -72,13 +72,13 @@
                                 <div class="fw-bold" th:text="${order.user.fullName}">Customer</div>
                                 <div class="small text-secondary" th:text="${order.user.email}">email@example.com</div>
                             </td>
-                            <td th:text="${#temporals.format(order.orderDate, 'dd-MM-yyyy HH:mm')}">Date</td>
+                            <td th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}">Date</td>
                             <td class="text-secondary" th:text="${orderItems[order.id] ?: 'No items'}">Items</td>
-                            <td class="fw-bold text-primary" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 2, 'POINT')}">0</td>
+                            <td class="fw-bold text-primary" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 2, 'POINT')}">0</td>
                             <td>
                                 <span class="badge text-uppercase"
-                                      th:classappend="${order.status == 'PENDING' ? ' text-bg-warning' : (order.status == 'PROCESSING' ? ' text-bg-primary' : (order.status == 'SHIPPED' ? ' text-bg-info' : (order.status == 'DELIVERED' ? ' text-bg-success' : ' text-bg-danger')))}"
-                                      th:text="${order.status}">PENDING</span>
+                                      th:classappend="${order.orderStatus.name() == 'PENDING_DEPOSIT' ? ' text-bg-warning' : (order.orderStatus.name() == 'PROCESSING' ? ' text-bg-primary' : (order.orderStatus.name() == 'SHIPPING' ? ' text-bg-info' : (order.orderStatus.name() == 'COMPLETED' ? ' text-bg-success' : ' text-bg-danger')))}"
+                                      th:text="${order.orderStatus}">PENDING</span>
                             </td>
                             <td class="text-end table-action">
                                 <a class="btn btn-outline-secondary btn-sm" th:href="@{/admin/orders/{id}(id=${order.id})}">

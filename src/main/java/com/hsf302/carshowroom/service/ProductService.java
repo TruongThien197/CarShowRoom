@@ -15,7 +15,13 @@ public interface ProductService {
 
     Page<Product> findProductsPaged(Integer categoryId, String keyword, Pageable pageable);
 
+    Page<Product> findProductsPaged(Integer categoryId, String keyword, Integer carModelId,
+                                    String brand, String modelName, Integer year, Pageable pageable);
+
     Page<Product> findAdminProductsPaged(Integer categoryId, String keyword, Pageable pageable);
+
+    Page<Product> findAdminProductsPaged(Integer categoryId, String keyword, Integer carModelId,
+                                         String brand, String modelName, Integer year, Pageable pageable);
 
     Product createProduct(Product product);
 

@@ -37,13 +37,14 @@ public class CartController {
     @PostMapping("/add")
     public String add(@RequestParam Integer productId,
                       @RequestParam(defaultValue = "1") Integer quantity,
+                      @RequestParam(defaultValue = "SHIPPING") String fulfillmentType,
                       RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
             return "redirect:/auth/login";
         }
         try{
-            cartService.addToCart(user, productId, quantity);
+            cartService.addToCart(user, productId, quantity, fulfillmentType);
             redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm vào giỏ hàng thành công.");
         }catch (RuntimeException ex){
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());

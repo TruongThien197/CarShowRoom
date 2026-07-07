@@ -80,11 +80,11 @@
                             <div class="mb-3">
                                 <label class="form-label" for="status">Fulfillment status</label>
                                 <select id="status" name="status" class="form-select">
-                                    <option value="PENDING" th:selected="${order.status == 'PENDING'}">PENDING</option>
-                                    <option value="PROCESSING" th:selected="${order.status == 'PROCESSING'}">PROCESSING</option>
-                                    <option value="SHIPPED" th:selected="${order.status == 'SHIPPED'}">SHIPPED</option>
-                                    <option value="DELIVERED" th:selected="${order.status == 'DELIVERED'}">DELIVERED</option>
-                                    <option value="CANCELLED" th:selected="${order.status == 'CANCELLED'}">CANCELLED</option>
+                                    <option value="PENDING_DEPOSIT" th:selected="${order.orderStatus.name() == 'PENDING_DEPOSIT'}">PENDING_DEPOSIT</option>
+                                    <option value="PROCESSING" th:selected="${order.orderStatus.name() == 'PROCESSING'}">PROCESSING</option>
+                                    <option value="SHIPPING" th:selected="${order.orderStatus.name() == 'SHIPPING'}">SHIPPING</option>
+                                    <option value="COMPLETED" th:selected="${order.orderStatus.name() == 'COMPLETED'}">COMPLETED</option>
+                                    <option value="CANCELED" th:selected="${order.orderStatus.name() == 'CANCELED'}">CANCELED</option>
                                 </select>
                             </div>
                             <button class="btn btn-primary w-100" type="submit">
@@ -97,16 +97,16 @@
                         <h4 class="fw-bold mb-3"><i class="bi bi-receipt me-2 text-primary"></i>Tóm tắt</h4>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-secondary">Order Date</span>
-                            <span class="fw-bold" th:text="${#temporals.format(order.orderDate, 'dd-MM-yyyy HH:mm')}">Date</span>
+                            <span class="fw-bold" th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}">Date</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-secondary">Status</span>
-                            <span class="badge text-bg-primary" th:text="${order.status}">PENDING</span>
+                            <span class="badge text-bg-primary" th:text="${order.orderStatus}">PENDING</span>
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between fs-5 fw-bold text-success">
                             <span>Total</span>
-                            <span th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 2, 'POINT')}">0</span>
+                            <span th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 2, 'POINT')}">0</span>
                         </div>
                     </div>
                 </div>
