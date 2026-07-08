@@ -1,5 +1,6 @@
 package com.hsf302.carshowroom.service.impl;
 
+import com.hsf302.carshowroom.common.Enums.ProductStatus;
 import com.hsf302.carshowroom.entity.Product;
 import com.hsf302.carshowroom.repository.ProductRepository;
 import com.hsf302.carshowroom.service.ProductService;
@@ -19,12 +20,12 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<Product> findProducts(Integer categoryId, String keyword) {
         if (StringUtils.hasText(keyword)) {
-            return productRepository.findByProductNameContainingIgnoreCaseAndStatusIgnoreCase(keyword.trim(), "ACTIVE");
+            return productRepository.findByNameContainingIgnoreCaseAndStatus(keyword.trim(), ProductStatus.ACTIVE);
         }
         if (categoryId != null) {
-            return productRepository.findByCategoryIdAndStatusIgnoreCase(categoryId, "ACTIVE");
+            return productRepository.findByCategoryIdAndStatus(categoryId, ProductStatus.ACTIVE);
         }
-        return productRepository.findByStatusIgnoreCase("ACTIVE");
+        return productRepository.findByStatus(ProductStatus.ACTIVE);
     }
 
     @Override
@@ -40,42 +41,50 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<Product> findProductsPaged(Integer categoryId, String keyword, Pageable pageable) {
+        return findProductsPaged(categoryId, keyword, null, null, null, null, pageable);
+    }
+
+    @Override
+    public Page<Product> findProductsPaged(Integer categoryId, String keyword, Integer carModelId,
+                                           String brand, String modelName, Integer year, Pageable pageable) {
         boolean hasKeyword = StringUtils.hasText(keyword);
         String cleanKeyword = hasKeyword ? keyword.trim() : "";
-
-        if (categoryId != null && hasKeyword) {
-            return productRepository.findByCategoryIdAndProductNameContainingIgnoreCaseAndStatusIgnoreCase(categoryId, cleanKeyword, "ACTIVE", pageable);
-        }
-        if (hasKeyword) {
-            return productRepository.findByProductNameContainingIgnoreCaseAndStatusIgnoreCase(cleanKeyword, "ACTIVE", pageable);
-        }
-        if (categoryId != null) {
-            return productRepository.findByCategoryIdAndStatusIgnoreCase(categoryId, "ACTIVE", pageable);
-        }
-        return productRepository.findByStatusIgnoreCase("ACTIVE", pageable);
+        return productRepository.searchCatalog(
+                categoryId,
+                hasKeyword ? cleanKeyword : null,
+                carModelId,
+                normalize(brand),
+                normalize(modelName),
+                year,
+                pageable
+        );
     }
 
     @Override
     public Page<Product> findAdminProductsPaged(Integer categoryId, String keyword, Pageable pageable) {
+        return findAdminProductsPaged(categoryId, keyword, null, null, null, null, pageable);
+    }
+
+    @Override
+    public Page<Product> findAdminProductsPaged(Integer categoryId, String keyword, Integer carModelId,
+                                                String brand, String modelName, Integer year, Pageable pageable) {
         boolean hasKeyword = StringUtils.hasText(keyword);
         String cleanKeyword = hasKeyword ? keyword.trim() : "";
-
-        if (categoryId != null && hasKeyword) {
-            return productRepository.findByCategoryIdAndProductNameContainingIgnoreCase(categoryId, cleanKeyword, pageable);
-        }
-        if (hasKeyword) {
-            return productRepository.findByProductNameContainingIgnoreCase(cleanKeyword, pageable);
-        }
-        if (categoryId != null) {
-            return productRepository.findByCategoryId(categoryId, pageable);
-        }
-        return productRepository.findAll(pageable);
+        return productRepository.searchAdminCatalog(
+                categoryId,
+                hasKeyword ? cleanKeyword : null,
+                carModelId,
+                normalize(brand),
+                normalize(modelName),
+                year,
+                pageable
+        );
     }
 
     @Override
     public Product createProduct(Product product) {
-        if (product.getStatus() == null || product.getStatus().isBlank()) {
-            product.setStatus("ACTIVE");
+        if (product.getStatus() == null) {
+            product.setStatus(ProductStatus.ACTIVE);
         }
         return productRepository.save(product);
     }
@@ -83,10 +92,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Product updateProduct(Integer id, Product updatedProduct) {
         Product existing = getProduct(id);
-        existing.setProductName(updatedProduct.getProductName());
+        existing.setName(updatedProduct.getName());
         existing.setCategory(updatedProduct.getCategory());
         existing.setPrice(updatedProduct.getPrice());
-        existing.setStockQuantity(updatedProduct.getStockQuantity());
+        existing.setPhysicalStock(updatedProduct.getPhysicalStock());
         existing.setDescription(updatedProduct.getDescription());
         if (updatedProduct.getImageUrl() != null) {
             existing.setImageUrl(updatedProduct.getImageUrl());
@@ -100,14 +109,18 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteProduct(Integer id) {
         Product existing = getProduct(id);
-        existing.setStatus("INACTIVE"); // Soft delete
+        existing.setStatus(ProductStatus.INACTIVE);
         productRepository.save(existing);
     }
 
     @Override
     public Product changeStatus(Integer id, String status) {
         Product existing = getProduct(id);
-        existing.setStatus(status);
+        existing.setStatus(ProductStatus.valueOf(status.toUpperCase()));
         return productRepository.save(existing);
+    }
+
+    private String normalize(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
     }
 }

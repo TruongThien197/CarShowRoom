@@ -281,6 +281,37 @@ body {
     background: #fafafa;
 }
 
+.admin-tabbar {
+    border-bottom: 1px solid #dfe4ec;
+    overflow-x: auto;
+    padding-bottom: .75rem;
+    flex-wrap: nowrap;
+}
+
+.admin-tabbar .nav-link {
+    color: #374151;
+    background: #fff;
+    border: 1px solid #dfe4ec;
+    white-space: nowrap;
+}
+
+.admin-tabbar .nav-link.active,
+.admin-tabbar .nav-link:hover {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+.admin-link-card {
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.admin-link-card:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 14px 30px rgba(13, 110, 253, .12);
+    transform: translateY(-2px);
+}
+
 .table > :not(caption) > * > * {
     padding-top: .82rem;
     padding-bottom: .82rem;

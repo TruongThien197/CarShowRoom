@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Dong xe catalog | GearShift Admin')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('admin')}"></div>
+
+<main class="container-fluid py-4">
+    <div class="row min-vh-100">
+        <aside th:replace="~{fragments/sidebar :: adminSidebar('car-models')}"></aside>
+        <section class="col-lg-9 col-xl-10 px-md-4">
+            <div class="d-flex justify-content-between align-items-start pt-3 pb-2 mb-4 border-bottom">
+                <div>
+                    <h1 class="h2 fw-bold">Dong xe catalog</h1>
+                    <p class="text-secondary mb-0">Danh muc dong xe dung de gan va loc san pham. Khong phai xe ca nhan cua customer.</p>
+                </div>
+                <a class="btn btn-outline-primary" th:href="@{/admin/products}">Quan ly san pham</a>
+            </div>
+
+            <form class="surface-card p-4 mb-4" th:action="@{/admin/car-models}" method="post">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Hang xe</label>
+                        <input class="form-control" name="brand" placeholder="Toyota" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Dong xe</label>
+                        <input class="form-control" name="modelName" placeholder="Camry" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Doi xe</label>
+                        <input class="form-control" name="year" type="number" min="1900" placeholder="2024" required>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button class="btn btn-primary" type="submit">Them</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="surface-card p-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Hang xe</th>
+                            <th>Dong xe</th>
+                            <th>Doi xe</th>
+                            <th class="text-end pe-4">Thao tac</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(carModels)}">
+                            <td colspan="5" class="text-center text-secondary py-5">Chua co dong xe catalog.</td>
+                        </tr>
+                        <tr th:each="model : ${carModels}">
+                            <td class="ps-4 fw-bold" th:text="${model.id}">1</td>
+                            <td th:text="${model.brand}">Toyota</td>
+                            <td th:text="${model.modelName}">Camry</td>
+                            <td th:text="${model.year}">2024</td>
+                            <td class="text-end pe-4">
+                                <form class="d-inline" th:action="@{/admin/car-models/delete}" method="post" data-confirm="Xoa dong xe nay?">
+                                    <input type="hidden" name="id" th:value="${model.id}">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>

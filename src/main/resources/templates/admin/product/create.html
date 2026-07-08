@@ -1,85 +1,85 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Thêm Phụ Tùng Mới | GearShift Admin')}"></head>
+<head th:replace="~{fragments/header :: head('Them phu tung | GearShift Admin')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
 <div class="container-fluid py-4">
     <div class="row min-vh-100">
         <aside th:replace="~{fragments/sidebar :: adminSidebar('products')}"></aside>
-
         <main class="col-md-9 col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+            <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-4 border-bottom">
                 <div>
-                    <h1 class="h2 fw-bold text-dark"><i class="bi bi-plus-circle me-2 text-primary"></i>Thêm Sản Phẩm Phụ Tùng Mới</h1>
-                    <p class="text-secondary small mb-0">Nhập đầy đủ thông tin chi tiết cho phụ tùng ô tô mới.</p>
+                    <h1 class="h2 fw-bold text-dark">Them phu tung</h1>
+                    <p class="text-secondary small mb-0">Gan san pham vao nhom phu tung va dong xe catalog. Khong lien quan xe ca nhan customer.</p>
                 </div>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <a th:href="@{/admin/products}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
-                        <i class="bi bi-arrow-left"></i>
-                        <span>Quay Lại Danh Sách</span>
-                    </a>
-                </div>
+                <a th:href="@{/admin/products}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Quay lai</a>
             </div>
 
-            <div class="row justify-content-center">
-                <div class="col-lg-9">
-                    <div class="card border-0 shadow-sm rounded-4">
-                        <div class="card-body p-4 p-md-5">
-                            <form th:action="@{/admin/products/create}" method="post">
-                                <div class="row g-4 mb-4">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">Tên Phụ Tùng <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-lg" name="productName" placeholder="Ví dụ: Lọc dầu động cơ Toyota..." required maxlength="200">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold text-dark">Danh Mục <span class="text-danger">*</span></label>
-                                        <select class="form-select form-select-lg" name="categoryId" required>
-                                            <option value="">-- Chọn Danh Mục Phụ Tùng --</option>
-                                            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.categoryName}">Category</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="row g-4 mb-4">
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold text-dark">Giá Bán (VNĐ) <span class="text-danger">*</span></label>
-                                        <input type="number" step="1" min="0" class="form-control form-control-lg" name="price" placeholder="500000" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold text-dark">Số Lượng Kho <span class="text-danger">*</span></label>
-                                        <input type="number" min="0" class="form-control form-control-lg" name="stockQuantity" value="10" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-semibold text-dark">Trạng Thái <span class="text-danger">*</span></label>
-                                        <select class="form-select form-select-lg" name="status">
-                                            <option value="ACTIVE">ACTIVE (Đang bán)</option>
-                                            <option value="INACTIVE">INACTIVE (Tạm ngưng)</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="mb-4">
-                                    <label class="form-label fw-semibold text-dark">Đường Dẫn Hình Ảnh (URL)</label>
-                                    <input type="url" class="form-control" name="imageUrl" placeholder="https://example.com/image.jpg">
-                                    <div class="form-text">Có thể dán link hình ảnh trực tuyến (hoặc để trống dùng ảnh mặc định).</div>
-                                </div>
-
-                                <div class="mb-4">
-                                    <label class="form-label fw-semibold text-dark">Mô Tả Sản Phẩm</label>
-                                    <textarea class="form-control" name="description" rows="4" placeholder="Thông số kỹ thuật, xuất xứ, tương thích các dòng xe..."></textarea>
-                                </div>
-
-                                <div class="d-flex gap-2 justify-content-end pt-3 border-top">
-                                    <a th:href="@{/admin/products}" class="btn btn-outline-secondary px-4">Hủy</a>
-                                    <button type="submit" class="btn btn-primary px-5 shadow-sm d-flex align-items-center gap-2">
-                                        <i class="bi bi-check2-circle"></i>
-                                        <span>Lưu Phụ Tùng</span>
-                                    </button>
-                                </div>
-                            </form>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <form th:action="@{/admin/products/create}" method="post">
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Ten phu tung *</label>
+                                <input type="text" class="form-control form-control-lg" name="productName" required maxlength="200">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">SKU</label>
+                                <input type="text" class="form-control form-control-lg" name="sku" placeholder="Tu sinh neu bo trong">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Nhom phu tung *</label>
+                                <select class="form-select form-select-lg" name="categoryId" required>
+                                    <option value="">Chon nhom</option>
+                                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.categoryName}">Category</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Gia ban *</label>
+                                <input type="number" step="1" min="0" class="form-control form-control-lg" name="price" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Ton kho *</label>
+                                <input type="number" min="0" class="form-control form-control-lg" name="stockQuantity" value="10" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Trang thai</label>
+                                <select class="form-select form-select-lg" name="status">
+                                    <option value="ACTIVE">ACTIVE</option>
+                                    <option value="INACTIVE">INACTIVE</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Dong xe catalog</label>
+                            <select class="form-select" name="carModelIds" multiple size="8">
+                                <option th:each="model : ${carModels}" th:value="${model.id}"
+                                        th:text="${model.brand + ' ' + model.modelName + ' ' + model.year}">Model</option>
+                            </select>
+                            <div class="form-text">Bo trong neu chua muon phan loai theo dong xe.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">URL hinh anh</label>
+                            <input type="text" class="form-control" name="imageUrl" placeholder="/images/turbocharger.jpg hoac https://...">
+                            <div class="form-text">Chap nhan duong dan noi bo nhu /images/turbocharger.jpg hoac URL day du.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Mo ta</label>
+                            <textarea class="form-control" name="description" rows="4"></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2 justify-content-end pt-3 border-top">
+                            <a th:href="@{/admin/products}" class="btn btn-outline-secondary px-4">Huy</a>
+                            <button type="submit" class="btn btn-primary px-5"><i class="bi bi-check2-circle me-1"></i>Luu</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </main>

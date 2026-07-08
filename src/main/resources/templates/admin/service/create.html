@@ -1,43 +1,61 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Thêm dịch vụ | GearShift Admin')}"></head>
-<body>
+<head th:replace="~{fragments/header :: head('Them dich vu booking | GearShift Admin')}"></head>
+<body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
-<div class="container-fluid py-4">
+<main class="container-fluid admin-page">
     <div class="row min-vh-100">
         <aside th:replace="~{fragments/sidebar :: adminSidebar('services')}"></aside>
 
-        <main class="col-md-9 col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-4 border-bottom">
-                <h1 class="h2 fw-bold">Thêm dịch vụ</h1>
-                <a class="btn btn-outline-secondary" th:href="@{/admin/services}">Quay lại</a>
+        <section class="col-lg-9 col-xl-10 admin-content">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="admin-page-title mb-1"><i class="bi bi-plus-circle me-2 text-primary"></i>Them dich vu booking</h1>
+                    <p class="text-secondary mb-0">Khai bao dich vu sua xe voi khoang gia va thoi luong du kien.</p>
+                </div>
+                <a class="btn btn-outline-secondary" th:href="@{/admin/services}">Quay lai</a>
             </div>
 
-            <form class="card border-0 shadow-sm rounded-4 p-4" th:action="@{/admin/services/create}" th:object="${serviceForm}" method="post">
+            <div th:replace="~{fragments/sidebar :: adminTabs('services')}"></div>
+
+            <form class="surface-card p-4" th:action="@{/admin/services/create}" th:object="${serviceForm}" method="post">
                 <div class="row g-3">
                     <div class="col-md-8">
-                        <label class="form-label">Tên dịch vụ</label>
+                        <label class="form-label fw-semibold">Ten dich vu</label>
                         <input class="form-control" th:field="*{serviceName}" required>
                         <div class="text-danger small" th:if="${#fields.hasErrors('serviceName')}" th:errors="*{serviceName}"></div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Giá</label>
-                        <input class="form-control" type="number" min="0" step="0.01" th:field="*{price}" required>
-                        <div class="text-danger small" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></div>
+                        <label class="form-label fw-semibold">Thoi luong phut</label>
+                        <input class="form-control" type="number" min="1" th:field="*{durationMinutes}" required>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('durationMinutes')}" th:errors="*{durationMinutes}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Gia tu</label>
+                        <input class="form-control" type="number" min="0" step="0.01" th:field="*{minPrice}" required>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('minPrice')}" th:errors="*{minPrice}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Gia den</label>
+                        <input class="form-control" type="number" min="0" step="0.01" th:field="*{maxPrice}" required>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('maxPrice')}" th:errors="*{maxPrice}"></div>
                     </div>
                     <div class="col-12">
-                        <label class="form-label">Mô tả</label>
+                        <label class="form-label fw-semibold">Mo ta</label>
                         <textarea class="form-control" rows="4" th:field="*{description}"></textarea>
                     </div>
-                    <div class="col-12">
-                        <button class="btn btn-primary" type="submit">Lưu dịch vụ</button>
+                    <div class="col-12 d-flex justify-content-end gap-2">
+                        <a class="btn btn-outline-secondary" th:href="@{/admin/services}">Huy</a>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-save me-2"></i>Luu dich vu
+                        </button>
                     </div>
                 </div>
             </form>
-        </main>
+        </section>
     </div>
-</div>
+</main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 <div th:replace="~{fragments/footer :: scripts}"></div>

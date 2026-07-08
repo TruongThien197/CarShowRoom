@@ -1,10 +1,13 @@
 package com.hsf302.carshowroom.controller;
 
+import com.hsf302.carshowroom.common.Enums.FulfillmentType;
 import com.hsf302.carshowroom.dto.CheckoutForm;
 import com.hsf302.carshowroom.entity.CartItem;
 import com.hsf302.carshowroom.entity.Order;
 import com.hsf302.carshowroom.entity.User;
-import com.hsf302.carshowroom.repository.OrderDetailRepository;
+import com.hsf302.carshowroom.repository.OrderItemRepository;
+import com.hsf302.carshowroom.repository.ServiceRepository;
+import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.AuthService;
 import com.hsf302.carshowroom.service.CartService;
 import com.hsf302.carshowroom.service.OrderService;
@@ -29,7 +32,9 @@ public class OrderController {
     private final AuthService authService;
     private final CartService cartService;
     private final OrderService orderService;
-    private final OrderDetailRepository orderDetailRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final VehicleRepository vehicleRepository;
+    private final ServiceRepository serviceRepository;
 
     @GetMapping("/checkout")
     public String checkout(Model model) {
@@ -71,8 +76,8 @@ public class OrderController {
         List<Order> orders = orderService.getOrders(user);
         Map<Integer, String> orderItems = orders.stream().collect(Collectors.toMap(
                 Order::getId,
-                order -> orderDetailRepository.findByOrderId(order.getId()).stream()
-                        .map(detail -> detail.getProduct().getProductName() + " x" + detail.getQuantity())
+                order -> orderItemRepository.findByOrderId(order.getId()).stream()
+                        .map(item -> item.getProductNameSnapshot() + " x" + item.getQuantity())
                         .collect(Collectors.joining(", "))
         ));
         model.addAttribute("orders", orders);
@@ -85,6 +90,11 @@ public class OrderController {
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("subtotal", cartService.calculateSubtotal(cartItems));
         model.addAttribute("checkoutForm", form);
+        boolean needsWorkshop = cartItems.stream()
+                .anyMatch(item -> FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
+        model.addAttribute("needsWorkshop", needsWorkshop);
+        model.addAttribute("vehicles", vehicleRepository.findByUser(user));
+        model.addAttribute("services", serviceRepository.findAllByOrderByServiceNameAsc());
     }
 
     private User currentUserOrNull() {

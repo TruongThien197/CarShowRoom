@@ -20,7 +20,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth ->
                     auth.requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
-                            .requestMatchers("/staff", "/staff/**").hasRole("STAFF")
+                            .requestMatchers("/staff", "/staff/**").hasAnyRole("STAFF", "ADMIN")
                             .requestMatchers("/cart", "/cart/**").hasRole("CUSTOMER")
                             .requestMatchers("/orders", "/orders/**").hasRole("CUSTOMER")
                             .requestMatchers("/booking", "/booking/**").hasRole("CUSTOMER")

@@ -3,7 +3,7 @@ package com.hsf302.carshowroom.controller;
 import com.hsf302.carshowroom.dto.BookingForm;
 import com.hsf302.carshowroom.entity.Booking;
 import com.hsf302.carshowroom.entity.User;
-import com.hsf302.carshowroom.repository.BookingDetailRepository;
+import com.hsf302.carshowroom.repository.BookingServiceRepository;
 import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.AuthService;
@@ -31,7 +31,7 @@ public class BookingController {
     private final BookingService bookingService;
     private final ServiceRepository serviceRepository;
     private final VehicleRepository vehicleRepository;
-    private final BookingDetailRepository bookingDetailRepository;
+    private final BookingServiceRepository bookingServiceRepository;
 
     @GetMapping
     public String form(Model model) {
@@ -84,7 +84,7 @@ public class BookingController {
         }
         Booking booking = bookingService.getBookingDetail(user, id);
         model.addAttribute("booking", booking);
-        model.addAttribute("bookingDetails", bookingDetailRepository.findByBookingId(booking.getId()));
+        model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(booking.getId()));
         return "booking/detail";
     }
 
@@ -110,8 +110,8 @@ public class BookingController {
     private Map<Integer, String> buildBookingServices(List<Booking> bookings) {
         return bookings.stream().collect(Collectors.toMap(
                 Booking::getId,
-                booking -> bookingDetailRepository.findByBookingId(booking.getId()).stream()
-                        .map(detail -> detail.getService().getServiceName())
+                booking -> bookingServiceRepository.findByBookingId(booking.getId()).stream()
+                        .map(service -> service.getServiceNameSnapshot())
                         .collect(Collectors.joining(", "))
         ));
     }

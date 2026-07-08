@@ -1,5 +1,6 @@
 package com.hsf302.carshowroom.entity;
 
+import com.hsf302.carshowroom.common.Enums.ServiceStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -31,8 +32,18 @@ public class Service {
     private String description;
 
     @NotNull
-    @Column(name = "price", nullable = false, precision = 18, scale = 2)
-    private BigDecimal price;
+    @Column(name = "min_price", nullable = false, precision = 18, scale = 2)
+    private BigDecimal minPrice;
 
+    @NotNull
+    @Column(name = "max_price", nullable = false, precision = 18, scale = 2)
+    private BigDecimal maxPrice;
 
+    @NotNull
+    @Column(name = "duration_minutes", nullable = false)
+    private Integer durationMinutes;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ServiceStatus status;
 }

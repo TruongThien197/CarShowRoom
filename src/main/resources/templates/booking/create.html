@@ -1,59 +1,106 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Đặt lịch sửa xe | GearShift Pro')}"></head>
+<head th:replace="~{fragments/header :: head('Dat lich sua xe | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('booking')}"></div>
 
 <main class="container py-5">
     <div class="row g-4">
-        <aside th:replace="~{fragments/sidebar :: accountSidebar('bookings')}"></aside>
+        <aside th:replace="~{fragments/sidebar :: accountSidebar('booking-create')}"></aside>
 
         <section class="col-lg-9">
-            <div class="d-flex justify-content-between align-items-start mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3 mb-3">
                 <div>
-                    <h1 class="section-title mb-1">Đặt lịch sửa xe</h1>
-                    <p class="text-secondary mb-0">Chọn xe, dịch vụ, ngày giờ và ghi chú tình trạng xe.</p>
+                    <h1 class="section-title mb-1">Dat lich sua xe</h1>
+                    <p class="text-secondary mb-0">Chon xe, dich vu, thoi gian va xem truoc khoang gia truoc khi dat lich.</p>
                 </div>
-                <a class="btn btn-outline-primary" th:href="@{/booking/my-bookings}">
-                    <i class="bi bi-clock-history me-2"></i>Lịch sử
-                </a>
             </div>
 
+            <div th:replace="~{fragments/sidebar :: bookingTabs('create')}"></div>
+
             <form class="surface-card p-4 needs-validation" th:action="@{/booking}" th:object="${bookingForm}" method="post">
-                <div class="row g-3">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge text-bg-primary">1</span>
+                            <h5 class="fw-bold mb-0">Thong tin xe va dich vu</h5>
+                        </div>
+                        <p class="text-secondary small mb-0">Gia dich vu hien thi theo khoang min-max. Tien coc tam tinh bang 20% gia toi thieu.</p>
+                    </div>
+
                     <div class="col-md-6">
-                        <label class="form-label">Xe của bạn</label>
+                        <label class="form-label fw-semibold">Xe cua ban</label>
                         <select class="form-select" th:field="*{vehicleId}">
-                            <option value="">Chưa chọn xe</option>
+                            <option value="">Chua chon xe</option>
                             <option th:each="vehicle : ${vehicles}"
                                     th:value="${vehicle.id}"
-                                    th:text="${vehicle.carModel.brand + ' ' + vehicle.carModel.modelName + ' - ' + vehicle.licensePlate}">
+                                    th:text="${vehicle.brand + ' ' + vehicle.modelName + ' ' + vehicle.year + ' - ' + vehicle.licensePlate}">
                                 Vehicle
                             </option>
                         </select>
-                        <div class="form-text"><a th:href="@{/vehicles/add}">Thêm xe mới</a> nếu chưa có trong danh sách.</div>
+                        <div class="form-text">
+                            <a th:href="@{/vehicles/add}">Them xe moi</a> neu chua co trong danh sach.
+                        </div>
                     </div>
+
                     <div class="col-md-6">
-                        <label class="form-label">Dịch vụ</label>
-                        <select class="form-select" th:field="*{serviceId}" required>
-                            <option value="">Chọn dịch vụ</option>
+                        <label class="form-label fw-semibold">Dich vu</label>
+                        <select class="form-select" id="serviceSelect" th:field="*{serviceId}" required>
+                            <option value="">Chon dich vu</option>
                             <option th:each="service : ${services}"
                                     th:value="${service.id}"
-                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.price, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">
+                                    th:attr="data-min=${service.minPrice},data-max=${service.maxPrice},data-duration=${service.durationMinutes},data-description=${service.description}"
+                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(service.maxPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}">
                                 Service
                             </option>
                         </select>
                         <div class="text-danger small" th:if="${#fields.hasErrors('serviceId')}" th:errors="*{serviceId}"></div>
                     </div>
+
+                    <div class="col-12">
+                        <div id="serviceSummary" class="border rounded-3 p-3 bg-light d-none">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <div class="small text-secondary">Khoang gia dich vu</div>
+                                    <div class="fs-5 fw-bold text-primary">
+                                        <span id="serviceMinPrice">0 VND</span>
+                                        <span class="text-secondary fw-normal"> - </span>
+                                        <span id="serviceMaxPrice">0 VND</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="small text-secondary">Tien coc 20%</div>
+                                    <div class="fw-bold" id="serviceDeposit">0 VND</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="small text-secondary">Thoi luong</div>
+                                    <div class="fw-bold"><span id="serviceDuration">0</span> phut</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="small text-secondary">Gia cuoi cung</div>
+                                    <div class="small text-secondary">Se chot sau khi nhan vien kiem tra xe.</div>
+                                </div>
+                            </div>
+                            <div class="small text-secondary mt-2" id="serviceDescription"></div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="d-flex align-items-center gap-2 mt-2 mb-2">
+                            <span class="badge text-bg-primary">2</span>
+                            <h5 class="fw-bold mb-0">Thoi gian hen</h5>
+                        </div>
+                    </div>
+
                     <div class="col-md-6">
-                        <label class="form-label">Ngày hẹn</label>
+                        <label class="form-label fw-semibold">Ngay hen</label>
                         <input class="form-control" type="date" th:field="*{bookingDate}" required>
                         <div class="text-danger small" th:if="${#fields.hasErrors('bookingDate')}" th:errors="*{bookingDate}"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Khung giờ</label>
+                        <label class="form-label fw-semibold">Khung gio</label>
                         <select class="form-select" th:field="*{timeSlot}" required>
-                            <option value="">Chọn giờ</option>
+                            <option value="">Chon gio</option>
                             <option value="08:00">08:00</option>
                             <option value="09:30">09:30</option>
                             <option value="11:00">11:00</option>
@@ -63,13 +110,15 @@
                         </select>
                         <div class="text-danger small" th:if="${#fields.hasErrors('timeSlot')}" th:errors="*{timeSlot}"></div>
                     </div>
+
                     <div class="col-12">
-                        <label class="form-label">Ghi chú</label>
-                        <textarea class="form-control" rows="4" th:field="*{notes}" placeholder="Mô tả lỗi, tiếng kêu, tình trạng xe..."></textarea>
+                        <label class="form-label fw-semibold">Ghi chu</label>
+                        <textarea class="form-control" rows="4" th:field="*{notes}" placeholder="Mo ta loi, tieng keu, tinh trang xe..."></textarea>
                     </div>
-                    <div class="col-12">
+
+                    <div class="col-12 d-flex flex-wrap gap-2 justify-content-end align-items-center">
                         <button class="btn btn-primary btn-lg" type="submit">
-                            <i class="bi bi-calendar-plus me-2"></i>Đặt lịch
+                            <i class="bi bi-calendar-plus me-2"></i>Dat lich
                         </button>
                     </div>
                 </div>
@@ -80,5 +129,40 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 <div th:replace="~{fragments/footer :: scripts}"></div>
+<script>
+    (() => {
+        const select = document.getElementById('serviceSelect');
+        const summary = document.getElementById('serviceSummary');
+        const minPrice = document.getElementById('serviceMinPrice');
+        const maxPrice = document.getElementById('serviceMaxPrice');
+        const deposit = document.getElementById('serviceDeposit');
+        const duration = document.getElementById('serviceDuration');
+        const description = document.getElementById('serviceDescription');
+        const formatter = new Intl.NumberFormat('vi-VN');
+
+        const toNumber = (value) => Number(String(value || '0').replace(/,/g, ''));
+        const money = (value) => `${formatter.format(Math.round(value))} VND`;
+
+        const updateSummary = () => {
+            const option = select.options[select.selectedIndex];
+            if (!option || !option.value) {
+                summary.classList.add('d-none');
+                return;
+            }
+
+            const min = toNumber(option.dataset.min);
+            const max = toNumber(option.dataset.max);
+            minPrice.textContent = money(min);
+            maxPrice.textContent = money(max);
+            deposit.textContent = money(min * 0.2);
+            duration.textContent = option.dataset.duration || '0';
+            description.textContent = option.dataset.description || '';
+            summary.classList.remove('d-none');
+        };
+
+        select.addEventListener('change', updateSummary);
+        updateSummary();
+    })();
+</script>
 </body>
 </html>

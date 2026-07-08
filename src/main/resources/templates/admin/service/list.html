@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Quản lý dịch vụ | GearShift Admin')}"></head>
+<head th:replace="~{fragments/header :: head('Quan ly dich vu booking | GearShift Admin')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
@@ -9,15 +9,17 @@
         <aside th:replace="~{fragments/sidebar :: adminSidebar('services')}"></aside>
 
         <section class="col-lg-9 col-xl-10 admin-content">
-            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
                 <div>
-                    <h1 class="admin-page-title mb-1"><i class="bi bi-tools me-2 text-primary"></i>Quản lý dịch vụ sửa xe</h1>
-                    <p class="text-secondary mb-0">Danh sách dịch vụ khách có thể chọn khi đặt lịch.</p>
+                    <h1 class="admin-page-title mb-1"><i class="bi bi-tools me-2 text-primary"></i>Quan ly dich vu booking</h1>
+                    <p class="text-secondary mb-0">Dich vu customer chon khi dat lich sua xe, kem thoi luong va khoang gia.</p>
                 </div>
                 <a class="btn btn-primary" th:href="@{/admin/services/create}">
-                    <i class="bi bi-plus-lg me-2"></i>Thêm dịch vụ
+                    <i class="bi bi-plus-lg me-2"></i>Them dich vu
                 </a>
             </div>
+
+            <div th:replace="~{fragments/sidebar :: adminTabs('services')}"></div>
 
             <div class="surface-card p-0 overflow-hidden">
                 <div class="table-responsive">
@@ -25,27 +27,30 @@
                         <thead class="table-light">
                         <tr>
                             <th class="ps-4">ID</th>
-                            <th>Tên dịch vụ</th>
-                            <th>Mô tả</th>
-                            <th class="text-end">Giá</th>
-                            <th class="text-end pe-4">Thao tác</th>
+                            <th>Dich vu</th>
+                            <th>Mo ta</th>
+                            <th>Thoi luong</th>
+                            <th class="text-end">Khoang gia</th>
+                            <th class="text-end pe-4">Thao tac</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(services)}">
-                            <td colspan="5" class="text-center py-5 text-secondary">Chưa có dịch vụ nào.</td>
+                            <td colspan="6" class="text-center py-5 text-secondary">Chua co dich vu nao.</td>
                         </tr>
                         <tr th:each="service : ${services}">
                             <td class="ps-4 fw-bold" th:text="${service.id}">1</td>
                             <td class="fw-semibold" th:text="${service.serviceName}">Service</td>
-                            <td class="text-secondary" th:text="${service.description ?: 'Không có mô tả'}">Description</td>
-                            <td class="text-end fw-bold text-primary" th:text="${#numbers.formatDecimal(service.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</td>
+                            <td class="text-secondary" th:text="${service.description ?: 'Khong co mo ta'}">Description</td>
+                            <td th:text="${service.durationMinutes + ' phut'}">60 phut</td>
+                            <td class="text-end fw-bold text-primary"
+                                th:text="${#numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(service.maxPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 - 0 VND</td>
                             <td class="text-end pe-4">
                                 <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/services/edit/{id}(id=${service.id})}">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
                                 <a class="btn btn-outline-danger btn-sm" th:href="@{/admin/services/delete/{id}(id=${service.id})}"
-                                   onclick="return confirm('Xóa dịch vụ này?')">
+                                   onclick="return confirm('Xoa dich vu nay?')">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </td>
@@ -58,5 +63,6 @@
     </div>
 </main>
 <div th:replace="~{fragments/footer :: scripts}"></div>
+<script th:src="@{/js/admin.js}"></script>
 </body>
 </html>

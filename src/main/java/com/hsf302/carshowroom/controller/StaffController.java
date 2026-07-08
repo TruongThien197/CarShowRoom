@@ -1,11 +1,15 @@
 package com.hsf302.carshowroom.controller;
 
 import com.hsf302.carshowroom.entity.Booking;
+import com.hsf302.carshowroom.entity.CarModel;
 import com.hsf302.carshowroom.entity.Order;
-import com.hsf302.carshowroom.repository.BookingDetailRepository;
 import com.hsf302.carshowroom.repository.BookingRepository;
-import com.hsf302.carshowroom.repository.OrderDetailRepository;
+import com.hsf302.carshowroom.repository.BookingServiceRepository;
+import com.hsf302.carshowroom.repository.CarModelRepository;
+import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.OrderRepository;
+import com.hsf302.carshowroom.service.BookingService;
+import com.hsf302.carshowroom.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
@@ -25,24 +29,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StaffController {
     private final OrderRepository orderRepository;
-    private final OrderDetailRepository orderDetailRepository;
+    private final OrderItemRepository orderItemRepository;
     private final BookingRepository bookingRepository;
-    private final BookingDetailRepository bookingDetailRepository;
+    private final BookingServiceRepository bookingServiceRepository;
+    private final CarModelRepository carModelRepository;
+    private final OrderService orderService;
+    private final BookingService bookingService;
 
     @GetMapping
     public String dashboard(Model model) {
-        List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "orderDate"));
+        List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         List<Booking> bookings = bookingRepository.findAll(Sort.by(Sort.Direction.DESC, "bookingDate"));
         Map<Integer, String> orderItems = orders.stream().collect(Collectors.toMap(
                 Order::getId,
-                order -> orderDetailRepository.findByOrderId(order.getId()).stream()
-                        .map(detail -> detail.getProduct().getProductName() + " x" + detail.getQuantity())
+                order -> orderItemRepository.findByOrderId(order.getId()).stream()
+                        .map(item -> item.getProductNameSnapshot() + " x" + item.getQuantity())
                         .collect(Collectors.joining(", "))
         ));
         Map<Integer, String> bookingServices = bookings.stream().collect(Collectors.toMap(
                 Booking::getId,
-                booking -> bookingDetailRepository.findByBookingId(booking.getId()).stream()
-                        .map(detail -> detail.getService().getServiceName())
+                booking -> bookingServiceRepository.findByBookingId(booking.getId()).stream()
+                        .map(service -> service.getServiceNameSnapshot())
                         .collect(Collectors.joining(", "))
         ));
 
@@ -50,20 +57,20 @@ public class StaffController {
         model.addAttribute("bookings", bookings);
         model.addAttribute("orderItems", orderItems);
         model.addAttribute("bookingServices", bookingServices);
-        model.addAttribute("pendingOrders", countStatus(orders, "PENDING"));
-        model.addAttribute("pendingBookings", countStatus(bookings, "PENDING"));
-        model.addAttribute("completedBookings", countStatus(bookings, "COMPLETED"));
+        model.addAttribute("pendingOrders", countOrderStatus(orders, "PENDING_DEPOSIT"));
+        model.addAttribute("pendingBookings", countBookingStatus(bookings, "PENDING_DEPOSIT"));
+        model.addAttribute("completedBookings", countBookingStatus(bookings, "COMPLETED"));
+        model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
+        model.addAttribute("carBrands", carModelRepository.findDistinctBrands());
         return "staff/dashboard";
     }
 
     @PostMapping("/orders/status")
-    public String updateOrderStatus(@RequestParam Integer orderId, @RequestParam String status,
+    public String updateOrderStatus(@RequestParam Integer orderId,
+                                    @RequestParam String status,
                                     RedirectAttributes redirectAttributes) {
         try {
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Order not found"));
-            order.setStatus(status);
-            orderRepository.save(order);
+            orderService.updateOrderStatus(orderId, status);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
@@ -72,13 +79,11 @@ public class StaffController {
     }
 
     @PostMapping("/bookings/status")
-    public String updateBookingStatus(@RequestParam Integer bookingId, @RequestParam String status,
+    public String updateBookingStatus(@RequestParam Integer bookingId,
+                                      @RequestParam String status,
                                       RedirectAttributes redirectAttributes) {
         try {
-            Booking booking = bookingRepository.findById(bookingId)
-                    .orElseThrow(() -> new RuntimeException("Booking not found"));
-            booking.setStatus(status);
-            bookingRepository.save(booking);
+            bookingService.updateStatus(bookingId, status);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái lịch hẹn thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
@@ -86,15 +91,33 @@ public class StaffController {
         return "redirect:/staff#bookings";
     }
 
-    private long countStatus(List<? extends Object> items, String status) {
-        return items.stream().filter(item -> {
-            if (item instanceof Order order) {
-                return status.equalsIgnoreCase(order.getStatus());
-            }
-            if (item instanceof Booking booking) {
-                return status.equalsIgnoreCase(booking.getStatus());
-            }
-            return false;
-        }).count();
+    @PostMapping("/car-models")
+    public String createCarModel(@RequestParam String brand,
+                                 @RequestParam String modelName,
+                                 @RequestParam Integer year,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            CarModel carModel = new CarModel();
+            carModel.setBrand(brand.trim());
+            carModel.setModelName(modelName.trim());
+            carModel.setYear(year);
+            carModelRepository.save(carModel);
+            redirectAttributes.addFlashAttribute("successMessage", "Them dong xe catalog thanh cong!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Co loi khi them dong xe: " + e.getMessage());
+        }
+        return "redirect:/staff";
+    }
+
+    private long countOrderStatus(List<Order> orders, String status) {
+        return orders.stream()
+                .filter(order -> status.equalsIgnoreCase(order.getOrderStatus().name()))
+                .count();
+    }
+
+    private long countBookingStatus(List<Booking> bookings, String status) {
+        return bookings.stream()
+                .filter(booking -> status.equalsIgnoreCase(booking.getBookingStatus().name()))
+                .count();
     }
 }

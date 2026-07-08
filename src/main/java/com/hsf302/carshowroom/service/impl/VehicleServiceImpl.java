@@ -1,12 +1,10 @@
 package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.dto.VehicleForm;
-import com.hsf302.carshowroom.entity.CarModel;
 import com.hsf302.carshowroom.entity.Booking;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.repository.BookingRepository;
-import com.hsf302.carshowroom.repository.CarModelRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.VehicleService;
 import lombok.RequiredArgsConstructor;
@@ -19,29 +17,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VehicleServiceImpl implements VehicleService {
     private final VehicleRepository vehicleRepository;
-    private final CarModelRepository carModelRepository;
     private final BookingRepository bookingRepository;
 
     @Override
     @Transactional
     public Vehicle addVehicle(User user, VehicleForm form) {
-        List<CarModel> existing = carModelRepository
-                .findByBrandIgnoreCaseAndModelNameIgnoreCaseAndYear(
-                        form.getBrand(), form.getModelName(), form.getYear());
-        CarModel carModel;
-        if (existing.isEmpty()) {
-            carModel = new CarModel();
-            carModel.setBrand(form.getBrand());
-            carModel.setModelName(form.getModelName());
-            carModel.setYear(form.getYear());
-            carModel = carModelRepository.save(carModel);
-        } else {
-            carModel = existing.get(0);
-        }
-
         Vehicle vehicle = new Vehicle();
         vehicle.setUser(user);
-        vehicle.setCarModel(carModel);
+        vehicle.setBrand(form.getBrand().trim());
+        vehicle.setModelName(form.getModelName().trim());
+        vehicle.setYear(form.getYear());
         vehicle.setLicensePlate(form.getLicensePlate());
         return vehicleRepository.save(vehicle);
     }

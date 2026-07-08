@@ -1,0 +1,98 @@
+package com.hsf302.carshowroom.service.impl;
+
+import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.dto.AvailableSlotDTO;
+import com.hsf302.carshowroom.entity.Booking;
+import com.hsf302.carshowroom.repository.BookingRepository;
+import com.hsf302.carshowroom.repository.ServiceRepository;
+import com.hsf302.carshowroom.service.SchedulingService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class SchedulingServiceImpl implements SchedulingService {
+    private static final LocalTime WORK_START = LocalTime.of(8, 0);
+    private static final LocalTime WORK_END = LocalTime.of(17, 0);
+    private static final int SLOT_STEP_MINUTES = 30;
+    private static final int WORKSHOP_CAPACITY = 2;
+
+    private final BookingRepository bookingRepository;
+    private final ServiceRepository serviceRepository;
+
+    @Override
+    public List<AvailableSlotDTO> findAvailableSlots(LocalDate date, List<Integer> serviceIds) {
+        int duration = resolveDuration(serviceIds);
+        List<AvailableSlotDTO> slots = new ArrayList<>();
+        for (LocalTime start = WORK_START; !start.plusMinutes(duration).isAfter(WORK_END); start = start.plusMinutes(SLOT_STEP_MINUTES)) {
+            Booking probe = new Booking();
+            probe.setBookingDate(date);
+            probe.setStartTime(start);
+            probe.setEndTime(start.plusMinutes(duration));
+            if (!hasCapacityConflict(probe)) {
+                slots.add(new AvailableSlotDTO(probe.getStartTime(), probe.getEndTime()));
+            }
+        }
+        return slots;
+    }
+
+    @Override
+    public void validateSlot(Booking booking) {
+        if (booking.getBookingDate() == null || booking.getStartTime() == null || booking.getEndTime() == null) {
+            throw new RuntimeException("Vui lòng chọn đầy đủ ngày và giờ hẹn.");
+        }
+        if (booking.getBookingDate().isBefore(LocalDate.now())) {
+            throw new RuntimeException("Không thể đặt lịch trong quá khứ.");
+        }
+        if (booking.getStartTime().isBefore(WORK_START) || booking.getEndTime().isAfter(WORK_END)) {
+            throw new RuntimeException("Slot nằm ngoài giờ làm việc của xưởng.");
+        }
+        if (hasCapacityConflict(booking)) {
+            throw new RuntimeException("Slot này đã hết công suất, vui lòng chọn giờ khác.");
+        }
+    }
+
+    @Override
+    public void holdSlot(Booking booking) {
+        validateSlot(booking);
+    }
+
+    @Override
+    public void releaseSlot(Booking booking) {
+        booking.setBookingStatus(BookingStatus.CANCELED);
+    }
+
+    private int resolveDuration(List<Integer> serviceIds) {
+        if (serviceIds == null || serviceIds.isEmpty()) {
+            return 60;
+        }
+        return serviceIds.stream()
+                .map(serviceRepository::findById)
+                .filter(java.util.Optional::isPresent)
+                .map(java.util.Optional::get)
+                .mapToInt(service -> service.getDurationMinutes() == null ? 60 : service.getDurationMinutes())
+                .sum();
+    }
+
+    private boolean hasCapacityConflict(Booking booking) {
+        List<BookingStatus> blockingStatuses = List.of(
+                BookingStatus.PENDING_DEPOSIT,
+                BookingStatus.CONFIRMED,
+                BookingStatus.IN_PROGRESS,
+                BookingStatus.PENDING_APPROVAL
+        );
+        long overlaps = bookingRepository.findByBookingDateAndBookingStatusIn(booking.getBookingDate(), blockingStatuses)
+                .stream()
+                .filter(existing -> booking.getId() == null || !booking.getId().equals(existing.getId()))
+                .filter(existing -> existing.getStartTime() != null && existing.getEndTime() != null)
+                .filter(existing -> existing.getStartTime().isBefore(booking.getEndTime())
+                        && existing.getEndTime().isAfter(booking.getStartTime()))
+                .count();
+        return overlaps >= WORKSHOP_CAPACITY;
+    }
+}

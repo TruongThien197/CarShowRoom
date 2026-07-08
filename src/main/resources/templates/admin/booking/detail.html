@@ -24,9 +24,9 @@
                             <h5 class="fw-bold mb-3">Thông tin booking</h5>
                             <p><span class="text-secondary">Khách:</span> <strong th:text="${booking.user.fullName}">Customer</strong></p>
                             <p><span class="text-secondary">Email:</span> <span th:text="${booking.user.email}">email</span></p>
-                            <p><span class="text-secondary">Xe:</span> <span th:text="${booking.vehicle != null ? booking.vehicle.carModel.brand + ' ' + booking.vehicle.carModel.modelName + ' - ' + booking.vehicle.licensePlate : 'Chưa chọn xe'}">Vehicle</span></p>
+                            <p><span class="text-secondary">Xe:</span> <span th:text="${booking.vehicle != null ? booking.vehicle.brand + ' ' + booking.vehicle.modelName + ' ' + booking.vehicle.year + ' - ' + booking.vehicle.licensePlate : 'Chưa chọn xe'}">Vehicle</span></p>
                             <p><span class="text-secondary">Ngày giờ:</span> <strong th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</strong></p>
-                            <p><span class="text-secondary">Trạng thái:</span> <span class="badge text-bg-primary" th:text="${booking.status}">PENDING</span></p>
+                            <p><span class="text-secondary">Trạng thái:</span> <span class="badge text-bg-primary" th:text="${booking.bookingStatus}">PENDING</span></p>
                             <p class="mb-0"><span class="text-secondary">Ghi chú:</span> <span th:text="${booking.notes ?: 'Không có'}">Notes</span></p>
                         </div>
                     </div>
@@ -38,20 +38,20 @@
                             <table class="table align-middle">
                                 <thead class="table-light"><tr><th>Tên dịch vụ</th><th class="text-end">Giá</th></tr></thead>
                                 <tbody>
-                                <tr th:each="detail : ${bookingDetails}">
-                                    <td th:text="${detail.service.serviceName}">Service</td>
-                                    <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(detail.actualPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</td>
+                                <tr th:each="detail : ${bookingServices}">
+                                    <td th:text="${detail.serviceNameSnapshot}">Service</td>
+                                    <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(detail.minPriceSnapshot, 0, 'COMMA', 0, 'POINT')} + ' VND'">0</td>
                                 </tr>
                                 </tbody>
                             </table>
                             <form class="d-flex gap-2 justify-content-end" th:action="@{/admin/bookings/status}" method="post">
                                 <input type="hidden" name="bookingId" th:value="${booking.id}">
                                 <select class="form-select" name="status" style="max-width: 180px">
-                                    <option value="PENDING" th:selected="${booking.status == 'PENDING'}">PENDING</option>
-                                    <option value="CONFIRMED" th:selected="${booking.status == 'CONFIRMED'}">CONFIRMED</option>
-                                    <option value="IN_PROGRESS" th:selected="${booking.status == 'IN_PROGRESS'}">IN_PROGRESS</option>
-                                    <option value="COMPLETED" th:selected="${booking.status == 'COMPLETED'}">COMPLETED</option>
-                                    <option value="CANCELLED" th:selected="${booking.status == 'CANCELLED'}">CANCELLED</option>
+                                    <option value="PENDING_DEPOSIT" th:selected="${booking.bookingStatus.name() == 'PENDING_DEPOSIT'}">PENDING_DEPOSIT</option>
+                                    <option value="CONFIRMED" th:selected="${booking.bookingStatus.name() == 'CONFIRMED'}">CONFIRMED</option>
+                                    <option value="IN_PROGRESS" th:selected="${booking.bookingStatus.name() == 'IN_PROGRESS'}">IN_PROGRESS</option>
+                                    <option value="COMPLETED" th:selected="${booking.bookingStatus.name() == 'COMPLETED'}">COMPLETED</option>
+                                    <option value="CANCELED" th:selected="${booking.bookingStatus.name() == 'CANCELED'}">CANCELED</option>
                                 </select>
                                 <button class="btn btn-primary" type="submit">Cập nhật</button>
                             </form>

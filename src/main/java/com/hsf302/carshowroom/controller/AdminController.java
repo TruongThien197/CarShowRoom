@@ -1,19 +1,14 @@
 package com.hsf302.carshowroom.controller;
 
-import com.hsf302.carshowroom.entity.Booking;
-import com.hsf302.carshowroom.entity.Category;
-import com.hsf302.carshowroom.entity.Order;
-import com.hsf302.carshowroom.entity.Product;
+import com.hsf302.carshowroom.common.Enums;
 import com.hsf302.carshowroom.dto.ServiceForm;
-import com.hsf302.carshowroom.repository.BookingDetailRepository;
-import com.hsf302.carshowroom.repository.BookingRepository;
-import com.hsf302.carshowroom.repository.CategoryRepository;
-import com.hsf302.carshowroom.repository.OrderDetailRepository;
-import com.hsf302.carshowroom.repository.OrderRepository;
-import com.hsf302.carshowroom.repository.ProductRepository;
-import com.hsf302.carshowroom.repository.ServiceRepository;
+import com.hsf302.carshowroom.entity.*;
+import com.hsf302.carshowroom.repository.*;
+import com.hsf302.carshowroom.service.BookingService;
 import com.hsf302.carshowroom.service.OrderService;
+import com.hsf302.carshowroom.service.ProductService;
 import com.hsf302.carshowroom.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,16 +16,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import jakarta.validation.Valid;
-import org.springframework.validation.BindingResult;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,17 +39,20 @@ public class AdminController {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final OrderRepository orderRepository;
-    private final OrderDetailRepository orderDetailRepository;
+    private final OrderItemRepository orderItemRepository;
     private final BookingRepository bookingRepository;
-    private final BookingDetailRepository bookingDetailRepository;
+    private final BookingServiceRepository bookingServiceRepository;
+    private final CarModelRepository carModelRepository;
     private final ServiceRepository serviceRepository;
-    private  final OrderService orderService;
+    private final OrderService orderService;
+    private final BookingService bookingService;
+    private final ProductService productService;
 
     @GetMapping
     public String dashboard(Model model) {
-        List<Product> products = productRepository.findAll(Sort.by(Sort.Direction.ASC, "productName"));
+        List<Product> products = productRepository.findAll(Sort.by(Sort.Direction.ASC, "name"));
         List<Category> categories = categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "categoryName"));
-        List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "orderDate"));
+        List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         List<Booking> bookings = bookingRepository.findAll(Sort.by(Sort.Direction.DESC, "bookingDate"));
         List<com.hsf302.carshowroom.entity.Service> services = serviceRepository.findAll(Sort.by(Sort.Direction.ASC, "serviceName"));
         BigDecimal orderRevenue = calculateOrderRevenue(orders);
@@ -72,9 +71,12 @@ public class AdminController {
         model.addAttribute("totalProducts", products.size());
         model.addAttribute("totalOrders", orders.size());
         model.addAttribute("totalBookings", bookings.size());
-        model.addAttribute("activeProducts", products.stream().filter(product -> "ACTIVE".equalsIgnoreCase(product.getStatus())).count());
-        model.addAttribute("pendingOrders", orders.stream().filter(order -> "PENDING".equalsIgnoreCase(order.getStatus())).count());
-        model.addAttribute("pendingBookings", bookings.stream().filter(booking -> "PENDING".equalsIgnoreCase(booking.getStatus())).count());
+        model.addAttribute("activeProducts", products.stream().filter(product -> Enums.ProductStatus.ACTIVE.equals(product.getStatus())).count());
+        model.addAttribute("pendingOrders", orders.stream().filter(order -> Enums.OrderStatus.PENDING_DEPOSIT.equals(order.getOrderStatus())).count());
+        model.addAttribute("pendingBookings", bookings.stream().filter(booking -> Enums.BookingStatus.PENDING_DEPOSIT.equals(booking.getBookingStatus())).count());
+        model.addAttribute("today", LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")));
+        model.addAttribute("todayVehicleCount", countTodayVehicles(bookings));
+        model.addAttribute("todaySlotLoads", buildTodaySlotLoads(bookings));
         model.addAttribute("monthlyOrderLabels", buildMonthlyOrderLabels());
         model.addAttribute("monthlyOrderCounts", buildMonthlyOrderCounts(orders));
         model.addAttribute("recentOrders", orders.stream().limit(5).collect(Collectors.toList()));
@@ -84,10 +86,97 @@ public class AdminController {
         return "admin/dashboard";
     }
 
+    private long countTodayVehicles(List<Booking> bookings) {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        return bookings.stream()
+                .filter(booking -> today.equals(booking.getBookingDate()))
+                .filter(this::isActiveBooking)
+                .map(Booking::getVehicle)
+                .filter(vehicle -> vehicle != null && vehicle.getId() != null)
+                .map(Vehicle::getId)
+                .distinct()
+                .count();
+    }
+
+    private List<SlotLoad> buildTodaySlotLoads(List<Booking> bookings) {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        return bookings.stream()
+                .filter(booking -> today.equals(booking.getBookingDate()))
+                .filter(this::isActiveBooking)
+                .collect(Collectors.groupingBy(
+                        this::resolveSlotLabel,
+                        Collectors.toList()))
+                .entrySet()
+                .stream()
+                .map(entry -> new SlotLoad(
+                        entry.getKey(),
+                        entry.getValue().stream()
+                                .map(Booking::getVehicle)
+                                .filter(vehicle -> vehicle != null && vehicle.getId() != null)
+                                .map(Vehicle::getId)
+                                .distinct()
+                                .count(),
+                        entry.getValue().size()))
+                .sorted(Comparator.comparing(SlotLoad::timeSlot))
+                .collect(Collectors.toList());
+    }
+
+    private boolean isActiveBooking(Booking booking) {
+        return booking.getBookingStatus() != Enums.BookingStatus.CANCELED;
+    }
+
+    private String resolveSlotLabel(Booking booking) {
+        if (booking.getTimeSlot() != null && !booking.getTimeSlot().isBlank()) {
+            return booking.getTimeSlot();
+        }
+        if (booking.getStartTime() != null) {
+            return booking.getStartTime().toString();
+        }
+        return "Chua co gio";
+    }
+
+    private record SlotLoad(String timeSlot, long vehicleCount, long bookingCount) {
+    }
+
     @GetMapping("/categories")
     public String listCategories(Model model) {
         model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
         return "admin/category/list";
+    }
+
+    @GetMapping("/car-models")
+    public String listCarModels(Model model) {
+        model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
+        return "admin/car-model/list";
+    }
+
+    @PostMapping("/car-models")
+    public String createCarModel(@RequestParam String brand,
+                                 @RequestParam String modelName,
+                                 @RequestParam Integer year,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            CarModel carModel = new CarModel();
+            carModel.setBrand(brand.trim());
+            carModel.setModelName(modelName.trim());
+            carModel.setYear(year);
+            carModelRepository.save(carModel);
+            redirectAttributes.addFlashAttribute("successMessage", "Them dong xe thanh cong!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Co loi khi them dong xe: " + e.getMessage());
+        }
+        return "redirect:/admin/car-models";
+    }
+
+    @PostMapping("/car-models/delete")
+    public String deleteCarModel(@RequestParam Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            carModelRepository.deleteById(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xoa dong xe thanh cong!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Co loi khi xoa dong xe: " + e.getMessage());
+        }
+        return "redirect:/admin/car-models";
     }
 
     @GetMapping("/categories/create")
@@ -124,7 +213,7 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm danh mục: " + e.getMessage());
         }
-        return "redirect:/admin#products";
+        return "redirect:/admin/categories";
     }
 
     @GetMapping("/categories/edit/{id}")
@@ -164,25 +253,44 @@ public class AdminController {
     }
 
     @GetMapping("/products")
-    public String listProducts(Model model) {
-        model.addAttribute("products", productRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
+    public String listProducts(@RequestParam(required = false) Integer categoryId,
+                               @RequestParam(required = false) String keyword,
+                               @RequestParam(required = false) Integer carModelId,
+                               @RequestParam(required = false) String brand,
+                               @RequestParam(required = false) String modelName,
+                               @RequestParam(required = false) Integer year,
+                               Model model) {
+        List<Product> products = productService.findAdminProductsPaged(categoryId, keyword, carModelId, brand, modelName, year,
+                PageRequest.of(0, 500, Sort.by(Sort.Direction.ASC, "id"))).getContent();
+        model.addAttribute("products", products);
         model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "categoryName")));
+        model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
+        model.addAttribute("carBrands", carModelRepository.findDistinctBrands());
+        model.addAttribute("selectedCategoryId", categoryId);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedCarModelId", carModelId);
+        model.addAttribute("selectedBrand", brand);
+        model.addAttribute("selectedModelName", modelName);
+        model.addAttribute("selectedYear", year);
         return "admin/product/list";
     }
 
     @GetMapping("/products/create")
     public String createProductForm(Model model) {
         model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "categoryName")));
+        model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
         return "admin/product/create";
     }
 
     @PostMapping("/products/create")
     public String createProductSubmit(@RequestParam Integer categoryId,
-                                      @RequestParam String productName,
+                                      @RequestParam("productName") String name,
+                                      @RequestParam(required = false) String sku,
                                       @RequestParam(required = false) String description,
                                       @RequestParam BigDecimal price,
-                                      @RequestParam Integer stockQuantity,
+                                      @RequestParam("stockQuantity") Integer physicalStock,
                                       @RequestParam(required = false) String imageUrl,
+                                      @RequestParam(required = false) List<Integer> carModelIds,
                                       @RequestParam(defaultValue = "ACTIVE") String status,
                                       RedirectAttributes redirectAttributes) {
         try {
@@ -190,12 +298,15 @@ public class AdminController {
                     .orElseThrow(() -> new RuntimeException("Category not found"));
             Product product = new Product();
             product.setCategory(category);
-            product.setProductName(productName);
+            product.setName(name);
+            product.setSku((sku == null || sku.isBlank()) ? generateSku(name) : sku.trim());
             product.setDescription(description);
             product.setPrice(price);
-            product.setStockQuantity(stockQuantity);
+            product.setPhysicalStock(physicalStock);
             product.setImageUrl(imageUrl);
-            product.setStatus(status);
+            product.setStatus(Enums.ProductStatus.valueOf(status));
+            product.getCompatibleCarModels().clear();
+            product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productRepository.save(product);
             redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công!");
         } catch (Exception e) {
@@ -209,17 +320,20 @@ public class AdminController {
         model.addAttribute("product", productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found")));
         model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "categoryName")));
+        model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
         return "admin/product/edit";
     }
 
     @PostMapping("/products/edit/{id}")
     public String editProductSubmit(@PathVariable Integer id,
                                     @RequestParam Integer categoryId,
-                                    @RequestParam String productName,
+                                    @RequestParam("productName") String name,
+                                    @RequestParam(required = false) String sku,
                                     @RequestParam(required = false) String description,
                                     @RequestParam BigDecimal price,
-                                    @RequestParam Integer stockQuantity,
+                                    @RequestParam("stockQuantity") Integer physicalStock,
                                     @RequestParam(required = false) String imageUrl,
+                                    @RequestParam(required = false) List<Integer> carModelIds,
                                     @RequestParam(defaultValue = "ACTIVE") String status,
                                     RedirectAttributes redirectAttributes) {
         try {
@@ -228,12 +342,15 @@ public class AdminController {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("Category not found"));
             product.setCategory(category);
-            product.setProductName(productName);
+            product.setName(name);
+            product.setSku((sku == null || sku.isBlank()) ? product.getSku() : sku.trim());
             product.setDescription(description);
             product.setPrice(price);
-            product.setStockQuantity(stockQuantity);
+            product.setPhysicalStock(physicalStock);
             product.setImageUrl(imageUrl);
-            product.setStatus(status);
+            product.setStatus(Enums.ProductStatus.valueOf(status));
+            product.getCompatibleCarModels().clear();
+            product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productRepository.save(product);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật sản phẩm thành công!");
         } catch (Exception e) {
@@ -255,10 +372,11 @@ public class AdminController {
 
     @PostMapping("/products")
     public String createProduct(@RequestParam Integer categoryId,
-                                @RequestParam String productName,
+                                @RequestParam String name,
+                                @RequestParam String sku,
                                 @RequestParam(required = false) String description,
                                 @RequestParam BigDecimal price,
-                                @RequestParam Integer stockQuantity,
+                                @RequestParam Integer physicalStock,
                                 @RequestParam(required = false) String imageUrl,
                                 @RequestParam(defaultValue = "ACTIVE") String status,
                                 RedirectAttributes redirectAttributes) {
@@ -267,41 +385,47 @@ public class AdminController {
                     .orElseThrow(() -> new RuntimeException("Category not found"));
             Product product = new Product();
             product.setCategory(category);
-            product.setProductName(productName);
+            product.setName(name);
+            product.setSku(sku);
             product.setDescription(description);
             product.setPrice(price);
-            product.setStockQuantity(stockQuantity);
+            product.setPhysicalStock(physicalStock);
             product.setImageUrl(imageUrl);
-            product.setStatus(status);
+            product.setStatus(Enums.ProductStatus.valueOf(status));
             productRepository.save(product);
             redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm sản phẩm: " + e.getMessage());
         }
-        return "redirect:/admin#products";
+        return "redirect:/admin/products";
     }
 
     @PostMapping("/services")
-    public String createService(@RequestParam String serviceName,
+    public String createService(@RequestParam String name,
                                 @RequestParam(required = false) String description,
-                                @RequestParam BigDecimal price,
+                                @RequestParam BigDecimal minPrice,
+                                @RequestParam BigDecimal maxPrice,
+                                @RequestParam int duration,
                                 RedirectAttributes redirectAttributes) {
         try {
             com.hsf302.carshowroom.entity.Service service = new com.hsf302.carshowroom.entity.Service();
-            service.setServiceName(serviceName);
+            service.setServiceName(name);
             service.setDescription(description);
-            service.setPrice(price);
+            service.setMinPrice(minPrice);
+            service.setMaxPrice(maxPrice);
+            service.setDurationMinutes(duration);
+            service.setStatus(Enums.ServiceStatus.ACTIVE);
             serviceRepository.save(service);
             redirectAttributes.addFlashAttribute("successMessage", "Thêm dịch vụ thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm dịch vụ: " + e.getMessage());
         }
-        return "redirect:/admin#services";
+        return "redirect:/admin/services";
     }
 
     @GetMapping("/services")
     public String listServices(Model model) {
-        model.addAttribute("services", serviceRepository.findAllByOrderByServiceNameAsc());
+        model.addAttribute("services", serviceRepository.findAll(Sort.by(Sort.Direction.ASC, "serviceName")));
         return "admin/service/list";
     }
 
@@ -336,7 +460,9 @@ public class AdminController {
         ServiceForm form = new ServiceForm();
         form.setServiceName(service.getServiceName());
         form.setDescription(service.getDescription());
-        form.setPrice(service.getPrice());
+        form.setMinPrice(service.getMinPrice());
+        form.setMaxPrice(service.getMaxPrice());
+        form.setDurationMinutes(service.getDurationMinutes());
         model.addAttribute("service", service);
         model.addAttribute("serviceForm", form);
         return "admin/service/edit";
@@ -377,7 +503,7 @@ public class AdminController {
 
     @GetMapping("/bookings")
     public String listBookings(Model model) {
-        List<Booking> bookings = bookingRepository.findAllByOrderByBookingDateDesc();
+        List<Booking> bookings = bookingRepository.findAll(Sort.by(Sort.Direction.DESC, "bookingDate"));
         model.addAttribute("bookings", bookings);
         model.addAttribute("bookingServices", buildBookingServices(bookings));
         return "admin/booking/list";
@@ -388,7 +514,7 @@ public class AdminController {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
         model.addAttribute("booking", booking);
-        model.addAttribute("bookingDetails", bookingDetailRepository.findByBookingId(id));
+        model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(id));
         return "admin/booking/detail";
     }
 
@@ -398,43 +524,37 @@ public class AdminController {
         try {
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new RuntimeException("Product not found"));
-            product.setStatus(status);
+            product.setStatus(Enums.ProductStatus.valueOf(status));
             productRepository.save(product);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái sản phẩm thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
         }
-        return "redirect:/admin#products";
+        return "redirect:/admin/products";
     }
 
     @PostMapping("/orders/status")
     public String updateOrderStatus(@RequestParam Integer orderId, @RequestParam String status,
                                     RedirectAttributes redirectAttributes) {
         try {
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Order not found"));
-            order.setStatus(status);
-            orderRepository.save(order);
+            orderService.updateOrderStatus(orderId, status);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
         }
-        return "redirect:/admin#orders";
+        return "redirect:/admin/orders";
     }
 
     @PostMapping("/bookings/status")
     public String updateBookingStatus(@RequestParam Integer bookingId, @RequestParam String status,
                                       RedirectAttributes redirectAttributes) {
         try {
-            Booking booking = bookingRepository.findById(bookingId)
-                    .orElseThrow(() -> new RuntimeException("Booking not found"));
-            booking.setStatus(status);
-            bookingRepository.save(booking);
+            bookingService.updateStatus(bookingId, status);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái lịch hẹn thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
         }
-        return "redirect:/admin#bookings";
+        return "redirect:/admin/bookings";
     }
 
     @GetMapping("/users")
@@ -520,8 +640,8 @@ public class AdminController {
     private Map<Integer, String> buildOrderItems(List<Order> orders) {
         return orders.stream().collect(Collectors.toMap(
                 Order::getId,
-                order -> orderDetailRepository.findByOrderId(order.getId()).stream()
-                        .map(detail -> detail.getProduct().getProductName() + " x" + detail.getQuantity())
+                order -> orderItemRepository.findByOrderId(order.getId()).stream()
+                        .map(detail -> detail.getProduct().getName() + " x" + detail.getQuantity())
                         .collect(Collectors.joining(", "))
         ));
     }
@@ -529,10 +649,27 @@ public class AdminController {
     private Map<Integer, String> buildBookingServices(List<Booking> bookings) {
         return bookings.stream().collect(Collectors.toMap(
                 Booking::getId,
-                booking -> bookingDetailRepository.findByBookingId(booking.getId()).stream()
-                        .map(detail -> detail.getService().getServiceName())
+                booking -> bookingServiceRepository.findByBookingId(booking.getId()).stream()
+                        .map(service -> service.getServiceNameSnapshot())
                         .collect(Collectors.joining(", "))
         ));
+    }
+
+    private List<CarModel> resolveCarModels(List<Integer> carModelIds) {
+        if (carModelIds == null || carModelIds.isEmpty()) {
+            return List.of();
+        }
+        return carModelRepository.findAllById(carModelIds);
+    }
+
+    private String generateSku(String productName) {
+        String base = productName == null ? "PART" : productName.trim().toUpperCase()
+                .replaceAll("[^A-Z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+        if (base.isBlank()) {
+            base = "PART";
+        }
+        return base + "-" + System.currentTimeMillis();
     }
 
 
@@ -553,8 +690,8 @@ public class AdminController {
         for (int i = 5; i >= 0; i--) {
             YearMonth month = currentMonth.minusMonths(i);
             counts.add(orders.stream()
-                    .filter(order -> order.getOrderDate() != null)
-                    .filter(order -> YearMonth.from(order.getOrderDate().atZone(zoneId)).equals(month))
+                    .filter(order -> order.getCreatedAt() != null)
+                    .filter(order -> YearMonth.from(order.getCreatedAt().atZone(zoneId)).equals(month))
                     .count());
         }
         return counts;
@@ -562,30 +699,31 @@ public class AdminController {
 
     private BigDecimal calculateOrderRevenue(List<Order> orders) {
         return orders.stream()
-                .filter(order -> "DELIVERED".equalsIgnoreCase(order.getStatus()))
-                .map(Order::getTotalAmount)
+                .filter(order -> Enums.OrderStatus.COMPLETED.equals(order.getOrderStatus()))
+                .map(Order::getProductTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private BigDecimal calculateBookingRevenue(List<Booking> bookings) {
         return bookings.stream()
-                .filter(booking -> "COMPLETED".equalsIgnoreCase(booking.getStatus()))
-                .flatMap(booking -> bookingDetailRepository.findByBookingId(booking.getId()).stream())
-                .map(detail -> detail.getActualPrice() == null ? BigDecimal.ZERO : detail.getActualPrice())
+                .filter(booking -> Enums.BookingStatus.COMPLETED.equals(booking.getBookingStatus()))
+                .map(booking -> booking.getFinalAmount() != null ? booking.getFinalAmount() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private void fillService(com.hsf302.carshowroom.entity.Service service, ServiceForm form) {
         service.setServiceName(form.getServiceName());
         service.setDescription(form.getDescription());
-        service.setPrice(form.getPrice());
+        service.setMinPrice(form.getMinPrice());
+        service.setMaxPrice(form.getMaxPrice());
+        service.setDurationMinutes(form.getDurationMinutes());
     }
     @GetMapping("/orders")
     public String listOrders(@RequestParam(value = "status", required = false) String status, Model model) {
-        List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "orderDate"));
+        List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         if (status != null && !status.isBlank()) {
             orders = orders.stream()
-                    .filter(order -> status.equalsIgnoreCase(order.getStatus()))
+                    .filter(order -> status.equalsIgnoreCase(order.getOrderStatus().name()))
                     .collect(Collectors.toList());
         }
         model.addAttribute("orders", orders);
@@ -597,7 +735,7 @@ public class AdminController {
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Integer id, Model model) {
         model.addAttribute("order", orderService.getOrderById(id));
-        model.addAttribute("orderDetails", orderDetailRepository.findByOrderId(id));
+        model.addAttribute("orderDetails", orderItemRepository.findByOrderId(id));
         return "admin/order/detail";
     }
 

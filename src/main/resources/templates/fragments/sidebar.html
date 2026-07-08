@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!-- 1. Sidebar lọc danh mục cho trang Shop -->
 <aside th:fragment="shopSidebar" class="col-lg-3 col-xl-2 apex-sidebar p-3 p-md-4 border-end bg-light min-vh-100">
     <div class="surface-card p-3 mb-4 bg-primary text-white rounded shadow-sm">
-        <div class="small opacity-75">DANH MỤC SẢN PHẨM</div>
-        <div class="fw-bold fs-6">Phụ Tùng Ô Tô</div>
+        <div class="small opacity-75">DANH MUC SAN PHAM</div>
+        <div class="fw-bold fs-6">Phu Tung O To</div>
     </div>
     <div class="list-group list-group-flush rounded shadow-sm">
         <a class="list-group-item list-group-item-action d-flex align-items-center"
            th:classappend="${selectedCategoryId == null} ? 'active fw-semibold'" th:href="@{/shop}">
-            <i class="bi bi-grid me-2"></i>Tất cả danh mục
+            <i class="bi bi-grid me-2"></i>Tat ca danh muc
         </a>
         <a class="list-group-item list-group-item-action d-flex align-items-center justify-content-between"
            th:each="category : ${categories}"
@@ -24,58 +23,116 @@
     </div>
 </aside>
 
-<!-- 2. Unified sidebar for Admin Panel -->
 <aside th:fragment="adminSidebar(activeMenu)" class="col-lg-3 col-xl-2 ops-sidebar p-3 p-lg-4">
     <div class="admin-brand fw-bold">
         <i class="bi bi-shield-lock me-2"></i>Admin Panel
     </div>
     <nav class="d-grid gap-2">
         <a th:classappend="${activeMenu == 'dashboard'} ? 'active'" th:href="@{/admin}">
-            <i class="bi bi-speedometer2"></i>Tổng quan
+            <i class="bi bi-speedometer2"></i>Tong quan
         </a>
         <a th:classappend="${activeMenu == 'users'} ? 'active'" th:href="@{/admin/users}">
-            <i class="bi bi-people"></i>Người dùng
+            <i class="bi bi-people"></i>Nguoi dung
         </a>
-        <a th:classappend="${activeMenu == 'categories'} ? 'active'" th:href="@{/admin#products}">
-            <i class="bi bi-tags"></i>Danh mục
+        <a th:classappend="${activeMenu == 'categories'} ? 'active'" th:href="@{/admin/categories}">
+            <i class="bi bi-tags"></i>Danh muc
         </a>
-        <a th:classappend="${activeMenu == 'products'} ? 'active'" th:href="@{/admin#products}">
-            <i class="bi bi-box-seam"></i>Sản phẩm
+        <a th:classappend="${activeMenu == 'products'} ? 'active'" th:href="@{/admin/products}">
+            <i class="bi bi-box-seam"></i>San pham
         </a>
         <a th:classappend="${activeMenu == 'services'} ? 'active'" th:href="@{/admin/services}">
-            <i class="bi bi-tools"></i>Dịch vụ sửa xe
+            <i class="bi bi-tools"></i>Dich vu sua xe
+        </a>
+        <a th:classappend="${activeMenu == 'car-models'} ? 'active'" th:href="@{/admin/car-models}">
+            <i class="bi bi-car-front"></i>Dong xe catalog
         </a>
         <a th:classappend="${activeMenu == 'orders'} ? 'active'" th:href="@{/admin/orders}">
-            <i class="bi bi-cart-check"></i>Đơn hàng
+            <i class="bi bi-cart-check"></i>Don hang
         </a>
         <a th:classappend="${activeMenu == 'bookings'} ? 'active'" th:href="@{/admin/bookings}">
-            <i class="bi bi-calendar-check"></i>Lịch đặt sửa
+            <i class="bi bi-calendar-check"></i>Lich dat sua
         </a>
     </nav>
 </aside>
-<!-- 3. Sidebar điều hướng cho Account Khách hàng -->
+
+<nav th:fragment="adminTabs(activeMenu)" class="admin-tabbar nav nav-pills gap-2 mb-4">
+    <a class="nav-link px-3 py-2"
+       th:classappend="${activeMenu == 'dashboard'} ? 'active fw-semibold'"
+       th:href="@{/admin}">
+        <i class="bi bi-speedometer2 me-2"></i>Tong quan
+    </a>
+    <a class="nav-link px-3 py-2"
+       th:classappend="${activeMenu == 'products'} ? 'active fw-semibold'"
+       th:href="@{/admin/products}">
+        <i class="bi bi-box-seam me-2"></i>San pham
+    </a>
+    <a class="nav-link px-3 py-2"
+       th:classappend="${activeMenu == 'categories'} ? 'active fw-semibold'"
+       th:href="@{/admin/categories}">
+        <i class="bi bi-tags me-2"></i>Danh muc
+    </a>
+    <a class="nav-link px-3 py-2"
+       th:classappend="${activeMenu == 'services'} ? 'active fw-semibold'"
+       th:href="@{/admin/services}">
+        <i class="bi bi-tools me-2"></i>Dich vu booking
+    </a>
+    <a class="nav-link px-3 py-2"
+       th:classappend="${activeMenu == 'bookings'} ? 'active fw-semibold'"
+       th:href="@{/admin/bookings}">
+        <i class="bi bi-calendar-check me-2"></i>Lich booking
+    </a>
+</nav>
+
 <aside th:fragment="accountSidebar(activeTab)" class="col-lg-3 mb-4">
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
         <div class="card-body bg-primary text-white p-4 text-center">
             <i class="bi bi-person-circle display-4 mb-2 d-block"></i>
-            <h5 class="fw-bold mb-0" th:text="${currentUser != null ? currentUser.fullName : 'Tài khoản'}">Họ tên</h5>
+            <h5 class="fw-bold mb-0" th:text="${currentUser != null ? currentUser.fullName : 'Tai khoan'}">Ho ten</h5>
             <small class="opacity-75" th:text="${currentUser != null ? currentUser.email : ''}">email@domain.com</small>
         </div>
         <div class="list-group list-group-flush">
             <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'profile'} ? 'active fw-semibold'" th:href="@{/account}">
-                <i class="bi bi-person me-2"></i>Hồ sơ của tôi
+                <i class="bi bi-person me-2"></i>Ho so cua toi
             </a>
             <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'orders'} ? 'active fw-semibold'" th:href="@{/orders}">
-                <i class="bi bi-bag me-2"></i>Đơn hàng phụ tùng
+                <i class="bi bi-bag me-2"></i>Don hang phu tung
             </a>
-            <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'bookings'} ? 'active fw-semibold'" th:href="@{/booking/my-bookings}">
-                <i class="bi bi-calendar3 me-2"></i>Lịch đặt sửa xe
+            <a class="list-group-item list-group-item-action p-3"
+               th:classappend="${activeTab == 'booking-create' or activeTab == 'bookings'} ? 'active fw-semibold'"
+               th:href="@{/booking/create}">
+                <i class="bi bi-calendar-check me-2"></i>Lich sua xe
             </a>
             <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'vehicles'} ? 'active fw-semibold'" th:href="@{/vehicles}">
-                <i class="bi bi-car-front me-2"></i>Xe của tôi
+                <i class="bi bi-car-front me-2"></i>Xe cua toi
             </a>
         </div>
     </div>
 </aside>
+
+<nav th:fragment="bookingTabs(activeTab)" class="booking-tabbar nav nav-pills gap-2 mb-4">
+    <a class="nav-link px-3 py-2"
+       th:classappend="${activeTab == 'create'} ? 'active fw-semibold'"
+       th:href="@{/booking/create}">
+        <i class="bi bi-calendar-plus me-2"></i>Dat lich
+    </a>
+    <a class="nav-link px-3 py-2"
+       th:classappend="${activeTab == 'history'} ? 'active fw-semibold'"
+       th:href="@{/booking/my-bookings}">
+        <i class="bi bi-clock-history me-2"></i>Lich su
+    </a>
+</nav>
+
+<nav th:fragment="historyTabs(activeTab)" class="booking-tabbar nav nav-pills gap-2 mb-4">
+    <a class="nav-link px-3 py-2"
+       th:classappend="${activeTab == 'orders'} ? 'active fw-semibold'"
+       th:href="@{/orders}">
+        <i class="bi bi-bag-check me-2"></i>Don phu tung
+    </a>
+    <a class="nav-link px-3 py-2"
+       th:classappend="${activeTab == 'bookings'} ? 'active fw-semibold'"
+       th:href="@{/booking/my-bookings}">
+        <i class="bi bi-calendar-check me-2"></i>Lich sua xe
+    </a>
+</nav>
 </body>
 </html>

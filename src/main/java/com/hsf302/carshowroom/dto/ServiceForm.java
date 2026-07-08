@@ -20,5 +20,12 @@ public class ServiceForm {
 
     @NotNull
     @DecimalMin("0.00")
-    private BigDecimal price;
+    private BigDecimal minPrice;
+
+    @NotNull
+    @DecimalMin("0.00")
+    private BigDecimal maxPrice;
+
+    @NotNull
+    private Integer durationMinutes;
 }

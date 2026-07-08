@@ -1,56 +1,77 @@
 package com.hsf302.carshowroom.entity;
 
+import com.hsf302.carshowroom.common.Enums.OrderStatus;
+import com.hsf302.carshowroom.common.Enums.OrderType;
+import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.Nationalized;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "orders")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_id", nullable = false)
+    @Column(name = "order_id")
     private Integer id;
 
-    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_order_id")
+    private Order parentOrder;
+
+    @OneToMany(mappedBy = "parentOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> subOrders = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @NotNull
-    @ColumnDefault("sysdatetime()")
-    @Column(name = "order_date", nullable = false)
-    private Instant orderDate;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_type", nullable = false)
+    private OrderType orderType;
 
-    @NotNull
-    @ColumnDefault("0")
-    @Column(name = "total_amount", nullable = false, precision = 18, scale = 2)
-    private BigDecimal totalAmount;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", nullable = false)
+    private OrderStatus orderStatus;
 
-    @Size(max = 255)
-    @NotNull
-    @Nationalized
-    @Column(name = "shipping_address", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false)
+    private PaymentStatus paymentStatus;
+
+    @Column(name = "product_total", nullable = false)
+    private BigDecimal productTotal = BigDecimal.ZERO;
+
+    @Column(name = "deposit_amount", nullable = false)
+    private BigDecimal depositAmount = BigDecimal.ZERO;
+
+    @Column(name = "remaining_amount", nullable = false)
+    private BigDecimal remainingAmount = BigDecimal.ZERO;
+    
+    @Column(name = "shipping_address")
     private String shippingAddress;
 
-    @Size(max = 50)
-    @NotNull
-    @Nationalized
-    @ColumnDefault("'PENDING'")
-    @Column(name = "status", nullable = false, length = 50)
-    private String status;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems = new ArrayList<>();
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderDetail> orderDetail;
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }
