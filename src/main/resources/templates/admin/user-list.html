@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Quản lý người dùng | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('User Management | GearShift Pro')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments :: navbar('admin')}"></div>
 
@@ -11,11 +11,11 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div>
-                    <h1 class="admin-page-title mb-1">Quản lý người dùng</h1>
-                    <p class="text-secondary mb-0">Tìm kiếm, lọc vai trò, phân trang và quản lý trạng thái tài khoản.</p>
+                    <h1 class="admin-page-title mb-1">User Management</h1>
+                    <p class="text-secondary mb-0">Search, filter by role, paginate, and manage account statuses.</p>
                 </div>
                 <a class="btn btn-primary align-self-start" th:href="@{/admin/users/create}">
-                    <i class="bi bi-person-plus me-2"></i>Thêm người dùng
+                    <i class="bi bi-person-plus me-2"></i>Add User
                 </a>
             </div>
 
@@ -23,8 +23,7 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-lg-4">
                         <label class="form-label" for="keyword">Search</label>
-                        <input class="form-control" id="keyword" name="keyword" type="search"
-                               placeholder="Name or email" th:value="${keyword}">
+                        <input class="form-control" id="keyword" name="keyword" type="search" placeholder="Name or email" th:value="${keyword}">
                     </div>
                     <div class="col-sm-6 col-lg-2">
                         <label class="form-label" for="role">Role</label>
@@ -54,36 +53,43 @@
                     </div>
                 </div>
             </form>
-            <div class="surface-card p-0 overflow-hidden">
+
+            <div class="admin-table-card p-0 overflow-hidden">
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
                         <thead class="table-light">
                         <tr>
-                            <th>Mã</th>
-                            <th>Người dùng</th>
-                            <th>Số điện thoại</th>
-                            <th>Vai trò</th>
-                            <th>Trạng thái</th>
-                            <th class="text-end">Thao tác</th>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Phone</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(users)}">
-                            <td colspan="6" class="text-center text-secondary py-5">
-                                No users found for the selected filters.
+                            <td colspan="6" class="gs-empty-state">
+                                <div class="gs-empty-state-icon"><i class="bi bi-people"></i></div>
+                                <div class="gs-empty-state-title">No users found</div>
+                                <div class="gs-empty-state-text">No users found for the selected filters.</div>
                             </td>
                         </tr>
                         <tr th:each="user : ${users}">
-                            <td class="fw-bold" th:text="${user.id}">1</td>
+                            <td class="fw-bold gs-mono" th:text="${user.id}">1</td>
                             <td>
                                 <div class="fw-bold" th:text="${user.fullName}">User</div>
                                 <div class="small text-secondary" th:text="${user.email}">email@example.com</div>
                             </td>
-                            <td th:text="${user.phone ?: 'No phone'}">Phone</td>
-                            <td><span class="badge text-bg-light" th:text="${user.role}">CUSTOMER</span></td>
+                            <td class="gs-mono" th:text="${user.phone ?: 'No phone'}">Phone</td>
                             <td>
-                                <span class="badge"
-                                      th:classappend="${user.status == 'ACTIVE'} ? ' text-bg-success' : ' text-bg-secondary'"
+                                <span class="gs-badge"
+                                      th:classappend="${user.role == 'ADMIN'} ? 'gs-badge--danger' : (${user.role == 'STAFF'} ? 'gs-badge--info' : 'gs-badge--neutral')"
+                                      th:text="${user.role}">CUSTOMER</span>
+                            </td>
+                            <td>
+                                <span class="gs-badge"
+                                      th:classappend="${user.status == 'ACTIVE'} ? 'gs-badge--success' : (${user.status == 'INACTIVE'} ? 'gs-badge--neutral' : 'gs-badge--danger')"
                                       th:text="${user.status}">ACTIVE</span>
                             </td>
                             <td class="text-end table-action">
@@ -93,20 +99,16 @@
                                 <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/users/edit/{id}(id=${user.id})}">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a class="btn btn-outline-danger btn-sm"
-                                   th:if="${user.status == 'ACTIVE'}"
-                                   th:href="@{/admin/users/{id}/change-status(id=${user.id})}">Lock</a>
-                                <a class="btn btn-outline-success btn-sm"
-                                   th:if="${user.status != 'ACTIVE'}"
-                                   th:href="@{/admin/users/{id}/change-status(id=${user.id})}">Unlock</a>
+                                <a class="btn btn-outline-danger btn-sm" th:if="${user.status == 'ACTIVE'}" th:href="@{/admin/users/{id}/change-status(id=${user.id})}">Lock</a>
+                                <a class="btn btn-outline-success btn-sm" th:if="${user.status != 'ACTIVE'}" th:href="@{/admin/users/{id}/change-status(id=${user.id})}">Unlock</a>
                             </td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mt-4"
-                 th:if="${userPage != null}">
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mt-4" th:if="${userPage != null}">
                 <div class="text-secondary small">
                     Showing up to 10 users per page, <span th:text="${userPage.totalElements}">0</span> users found
                     <span th:if="${userPage.totalPages > 0}">
@@ -117,21 +119,15 @@
                 <nav aria-label="User pagination" th:if="${userPage.totalPages > 1}">
                     <ul class="pagination mb-0">
                         <li class="page-item" th:classappend="${userPage.first} ? 'disabled'">
-                            <a class="page-link"
-                               th:href="@{/admin/users(keyword=${keyword}, role=${selectedRole}, status=${selectedStatus}, page=${userPage.number - 1})}">
+                            <a class="page-link" th:href="@{/admin/users(keyword=${keyword}, role=${selectedRole}, status=${selectedStatus}, page=${userPage.number - 1})}">
                                 Previous
                             </a>
                         </li>
-                        <li class="page-item"
-                            th:each="pageNumber : ${#numbers.sequence(0, userPage.totalPages - 1)}"
-                            th:classappend="${pageNumber == userPage.number} ? 'active'">
-                            <a class="page-link"
-                               th:href="@{/admin/users(keyword=${keyword}, role=${selectedRole}, status=${selectedStatus}, page=${pageNumber})}"
-                               th:text="${pageNumber + 1}">1</a>
+                        <li class="page-item" th:each="pageNumber : ${#numbers.sequence(0, userPage.totalPages - 1)}" th:classappend="${pageNumber == userPage.number} ? 'active'">
+                            <a class="page-link" th:href="@{/admin/users(keyword=${keyword}, role=${selectedRole}, status=${selectedStatus}, page=${pageNumber})}" th:text="${pageNumber + 1}">1</a>
                         </li>
                         <li class="page-item" th:classappend="${userPage.last} ? 'disabled'">
-                            <a class="page-link"
-                               th:href="@{/admin/users(keyword=${keyword}, role=${selectedRole}, status=${selectedStatus}, page=${userPage.number + 1})}">
+                            <a class="page-link" th:href="@{/admin/users(keyword=${keyword}, role=${selectedRole}, status=${selectedStatus}, page=${userPage.number + 1})}">
                                 Next
                             </a>
                         </li>

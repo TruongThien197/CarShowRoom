@@ -17,7 +17,7 @@
         <section class="col-lg-9 col-xl-10 p-4 p-lg-5">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div>
-                    <h1 class="section-title mb-1">Staff Workspace</h1>
+                    <h1 class="gs-h1 mb-1">Staff Workspace</h1>
                     <p class="text-secondary mb-0">View and process customer bookings and product orders.</p>
                 </div>
                 <a class="btn btn-primary align-self-start" th:href="@{/staff}">
@@ -27,24 +27,24 @@
 
             <div class="row g-4 mb-4">
                 <div class="col-md-4">
-                    <div class="metric-card">
+                    <div class="metric-card gs-stripe-top--amber">
                         <div class="text-secondary">Bookings Pending</div>
-                        <div class="metric-value" th:text="${pendingBookings}">0</div>
-                        <span class="badge text-bg-warning">Confirm appointment</span>
+                        <div class="metric-value gs-mono" th:text="${pendingBookings}">0</div>
+                        <span class="gs-badge gs-badge--warning">Confirm appointment</span>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="metric-card">
+                    <div class="metric-card gs-stripe-top--info">
                         <div class="text-secondary">Orders Pending</div>
-                        <div class="metric-value" th:text="${pendingOrders}">0</div>
-                        <span class="badge text-bg-primary">Warehouse queue</span>
+                        <div class="metric-value gs-mono" th:text="${pendingOrders}">0</div>
+                        <span class="gs-badge gs-badge--info">Warehouse queue</span>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="metric-card">
+                    <div class="metric-card gs-stripe-top">
                         <div class="text-secondary">Bookings Completed</div>
-                        <div class="metric-value" th:text="${completedBookings}">0</div>
-                        <span class="badge text-bg-success">Service done</span>
+                        <div class="metric-value gs-mono" th:text="${completedBookings}">0</div>
+                        <span class="gs-badge gs-badge--success">Service done</span>
                     </div>
                 </div>
             </div>
@@ -52,59 +52,60 @@
             <div class="surface-card p-4 mb-4">
                 <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 align-items-xl-end">
                     <div>
-                        <h4 class="fw-bold mb-1"><i class="bi bi-funnel me-2 text-primary"></i>Loc dong xe catalog</h4>
-                        <p class="text-secondary mb-0">Dung de tra phu tung theo danh muc dong xe do staff/admin tao, khong lay xe ca nhan customer.</p>
+                        <h4 class="fw-bold mb-1"><i class="bi bi-funnel me-2 text-primary"></i>Filter catalog car models</h4>
+                        <p class="text-secondary mb-0">Use catalog car models created by staff/admin to filter parts, not customer-owned vehicles.</p>
                     </div>
                     <form class="row g-2 flex-grow-1 justify-content-xl-end" th:action="@{/products}" method="get">
                         <div class="col-md-3">
                             <select class="form-select" name="brand">
-                                <option value="">Chon hang xe</option>
+                                <option value="">Select brand</option>
                                 <option th:each="brand : ${carBrands}" th:value="${brand}" th:text="${brand}">Brand</option>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <select class="form-select" name="carModelId">
-                                <option value="">Chon dong xe</option>
+                                <option value="">Select car model</option>
                                 <option th:each="model : ${carModels}" th:value="${model.id}"
                                         th:text="${model.brand + ' ' + model.modelName + ' ' + model.year}">Model</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <input class="form-control" name="keyword" placeholder="Tu khoa phu tung">
+                            <input class="form-control" name="keyword" placeholder="Parts keyword">
                         </div>
                         <div class="col-md-2 d-grid">
-                            <button class="btn btn-primary" type="submit">Tim</button>
+                            <button class="btn btn-primary" type="submit">Search</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <div class="surface-card p-4 mb-4">
-                <h5 class="fw-bold mb-3"><i class="bi bi-car-front me-2 text-primary"></i>Them dong xe catalog</h5>
+                <h5 class="fw-bold mb-3"><i class="bi bi-car-front me-2 text-primary"></i>Add catalog car model</h5>
                 <form class="row g-2 align-items-end" th:action="@{/staff/car-models}" method="post">
                     <div class="col-md-4">
-                        <label class="form-label">Hang xe</label>
+                        <label class="form-label">Brand</label>
                         <input class="form-control" name="brand" placeholder="Toyota" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Dong xe</label>
+                        <label class="form-label">Model</label>
                         <input class="form-control" name="modelName" placeholder="Camry" required>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Doi xe</label>
+                        <label class="form-label">Year</label>
                         <input class="form-control" name="year" type="number" min="1900" placeholder="2024" required>
                     </div>
                     <div class="col-md-2 d-grid">
-                        <button class="btn btn-outline-primary" type="submit">Them</button>
+                        <button class="btn btn-outline-primary" type="submit">Add</button>
                     </div>
                 </form>
             </div>
 
-            <div id="bookings" class="surface-card p-4 mb-4">
-                <h4 class="fw-bold mb-3">Booking Queue</h4>
-                <div class="alert alert-light border" th:if="${#lists.isEmpty(bookings)}">No bookings yet.</div>
-                <div class="table-responsive" th:if="${!#lists.isEmpty(bookings)}">
-                    <table class="table align-middle">
+            <div id="bookings" class="admin-table-card p-0 overflow-hidden mb-4">
+                <div class="p-3 border-bottom">
+                    <h4 class="fw-bold mb-0"><i class="bi bi-calendar-check me-2 text-primary"></i>Booking Queue</h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
                         <thead class="table-light">
                         <tr>
                             <th>Booking</th>
@@ -117,18 +118,29 @@
                         </tr>
                         </thead>
                         <tbody>
+                        <tr th:if="${#lists.isEmpty(bookings)}">
+                            <td colspan="7" class="gs-empty-state">
+                                <div class="gs-empty-state-icon"><i class="bi bi-calendar-check"></i></div>
+                                <div class="gs-empty-state-title">No bookings yet</div>
+                                <div class="gs-empty-state-text">There are no bookings in the queue right now.</div>
+                            </td>
+                        </tr>
                         <tr th:each="booking : ${bookings}">
-                            <td><strong th:text="'BK-' + ${booking.id}">BK-1</strong></td>
+                            <td><strong class="gs-mono" th:text="'BK-' + ${booking.id}">BK-1</strong></td>
                             <td th:text="${booking.user.fullName}">Customer</td>
                             <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}">Vehicle</td>
-                            <td th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</td>
+                            <td class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</td>
                             <td th:text="${bookingServices[booking.id]}">Service</td>
-                            <td><span class="badge text-bg-primary" th:text="${booking.bookingStatus}">PENDING</span></td>
+                            <td>
+                                <span class="gs-badge"
+                                      th:classappend="${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${booking.bookingStatus.name() == 'CANCELED' or booking.bookingStatus.name() == 'EXPIRED_PAYMENT' or booking.bookingStatus.name() == 'EXPIRED_NO_SHOW'} ? 'gs-badge--danger' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS' or booking.bookingStatus.name() == 'PENDING_APPROVAL'} ? 'gs-badge--warning' : 'gs-badge--neutral')))"
+                                      th:text="${booking.bookingStatus}">PENDING</span>
+                            </td>
                             <td class="text-end">
                                 <form class="d-flex gap-2 justify-content-end" th:action="@{/staff/bookings/status}" method="post">
                                     <input type="hidden" name="bookingId" th:value="${booking.id}">
                                     <select class="form-select form-select-sm" name="status" style="max-width: 150px">
-                                        <option value="PENDING_DEPOSIT" th:selected="${booking.bookingStatus.name() == 'PENDING_DEPOSIT'}">PENDING_DEPOSIT</option>
+                                        <option value="PENDING_PAYMENT" th:selected="${booking.bookingStatus.name() == 'PENDING_PAYMENT'}">PENDING_PAYMENT</option>
                                         <option value="CONFIRMED" th:selected="${booking.bookingStatus.name() == 'CONFIRMED'}">CONFIRMED</option>
                                         <option value="IN_PROGRESS" th:selected="${booking.bookingStatus.name() == 'IN_PROGRESS'}">IN_PROGRESS</option>
                                         <option value="COMPLETED" th:selected="${booking.bookingStatus.name() == 'COMPLETED'}">COMPLETED</option>
@@ -143,10 +155,11 @@
                 </div>
             </div>
 
-            <div id="orders" class="surface-card p-4">
-                <h4 class="fw-bold mb-3">Order Fulfillment</h4>
-                <div class="alert alert-light border" th:if="${#lists.isEmpty(orders)}">No orders yet.</div>
-                <div class="table-responsive" th:if="${!#lists.isEmpty(orders)}">
+            <div id="orders" class="admin-table-card p-0 overflow-hidden">
+                <div class="p-3 border-bottom">
+                    <h4 class="fw-bold mb-0"><i class="bi bi-receipt-cutoff me-2 text-primary"></i>Order Fulfillment</h4>
+                </div>
+                <div class="table-responsive">
                     <table class="table align-middle mb-0">
                         <thead class="table-light">
                         <tr>
@@ -159,17 +172,28 @@
                         </tr>
                         </thead>
                         <tbody>
+                        <tr th:if="${#lists.isEmpty(orders)}">
+                            <td colspan="6" class="gs-empty-state">
+                                <div class="gs-empty-state-icon"><i class="bi bi-receipt-cutoff"></i></div>
+                                <div class="gs-empty-state-title">No orders yet</div>
+                                <div class="gs-empty-state-text">There are no orders in the queue right now.</div>
+                            </td>
+                        </tr>
                         <tr th:each="order : ${orders}">
-                            <td><strong th:text="'ORD-' + ${order.id}">ORD-1</strong></td>
+                            <td><strong class="gs-mono" th:text="'ORD-' + ${order.id}">ORD-1</strong></td>
                             <td th:text="${order.user.fullName}">Customer</td>
                             <td th:text="${orderItems[order.id]}">Items</td>
-                            <td><span class="badge text-bg-primary" th:text="${order.orderStatus}">PENDING</span></td>
-                            <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 2, 'POINT')}">$0</td>
+                            <td>
+                                <span class="gs-badge"
+                                      th:classappend="${order.orderStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${order.orderStatus.name() == 'CANCELED' or order.orderStatus.name() == 'EXPIRED_PAYMENT'} ? 'gs-badge--danger' : (${order.orderStatus.name() == 'PROCESSING' or order.orderStatus.name() == 'SHIPPING'} ? 'gs-badge--info' : 'gs-badge--neutral'))"
+                                      th:text="${order.orderStatus}">PENDING</span>
+                            </td>
+                            <td class="text-end fw-bold gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 2, 'POINT')}">$0</td>
                             <td class="text-end">
                                 <form class="d-flex gap-2 justify-content-end" th:action="@{/staff/orders/status}" method="post">
                                     <input type="hidden" name="orderId" th:value="${order.id}">
                                     <select class="form-select form-select-sm" name="status" style="max-width: 150px">
-                                        <option value="PENDING_DEPOSIT" th:selected="${order.orderStatus.name() == 'PENDING_DEPOSIT'}">PENDING_DEPOSIT</option>
+                                        <option value="PENDING_PAYMENT" th:selected="${order.orderStatus.name() == 'PENDING_PAYMENT'}">PENDING_PAYMENT</option>
                                         <option value="PROCESSING" th:selected="${order.orderStatus.name() == 'PROCESSING'}">PROCESSING</option>
                                         <option value="SHIPPING" th:selected="${order.orderStatus.name() == 'SHIPPING'}">SHIPPING</option>
                                         <option value="COMPLETED" th:selected="${order.orderStatus.name() == 'COMPLETED'}">COMPLETED</option>

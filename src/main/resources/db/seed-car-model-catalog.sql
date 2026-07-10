@@ -99,20 +99,20 @@ WHERE NOT EXISTS (
    Mercedes-Benz/Porsche apply to Engine Parts and Suspension. */
 
 INSERT INTO product_car_models (product_id, car_model_id)
-SELECT p.id, cm.car_model_id
-FROM products p
+SELECT p.product_id, cm.car_model_id
+FROM product p
 CROSS JOIN car_model cm
 WHERE cm.brand = N'BMW'
   AND NOT EXISTS (
       SELECT 1
       FROM product_car_models pcm
-      WHERE pcm.product_id = p.id
+      WHERE pcm.product_id = p.product_id
         AND pcm.car_model_id = cm.car_model_id
   );
 
 INSERT INTO product_car_models (product_id, car_model_id)
-SELECT p.id, cm.car_model_id
-FROM products p
+SELECT p.product_id, cm.car_model_id
+FROM product p
 JOIN category c ON c.category_id = p.category_id
 CROSS JOIN car_model cm
 WHERE c.category_name IN (N'Brakes', N'Oil & Fluids')
@@ -120,13 +120,13 @@ WHERE c.category_name IN (N'Brakes', N'Oil & Fluids')
   AND NOT EXISTS (
       SELECT 1
       FROM product_car_models pcm
-      WHERE pcm.product_id = p.id
+      WHERE pcm.product_id = p.product_id
         AND pcm.car_model_id = cm.car_model_id
   );
 
 INSERT INTO product_car_models (product_id, car_model_id)
-SELECT p.id, cm.car_model_id
-FROM products p
+SELECT p.product_id, cm.car_model_id
+FROM product p
 JOIN category c ON c.category_id = p.category_id
 CROSS JOIN car_model cm
 WHERE c.category_name IN (N'Engine Parts', N'Suspension')
@@ -134,7 +134,7 @@ WHERE c.category_name IN (N'Engine Parts', N'Suspension')
   AND NOT EXISTS (
       SELECT 1
       FROM product_car_models pcm
-      WHERE pcm.product_id = p.id
+      WHERE pcm.product_id = p.product_id
         AND pcm.car_model_id = cm.car_model_id
   );
 

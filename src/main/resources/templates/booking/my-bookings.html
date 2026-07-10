@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Lich dat cua toi | GearShift Pro')}"></head>
+<head th:replace="~{fragments/header :: head('My Bookings | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('booking')}"></div>
 
@@ -11,15 +11,16 @@
         <section class="col-lg-9">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
-                    <h1 class="section-title mb-1">Lich dat cua toi</h1>
-                    <p class="text-secondary mb-0">Theo doi trang thai lich sua xe cua ban.</p>
+                    <h1 class="gs-h1 section-title mb-1">My Bookings</h1>
+                    <p class="text-secondary mb-0">Track the status of your service bookings.</p>
                 </div>
             </div>
 
             <div th:replace="~{fragments/sidebar :: historyTabs('bookings')}"></div>
 
-            <div class="alert alert-light border" th:if="${#lists.isEmpty(bookings)}">
-                Ban chua co lich dat nao.
+            <div class="gs-empty-state surface-card" th:if="${#lists.isEmpty(bookings)}">
+                <i class="bi bi-calendar-x gs-empty-state-icon d-block"></i>
+                <div class="gs-empty-state-title">You have no bookings yet.</div>
             </div>
 
             <div class="surface-card p-0 overflow-hidden" th:if="${!#lists.isEmpty(bookings)}">
@@ -27,33 +28,37 @@
                     <table class="table align-middle mb-0">
                         <thead class="table-light">
                         <tr>
-                            <th>Ma</th>
-                            <th>Ngay</th>
-                            <th>Gio</th>
-                            <th>Dich vu</th>
-                            <th>Xe</th>
-                            <th>Trang thai</th>
-                            <th class="text-end">Thao tac</th>
+                            <th>Code</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Service</th>
+                            <th>Vehicle</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:each="booking : ${bookings}">
-                            <td class="fw-bold" th:text="'BK-' + ${booking.id}">BK-1</td>
-                            <td th:text="${booking.bookingDate}">2026-07-01</td>
-                            <td th:text="${booking.timeSlot}">09:30</td>
+                            <td class="fw-bold gs-mono" th:text="'BK-' + ${booking.id}">BK-1</td>
+                            <td class="gs-mono" th:text="${booking.bookingDate}">2026-07-01</td>
+                            <td class="gs-mono" th:text="${booking.timeSlot}">09:30</td>
                             <td th:text="${bookingServices[booking.id]}">Service</td>
-                            <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Chua chon'}">Vehicle</td>
-                            <td><span class="badge text-bg-primary" th:text="${booking.bookingStatus}">PENDING</span></td>
+                            <td class="gs-mono" th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}">Vehicle</td>
+                            <td>
+                                <span class="gs-badge"
+                                      th:classappend="${booking.bookingStatus.name() == 'PENDING_PAYMENT'} ? 'gs-badge--neutral' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS'} ? 'gs-badge--warning' : (${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : 'gs-badge--danger')))"
+                                      th:text="${booking.bookingStatus}">PENDING</span>
+                            </td>
                             <td class="text-end">
                                 <a class="btn btn-outline-primary btn-sm" th:href="@{/booking/{id}(id=${booking.id})}">
-                                    <i class="bi bi-eye me-1"></i>Chi tiet
+                                    <i class="bi bi-eye me-1"></i>Details
                                 </a>
                                 <button class="btn btn-outline-danger btn-sm"
                                         type="button"
                                         th:if="${booking.bookingStatus.name() != 'CANCELED' and booking.bookingStatus.name() != 'COMPLETED'}"
                                         data-bs-toggle="modal"
                                         th:attr="data-bs-target=${'#cancelBookingModal' + booking.id}">
-                                    Huy
+                                    Cancel
                                 </button>
                             </td>
                         </tr>
@@ -70,21 +75,21 @@
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Xac nhan huy booking</h5>
+                            <h5 class="modal-title">Confirm Booking Cancellation</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <p class="mb-2">Ban co chac chan muon huy lich dat nay khong?</p>
+                            <p class="mb-2">Are you sure you want to cancel this booking?</p>
                             <div class="small text-secondary">
-                                <div><strong>Ma booking:</strong> <span th:text="'BK-' + ${booking.id}">BK-1</span></div>
-                                <div><strong>Thoi gian:</strong> <span th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</span></div>
-                                <div><strong>Dich vu:</strong> <span th:text="${bookingServices[booking.id]}">Service</span></div>
+                                <div><strong>Booking code:</strong> <span th:text="'BK-' + ${booking.id}">BK-1</span></div>
+                                <div><strong>Time:</strong> <span th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</span></div>
+                                <div><strong>Service:</strong> <span th:text="${bookingServices[booking.id]}">Service</span></div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Khong</button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">No</button>
                             <form th:action="@{/booking/{id}/cancel(id=${booking.id})}" method="post">
-                                <button class="btn btn-danger" type="submit">Xac nhan huy</button>
+                                <button class="btn btn-danger" type="submit">Confirm Cancellation</button>
                             </form>
                         </div>
                     </div>

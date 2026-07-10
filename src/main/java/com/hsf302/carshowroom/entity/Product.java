@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Nationalized;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "products")
+@Table(name = "product")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,30 +25,34 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "product_id")
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @Column(nullable = false)
+    @Nationalized
+    @Column(name = "product_name", nullable = false, length = 150)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true)
     private String sku;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 18, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "physical_stock", nullable = false)
+    @Column(name = "stock_quantity", nullable = false)
     private Integer physicalStock = 0;
 
-    @Column(name = "reserved_stock", nullable = false)
+    @Column(name = "reserved_stock")
     private Integer reservedStock = 0;
 
-    @Column(name = "image_url")
+    @Nationalized
+    @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    @Nationalized
     @Lob
     private String description;
 
@@ -60,23 +65,25 @@ public class Product {
     private Set<CarModel> compatibleCarModels = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Nationalized
+    @Column(nullable = false, length = 50)
     private ProductStatus status;
 
     @Version
+    @Column(nullable = true)
     private Long version;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false, nullable = true)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = true)
     private LocalDateTime updatedAt;
 
     @Transient
     public int getAvailableStock() {
-        return physicalStock - reservedStock;
+        return nullToZero(physicalStock) - nullToZero(reservedStock);
     }
 
     @Transient
@@ -87,5 +94,9 @@ public class Product {
     @Transient
     public Integer getStockQuantity() {
         return getAvailableStock();
+    }
+
+    private int nullToZero(Integer value) {
+        return value == null ? 0 : value;
     }
 }

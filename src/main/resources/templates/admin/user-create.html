@@ -1,55 +1,60 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Add User | GearShift Pro')}"></head>
-<body class="ops-shell">
+<body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments :: navbar('admin')}"></div>
 
-<main class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="section-title mb-1">Add User</h1>
-            <p class="text-secondary mb-0">Create customer, staff, or admin accounts.</p>
-        </div>
-        <a class="btn btn-outline-secondary" th:href="@{/admin/users}">Back</a>
-    </div>
+<main class="container-fluid admin-page">
+    <div class="row min-vh-100">
+        <aside th:replace="~{fragments/sidebar :: adminSidebar('users')}"></aside>
+        <section class="col-lg-9 col-xl-10 admin-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="admin-page-title mb-1">Add User</h1>
+                    <p class="text-secondary mb-0">Create customer, staff, or admin accounts.</p>
+                </div>
+                <a class="btn btn-outline-secondary" th:href="@{/admin/users}">Back</a>
+            </div>
 
-    <form class="surface-card p-4 p-md-5" th:action="@{/admin/users/create}" method="post">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label class="form-label">Full name</label>
-                <input class="form-control" type="text" name="txtFullName" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Email</label>
-                <input class="form-control" type="email" name="txtEmail" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Password</label>
-                <input class="form-control" type="password" name="txtPassword" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Phone</label>
-                <input class="form-control" type="text" name="txtPhone">
-            </div>
-            <div class="col-md-8">
-                <label class="form-label">Address</label>
-                <input class="form-control" type="text" name="txtAddress">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Role</label>
-                <select class="form-select" name="role">
-                    <option value="CUSTOMER">CUSTOMER</option>
-                    <option value="STAFF">STAFF</option>
-                    <option value="ADMIN">ADMIN</option>
-                </select>
-            </div>
-            <div class="col-12">
-                <button class="btn btn-primary btn-lg" type="submit">
-                    <i class="bi bi-person-plus me-2"></i>Create User
-                </button>
-            </div>
-        </div>
-    </form>
+            <form class="surface-card gs-stripe-top p-4 p-md-5" th:action="@{/admin/users/create}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Full name</label>
+                        <input class="form-control" type="text" name="txtFullName" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input class="form-control" type="email" name="txtEmail" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Password</label>
+                        <input class="form-control" type="password" name="txtPassword" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone</label>
+                        <input class="form-control" type="text" name="txtPhone">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Address</label>
+                        <input class="form-control" type="text" name="txtAddress">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Role</label>
+                        <select class="form-select" name="role">
+                            <option value="CUSTOMER">CUSTOMER</option>
+                            <option value="STAFF">STAFF</option>
+                            <option value="ADMIN">ADMIN</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary btn-lg" type="submit">
+                            <i class="bi bi-person-plus me-2"></i>Create User
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </div>
 </main>
 
 <div th:replace="~{fragments :: scripts}"></div>

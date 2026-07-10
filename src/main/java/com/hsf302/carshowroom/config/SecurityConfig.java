@@ -20,6 +20,9 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth ->
                     auth.requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
+                            .requestMatchers("/payments/payos/return", "/payments/payos/cancel",
+                                    "/payments/payos/webhook").permitAll()
+                            .requestMatchers("/payments/payos/sync").hasRole("CUSTOMER")
                             .requestMatchers("/staff", "/staff/**").hasAnyRole("STAFF", "ADMIN")
                             .requestMatchers("/cart", "/cart/**").hasRole("CUSTOMER")
                             .requestMatchers("/orders", "/orders/**").hasRole("CUSTOMER")
@@ -32,7 +35,7 @@ public class SecurityConfig {
                             .anyRequest().permitAll())
             .exceptionHandling(exception -> exception
                     .authenticationEntryPoint((request, response, authException) ->
-                            response.sendRedirect("/auth/login"))
+                            response.sendRedirect("/auth/login?authRequired=true"))
                     .accessDeniedHandler((request, response, accessDeniedException) -> {
                         if (request.isUserInRole("ADMIN")) {
                             response.sendRedirect("/admin");

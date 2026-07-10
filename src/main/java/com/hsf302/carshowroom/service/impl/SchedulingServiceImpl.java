@@ -44,16 +44,16 @@ public class SchedulingServiceImpl implements SchedulingService {
     @Override
     public void validateSlot(Booking booking) {
         if (booking.getBookingDate() == null || booking.getStartTime() == null || booking.getEndTime() == null) {
-            throw new RuntimeException("Vui lòng chọn đầy đủ ngày và giờ hẹn.");
+            throw new RuntimeException("Please select a complete appointment date and time.");
         }
         if (booking.getBookingDate().isBefore(LocalDate.now())) {
-            throw new RuntimeException("Không thể đặt lịch trong quá khứ.");
+            throw new RuntimeException("You cannot book an appointment in the past.");
         }
         if (booking.getStartTime().isBefore(WORK_START) || booking.getEndTime().isAfter(WORK_END)) {
-            throw new RuntimeException("Slot nằm ngoài giờ làm việc của xưởng.");
+            throw new RuntimeException("This time slot is outside the workshop's business hours.");
         }
         if (hasCapacityConflict(booking)) {
-            throw new RuntimeException("Slot này đã hết công suất, vui lòng chọn giờ khác.");
+            throw new RuntimeException("This slot is fully booked. Please choose a different time.");
         }
     }
 
@@ -81,7 +81,7 @@ public class SchedulingServiceImpl implements SchedulingService {
 
     private boolean hasCapacityConflict(Booking booking) {
         List<BookingStatus> blockingStatuses = List.of(
-                BookingStatus.PENDING_DEPOSIT,
+                BookingStatus.PENDING_PAYMENT,
                 BookingStatus.CONFIRMED,
                 BookingStatus.IN_PROGRESS,
                 BookingStatus.PENDING_APPROVAL

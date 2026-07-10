@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -37,13 +36,13 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     @Transactional
     public Booking createBooking(User user, BookingForm form) {
         if (form.getBookingDate().isBefore(LocalDate.now())) {
-            throw new RuntimeException("Không thể đặt lịch trong quá khứ.");
+            throw new RuntimeException("You cannot book an appointment in the past.");
         }
 
         com.hsf302.carshowroom.entity.Service selectedService = serviceRepository.findById(form.getServiceId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ."));
+                .orElseThrow(() -> new RuntimeException("Service not found."));
         if (selectedService.getStatus() != ServiceStatus.ACTIVE) {
-            throw new RuntimeException("Dịch vụ hiện không khả dụng.");
+            throw new RuntimeException("This service is currently unavailable.");
         }
 
         LocalTime startTime = parseStartTime(form.getTimeSlot());
@@ -59,9 +58,8 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         booking.setTotalDurationMinutes(selectedService.getDurationMinutes());
         booking.setEstimatedMinAmount(selectedService.getMinPrice());
         booking.setEstimatedMaxAmount(selectedService.getMaxPrice());
-        booking.setDepositAmount(calculateDeposit(selectedService.getMinPrice()));
-        booking.setRemainingAmount(selectedService.getMinPrice().subtract(booking.getDepositAmount()));
-        booking.setBookingStatus(BookingStatus.PENDING_DEPOSIT);
+        booking.setFinalAmount(selectedService.getMinPrice());
+        booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
         booking.setPaymentStatus(PaymentStatus.PENDING);
         booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
         booking.setNotes(form.getNotes());
@@ -94,7 +92,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     public Booking getBookingDetail(User user, Integer bookingId) {
         Booking booking = getBookingDetail(bookingId);
         if (!booking.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Booking không thuộc tài khoản hiện tại.");
+            throw new RuntimeException("This booking does not belong to your account.");
         }
         return booking;
     }
@@ -102,7 +100,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     @Override
     public Booking getBookingDetail(Integer bookingId) {
         return bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy booking."));
+                .orElseThrow(() -> new RuntimeException("Booking not found."));
     }
 
     @Override
@@ -110,7 +108,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     public void cancelBooking(User user, Integer bookingId) {
         Booking booking = getBookingDetail(user, bookingId);
         if (booking.getBookingStatus() == BookingStatus.COMPLETED) {
-            throw new RuntimeException("Không thể hủy lịch đã hoàn tất.");
+            throw new RuntimeException("You cannot cancel a booking that has already been completed.");
         }
         booking.setBookingStatus(BookingStatus.CANCELED);
         bookingRepository.save(booking);
@@ -133,23 +131,19 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
             return null;
         }
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy xe."));
+                .orElseThrow(() -> new RuntimeException("Vehicle not found."));
         if (!vehicle.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Xe không thuộc tài khoản hiện tại.");
+            throw new RuntimeException("This vehicle does not belong to your account.");
         }
         return vehicle;
     }
 
     private LocalTime parseStartTime(String timeSlot) {
         if (timeSlot == null || timeSlot.isBlank()) {
-            throw new RuntimeException("Vui lòng chọn giờ hẹn.");
+            throw new RuntimeException("Please select an appointment time.");
         }
         String rawStart = timeSlot.split("-")[0].trim();
         return LocalTime.parse(rawStart);
     }
 
-    private BigDecimal calculateDeposit(BigDecimal subtotal) {
-        return subtotal.multiply(BigDecimal.valueOf(20))
-                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
-    }
 }

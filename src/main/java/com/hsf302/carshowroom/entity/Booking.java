@@ -62,14 +62,8 @@ public class Booking {
     @Column(name = "estimated_max_amount", nullable = false)
     private BigDecimal estimatedMaxAmount = BigDecimal.ZERO;
 
-    @Column(name = "deposit_amount", nullable = false)
-    private BigDecimal depositAmount = BigDecimal.ZERO;
-
     @Column(name = "final_amount")
     private BigDecimal finalAmount;
-
-    @Column(name = "remaining_amount")
-    private BigDecimal remainingAmount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "booking_status", nullable = false)

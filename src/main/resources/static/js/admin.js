@@ -23,7 +23,7 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: "Số đơn hàng",
+                    label: "Order count",
                     data: counts,
                     backgroundColor: "rgba(63, 160, 78, 0.9)",
                     borderColor: "rgba(63, 160, 78, 1)",
@@ -40,7 +40,7 @@
                 },
                 plugins: {
                     legend: {display: false},
-                    tooltip: {callbacks: {label: function (context) { return context.parsed.y + " đơn hàng"; }}}
+                    tooltip: {callbacks: {label: function (context) { return context.parsed.y + " orders"; }}}
                 }
             }
         });

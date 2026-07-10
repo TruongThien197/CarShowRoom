@@ -5,7 +5,9 @@
 <div th:replace="~{fragments :: navbar('shop')}"></div>
 
 <main class="container py-5">
-    <h1 class="section-title mb-4">Xác nhận đơn hàng</h1>
+    <h1 class="gs-h1 section-title mb-4">Order Confirmation</h1>
+
+    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
     <div class="alert alert-light border" th:if="${#lists.isEmpty(cartItems)}">
         Your cart is empty. <a th:href="@{/shop}">Continue shopping</a>.
@@ -14,7 +16,7 @@
     <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
         <div class="col-lg-8">
             <form class="surface-card p-4 needs-validation" th:action="@{/orders/checkout}" th:object="${checkoutForm}" method="post">
-                <h4 class="fw-bold mb-3"><span class="step-pill me-2">1</span>Thông tin liên hệ & giao hàng</h4>
+                <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">1</span>Contact &amp; Shipping Information<span class="gs-chevron-divider" th:if="${needsWorkshop}"></span></h4>
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label class="form-label">Full name</label>
@@ -34,60 +36,61 @@
                         <div class="text-danger small" th:if="${#fields.hasErrors('shippingAddress')}" th:errors="*{shippingAddress}"></div>
                     </div>
                 </div>
+
                 <div th:if="${needsWorkshop}" class="mb-4">
-                    <h4 class="fw-bold mb-3"><span class="step-pill me-2">2</span>Lich lap dat tai xuong</h4>
+                    <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">2</span>Workshop Installation Schedule<span class="gs-chevron-divider"></span></h4>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Xe</label>
+                            <label class="form-label">Vehicle</label>
                             <select class="form-select" th:field="*{vehicleId}" required>
-                                <option value="">Chon xe</option>
+                                <option value="">Select a Vehicle</option>
                                 <option th:each="vehicle : ${vehicles}"
                                         th:value="${vehicle.id}"
                                         th:text="${vehicle.brand + ' ' + vehicle.modelName + ' ' + vehicle.year + ' - ' + vehicle.licensePlate}">Vehicle</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Dich vu</label>
+                            <label class="form-label">Service</label>
                             <select class="form-select" th:field="*{serviceId}" required>
-                                <option value="">Chon dich vu</option>
+                                <option value="">Select a Service</option>
                                 <option th:each="service : ${services}"
                                         th:value="${service.id}"
                                         th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}">Service</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Ngay hen</label>
+                            <label class="form-label">Appointment Date</label>
                             <input class="form-control" type="date" th:field="*{bookingDate}" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Gio bat dau</label>
+                            <label class="form-label">Start Time</label>
                             <input class="form-control" type="time" th:field="*{startTime}" required>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Ghi chu</label>
+                            <label class="form-label">Notes</label>
                             <textarea class="form-control" rows="3" th:field="*{notes}"></textarea>
                         </div>
                     </div>
                 </div>
 
-                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${needsWorkshop ? 3 : 2}">2</span>Thanh toán</h4>
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${needsWorkshop ? 3 : 2}">2</span>Payment</h4>
                 <div class="alert alert-info mb-4">
-                    He thong tao giao dich coc 20% va giu kho/slot trong 15 phut. PayOS se duoc cau hinh sau khi co API.
+                    The system will create a PayOS payment transaction and hold stock or booking slots for 15 minutes.
                 </div>
-                <button class="btn btn-primary btn-lg" type="submit">Đặt hàng</button>
+                <button class="btn btn-primary btn-lg" type="submit">Place Order</button>
             </form>
         </div>
         <div class="col-lg-4">
             <div class="surface-card p-4">
-                <h4 class="fw-bold">Đơn hàng của bạn</h4>
+                <h4 class="fw-bold">Your Order</h4>
                 <div class="d-flex justify-content-between my-3" th:each="item : ${cartItems}">
                     <span th:text="${item.product.productName + ' x' + item.quantity}">Product</span>
-                    <strong th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">$0</strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">$0</strong>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between fs-5 mb-4">
                     <span>Total</span>
-                    <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
                 </div>
             </div>
         </div>

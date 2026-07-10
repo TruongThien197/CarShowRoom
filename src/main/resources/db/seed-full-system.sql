@@ -4,10 +4,12 @@
    Notes:
    - car_model is the system catalog used to filter compatible products.
    - vehicle is only a customer's personal vehicle used for booking demos.
-   - This script is idempotent by natural keys such as email, SKU, service name,
-     category name, car brand/model/year, and order code-like demo records.
+   - This script resets demo data and then inserts a clean catalog.
+   - Demo accounts keep the current emails and password 123456.
 */
 
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
@@ -15,29 +17,54 @@ BEGIN TRANSACTION;
 
 DECLARE @password_hash NVARCHAR(255) = N'$2a$10$O3OGQjdH.WH.LHpGBMF6Pux36EG1ewV54RpXH0QoLn91827QZo.Ai'; -- 123456
 
+/* Clean demo data in FK-safe order. Run this on local/demo databases only. */
+IF OBJECT_ID(N'payment_transactions', N'U') IS NOT NULL DELETE FROM payment_transactions;
+IF OBJECT_ID(N'inventory_reservations', N'U') IS NOT NULL DELETE FROM inventory_reservations;
+IF OBJECT_ID(N'notifications', N'U') IS NOT NULL DELETE FROM notifications;
+IF OBJECT_ID(N'booking_extra_items', N'U') IS NOT NULL DELETE FROM booking_extra_items;
+IF OBJECT_ID(N'booking_services', N'U') IS NOT NULL DELETE FROM booking_services;
+IF OBJECT_ID(N'booking_detail', N'U') IS NOT NULL DELETE FROM booking_detail;
+IF OBJECT_ID(N'bookings', N'U') IS NOT NULL DELETE FROM bookings;
+IF OBJECT_ID(N'booking', N'U') IS NOT NULL DELETE FROM booking;
+IF OBJECT_ID(N'order_items', N'U') IS NOT NULL DELETE FROM order_items;
+IF OBJECT_ID(N'order_detail', N'U') IS NOT NULL DELETE FROM order_detail;
+IF OBJECT_ID(N'orders', N'U') IS NOT NULL DELETE FROM orders;
+IF OBJECT_ID(N'cart_item', N'U') IS NOT NULL DELETE FROM cart_item;
+IF OBJECT_ID(N'vehicle', N'U') IS NOT NULL DELETE FROM vehicle;
+IF OBJECT_ID(N'product_car_models', N'U') IS NOT NULL DELETE FROM product_car_models;
+IF OBJECT_ID(N'product_compatibility', N'U') IS NOT NULL DELETE FROM product_compatibility;
+IF OBJECT_ID(N'product', N'U') IS NOT NULL DELETE FROM product;
+IF OBJECT_ID(N'service', N'U') IS NOT NULL DELETE FROM service;
+IF OBJECT_ID(N'car_model', N'U') IS NOT NULL DELETE FROM car_model;
+IF OBJECT_ID(N'category', N'U') IS NOT NULL DELETE FROM category;
+DELETE FROM users WHERE email IN (
+    N'admin@gearshift.local', N'staff@gearshift.local', N'customer@gearshift.local',
+    N'admin@gearshift.vn', N'staff@gearshift.vn', N'customer@gearshift.vn'
+);
+
 /* Users */
-IF NOT EXISTS (SELECT 1 FROM users WHERE email = N'admin@gearshift.vn')
+IF NOT EXISTS (SELECT 1 FROM users WHERE email = N'admin@gearshift.local')
     INSERT INTO users (email, password_hash, full_name, phone, address, role, status)
-    VALUES (N'admin@gearshift.vn', @password_hash, N'Admin GearShift', N'0900000001', N'FPT University', N'ADMIN', N'ACTIVE');
+    VALUES (N'admin@gearshift.local', @password_hash, N'Admin GearShift', N'0900000001', N'Showroom Office', N'ADMIN', N'ACTIVE');
 
-IF NOT EXISTS (SELECT 1 FROM users WHERE email = N'staff@gearshift.vn')
+IF NOT EXISTS (SELECT 1 FROM users WHERE email = N'staff@gearshift.local')
     INSERT INTO users (email, password_hash, full_name, phone, address, role, status)
-    VALUES (N'staff@gearshift.vn', @password_hash, N'Staff GearShift', N'0900000002', N'GearShift Workshop', N'STAFF', N'ACTIVE');
+    VALUES (N'staff@gearshift.local', @password_hash, N'Staff GearShift', N'0900000002', N'Service Bay', N'STAFF', N'ACTIVE');
 
-IF NOT EXISTS (SELECT 1 FROM users WHERE email = N'customer@gearshift.vn')
+IF NOT EXISTS (SELECT 1 FROM users WHERE email = N'customer@gearshift.local')
     INSERT INTO users (email, password_hash, full_name, phone, address, role, status)
-    VALUES (N'customer@gearshift.vn', @password_hash, N'Nguyen Van Customer', N'0900000003', N'Quan 9, TP Thu Duc', N'CUSTOMER', N'ACTIVE');
+    VALUES (N'customer@gearshift.local', @password_hash, N'Customer Demo', N'0900000003', N'123 Demo Street', N'CUSTOMER', N'ACTIVE');
 
 /* Product categories */
 DECLARE @categories TABLE (category_name NVARCHAR(100), description NVARCHAR(MAX));
 INSERT INTO @categories (category_name, description) VALUES
-(N'Engine Parts', N'Phu tung dong co: turbo, loc gio, loc dau, bugi, bom nuoc.'),
-(N'Brakes', N'He thong phanh: bo thang, dia phanh, heo phanh va phu kien.'),
-(N'Tires & Wheels', N'Mam, lop va phu kien banh xe.'),
-(N'Suspension', N'Phu tung gam va he thong treo.'),
-(N'Oil & Fluids', N'Dau nhot, dau hop so, nuoc lam mat va dung dich bao duong.'),
-(N'Interior & Accessories', N'Phu kien noi that va tien ich.'),
-(N'Other', N'Nhom phu tung khac.');
+(N'Engine Parts', N'Engine parts: turbochargers, air filters, oil filters, spark plugs, water pumps.'),
+(N'Brakes', N'Brake system: brake kits, brake rotors, brake calipers, and accessories.'),
+(N'Tires & Wheels', N'Wheels, tires, and wheel accessories.'),
+(N'Suspension', N'Chassis and suspension parts.'),
+(N'Oil & Fluids', N'Engine oil, transmission fluid, coolant, and maintenance fluids.'),
+(N'Interior & Accessories', N'Interior accessories and conveniences.'),
+(N'Other', N'Other parts and accessories.');
 
 INSERT INTO category (category_name, description)
 SELECT c.category_name, c.description
@@ -56,12 +83,22 @@ DECLARE @services TABLE (
     status NVARCHAR(20)
 );
 INSERT INTO @services (service_name, description, min_price, max_price, duration_minutes, status) VALUES
-(N'Digital Diagnostics', N'Quet loi dien tu, kiem tra suc khoe ECU va bao cao tinh trang xe.', 120.00, 180.00, 60, N'ACTIVE'),
-(N'Brake & Chassis Inspection', N'Kiem tra phanh, gam, treo va cac chi tiet duoi xe.', 280.00, 420.00, 90, N'ACTIVE'),
-(N'Engine Performance Tuning', N'Kiem tra ECU, hieu chinh va danh gia hieu nang dong co.', 450.00, 750.00, 120, N'ACTIVE'),
-(N'Regular Maintenance', N'Bao duong dinh ky: dau, loc, dung dich va kiem tra tong quat.', 180.00, 350.00, 60, N'ACTIVE'),
-(N'Air Conditioning Service', N'Kiem tra dieu hoa, ve sinh loc gio va nap gas khi can.', 160.00, 320.00, 75, N'ACTIVE'),
-(N'Wheel Alignment', N'Can chinh thuoc lai, kiem tra lop va goc dat banh xe.', 220.00, 360.00, 75, N'ACTIVE');
+(N'Digital Diagnostics', N'Electronic fault scan, ECU health check, and vehicle condition report.', 20000, 30000, 60, N'ACTIVE'),
+(N'Brake & Chassis Inspection', N'Inspection of brakes, undercarriage, suspension, and related components.', 35000, 45000, 90, N'ACTIVE'),
+(N'Engine Performance Tuning', N'ECU check, calibration, and engine performance evaluation.', 40000, 60000, 120, N'ACTIVE'),
+(N'Regular Maintenance', N'Routine maintenance: oil, filters, fluids, and general inspection.', 30000, 45000, 60, N'ACTIVE'),
+(N'Air Conditioning Service', N'A/C system check, air filter cleaning, and refrigerant recharge as needed.', 20000, 30000, 75, N'ACTIVE'),
+(N'Wheel Alignment', N'Steering alignment, tire inspection, and wheel angle adjustment.', 20000, 35000, 75, N'ACTIVE');
+
+IF COL_LENGTH(N'service', N'price') IS NOT NULL
+AND EXISTS (
+    SELECT 1
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = N'service'
+      AND COLUMN_NAME = N'price'
+      AND IS_NULLABLE = N'NO'
+)
+    ALTER TABLE service ALTER COLUMN price DECIMAL(18,2) NULL;
 
 INSERT INTO service (service_name, description, min_price, max_price, duration_minutes, status)
 SELECT s.service_name, s.description, s.min_price, s.max_price, s.duration_minutes, s.status
@@ -69,6 +106,27 @@ FROM @services s
 WHERE NOT EXISTS (
     SELECT 1 FROM service existing WHERE existing.service_name = s.service_name
 );
+
+UPDATE service SET min_price = 0 WHERE min_price IS NULL;
+UPDATE service SET max_price = min_price WHERE max_price IS NULL;
+UPDATE service SET duration_minutes = 60 WHERE duration_minutes IS NULL;
+UPDATE service SET status = N'ACTIVE' WHERE status IS NULL;
+
+IF NOT EXISTS (SELECT 1 FROM service WHERE min_price IS NULL)
+AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'service' AND COLUMN_NAME = N'min_price' AND IS_NULLABLE = N'YES')
+    ALTER TABLE service ALTER COLUMN min_price DECIMAL(18,2) NOT NULL;
+
+IF NOT EXISTS (SELECT 1 FROM service WHERE max_price IS NULL)
+AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'service' AND COLUMN_NAME = N'max_price' AND IS_NULLABLE = N'YES')
+    ALTER TABLE service ALTER COLUMN max_price DECIMAL(18,2) NOT NULL;
+
+IF NOT EXISTS (SELECT 1 FROM service WHERE duration_minutes IS NULL)
+AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'service' AND COLUMN_NAME = N'duration_minutes' AND IS_NULLABLE = N'YES')
+    ALTER TABLE service ALTER COLUMN duration_minutes INT NOT NULL;
+
+IF NOT EXISTS (SELECT 1 FROM service WHERE status IS NULL)
+AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'service' AND COLUMN_NAME = N'status' AND IS_NULLABLE = N'YES')
+    ALTER TABLE service ALTER COLUMN status VARCHAR(255) NOT NULL;
 
 /* System car model catalog */
 DECLARE @car_models TABLE (brand NVARCHAR(100), model_name NVARCHAR(100), [year] INT);
@@ -160,73 +218,73 @@ DECLARE @products TABLE (
     sku NVARCHAR(255),
     name NVARCHAR(255),
     price DECIMAL(18,2),
-    physical_stock INT,
+    stock_quantity INT,
     reserved_stock INT,
     image_url NVARCHAR(255),
     description NVARCHAR(MAX),
     status NVARCHAR(20)
 );
-INSERT INTO @products (category_name, sku, name, price, physical_stock, reserved_stock, image_url, description, status) VALUES
-(N'Engine Parts', N'SKU001', N'Hybrid Series Turbocharger', 2850.00, 8, 0, N'/images/turbocharger.jpg', N'Direct bolt-on turbo upgrade for high horsepower builds.', N'ACTIVE'),
-(N'Engine Parts', N'SKU002', N'Performance Air Filter', 145.00, 30, 0, N'/images/air-filter.jpg', N'High-flow air filter for improved intake response.', N'ACTIVE'),
-(N'Engine Parts', N'SKU003', N'Iridium Spark Plug Set', 95.00, 40, 0, N'/images/spark-plug.jpg', N'Premium iridium spark plugs for stable ignition.', N'ACTIVE'),
-(N'Brakes', N'SKU004', N'Stage 2 Performance Brake Kit', 1249.99, 12, 0, N'/images/brake-kit.jpg', N'Street and track brake kit with upgraded rotors and pads.', N'ACTIVE'),
-(N'Brakes', N'SKU005', N'Ceramic Brake Pad Set', 210.00, 18, 0, N'/images/brake-pad.jpg', N'Low-dust ceramic pads for daily performance driving.', N'ACTIVE'),
-(N'Tires & Wheels', N'SKU006', N'Forged Alloy Rims', 2450.00, 6, 0, N'/images/alloy-rims.jpg', N'Lightweight satin black forged wheel set.', N'ACTIVE'),
-(N'Tires & Wheels', N'SKU007', N'Track-Ready Tire Set', 1280.00, 16, 0, N'/images/tires.jpg', N'High-grip tire set for spirited driving.', N'ACTIVE'),
-(N'Suspension', N'SKU008', N'Track-Spec Coilover Kit', 1890.00, 10, 0, N'/images/coilover.jpg', N'Height-adjustable coilover kit for sharper handling.', N'ACTIVE'),
-(N'Suspension', N'SKU009', N'Front Control Arm Kit', 420.00, 14, 0, N'/images/control-arm.jpg', N'Complete front control arm replacement kit.', N'ACTIVE'),
-(N'Oil & Fluids', N'SKU010', N'0W-30 Full Synthetic Oil', 74.99, 50, 0, N'/images/oil.jpg', N'Premium full synthetic oil for modern engines.', N'ACTIVE'),
-(N'Oil & Fluids', N'SKU011', N'AISIN Super Long Life Coolant 4L', 680.00, 20, 0, N'/images/coolant.jpg', N'Super long-life coolant for Japanese and European vehicles.', N'ACTIVE'),
-(N'Oil & Fluids', N'SKU012', N'Automatic Transmission Fluid AFW-VI', 1580.00, 0, 0, N'/images/atf.jpg', N'Automatic transmission fluid. Currently unavailable.', N'INACTIVE'),
-(N'Interior & Accessories', N'SKU013', N'Carbon Fiber Shift Knob', 125.00, 22, 0, N'/images/shift-knob.jpg', N'Carbon-look shift knob with weighted feel.', N'ACTIVE'),
-(N'Other', N'SKU014', N'Universal Emergency Road Kit', 88.00, 15, 0, N'/images/road-kit.jpg', N'Emergency roadside kit for daily drivers.', N'ACTIVE');
+INSERT INTO @products (category_name, sku, name, price, stock_quantity, reserved_stock, image_url, description, status) VALUES
+(N'Engine Parts', N'SKU001', N'Hybrid Series Turbocharger', 10000, 8, 0, N'/images/turbocharger.jpg', N'Direct bolt-on turbo upgrade for high horsepower builds.', N'ACTIVE'),
+(N'Engine Parts', N'SKU002', N'Performance Air Filter', 12000, 30, 0, N'/images/turbocharger.jpg', N'High-flow air filter for improved intake response.', N'ACTIVE'),
+(N'Engine Parts', N'SKU003', N'Iridium Spark Plug Set', 14000, 40, 0, N'/images/turbocharger.jpg', N'Premium iridium spark plugs for stable ignition.', N'ACTIVE'),
+(N'Brakes', N'SKU004', N'Stage 2 Performance Brake Kit', 16000, 12, 0, N'/images/suspension-service.jpg', N'Street and track brake kit with upgraded rotors and pads.', N'ACTIVE'),
+(N'Brakes', N'SKU005', N'Ceramic Brake Pad Set', 18000, 18, 0, N'/images/suspension-service.jpg', N'Low-dust ceramic pads for daily performance driving.', N'ACTIVE'),
+(N'Tires & Wheels', N'SKU006', N'Forged Alloy Rims', 20000, 6, 0, N'/images/forged-rims.jpg', N'Lightweight satin black forged wheel set.', N'ACTIVE'),
+(N'Tires & Wheels', N'SKU007', N'Track-Ready Tire Set', 22000, 16, 0, N'/images/track-tire.jpg', N'High-grip tire set for daily performance and weekend track use.', N'ACTIVE'),
+(N'Suspension', N'SKU008', N'Track-Spec Coilover Kit', 24000, 10, 0, N'/images/suspension-service.jpg', N'Adjustable coilover kit for sharper handling and ride control.', N'ACTIVE'),
+(N'Suspension', N'SKU009', N'Front Control Arm Kit', 26000, 14, 0, N'/images/suspension-service.jpg', N'Complete front control arm replacement kit.', N'ACTIVE'),
+(N'Oil & Fluids', N'SKU010', N'0W-30 Full Synthetic Oil', 28000, 50, 0, N'/images/turbocharger.jpg', N'Premium synthetic oil for modern engines.', N'ACTIVE'),
+(N'Oil & Fluids', N'SKU011', N'AISIN Super Long Life Coolant 4L', 30000, 20, 0, N'/images/turbocharger.jpg', N'Super long-life coolant for Japanese and European vehicles.', N'ACTIVE'),
+(N'Oil & Fluids', N'SKU012', N'Automatic Transmission Fluid AFW-VI', 12000, 0, 0, N'/images/turbocharger.jpg', N'Automatic transmission fluid. Currently unavailable.', N'INACTIVE'),
+(N'Interior & Accessories', N'SKU013', N'Carbon Fiber Shift Knob', 14000, 22, 0, N'/images/forged-rims.jpg', N'Carbon-look shift knob with weighted feel.', N'ACTIVE'),
+(N'Other', N'SKU014', N'Universal Emergency Road Kit', 16000, 15, 0, N'/images/track-tire.jpg', N'Emergency roadside kit for daily drivers.', N'ACTIVE');
 
-INSERT INTO products (category_id, sku, name, price, physical_stock, reserved_stock, image_url, description, status, version, created_at, updated_at)
-SELECT c.category_id, p.sku, p.name, p.price, p.physical_stock, p.reserved_stock, p.image_url, p.description, p.status, 0, SYSDATETIME(), SYSDATETIME()
+INSERT INTO product (category_id, sku, product_name, price, stock_quantity, reserved_stock, image_url, description, status, version, created_at, updated_at)
+SELECT c.category_id, p.sku, p.name, p.price, p.stock_quantity, p.reserved_stock, p.image_url, p.description, p.status, 0, SYSDATETIME(), SYSDATETIME()
 FROM @products p
 JOIN category c ON c.category_name = p.category_name
 WHERE NOT EXISTS (
-    SELECT 1 FROM products existing WHERE existing.sku = p.sku
+    SELECT 1 FROM product existing WHERE existing.sku = p.sku
 );
 
 /* Product compatibility with system car model catalog */
 INSERT INTO product_car_models (product_id, car_model_id)
-SELECT p.id, cm.car_model_id
-FROM products p
+SELECT p.product_id, cm.car_model_id
+FROM product p
 CROSS JOIN car_model cm
 WHERE p.sku IN (N'SKU001', N'SKU002', N'SKU003', N'SKU010')
   AND cm.brand = N'BMW'
   AND NOT EXISTS (
       SELECT 1 FROM product_car_models existing
-      WHERE existing.product_id = p.id AND existing.car_model_id = cm.car_model_id
+      WHERE existing.product_id = p.product_id AND existing.car_model_id = cm.car_model_id
   );
 
 INSERT INTO product_car_models (product_id, car_model_id)
-SELECT p.id, cm.car_model_id
-FROM products p
+SELECT p.product_id, cm.car_model_id
+FROM product p
 CROSS JOIN car_model cm
 WHERE p.sku IN (N'SKU004', N'SKU005', N'SKU010', N'SKU011', N'SKU012')
   AND cm.brand IN (N'Toyota', N'Honda', N'Mazda')
   AND NOT EXISTS (
       SELECT 1 FROM product_car_models existing
-      WHERE existing.product_id = p.id AND existing.car_model_id = cm.car_model_id
+      WHERE existing.product_id = p.product_id AND existing.car_model_id = cm.car_model_id
   );
 
 INSERT INTO product_car_models (product_id, car_model_id)
-SELECT p.id, cm.car_model_id
-FROM products p
+SELECT p.product_id, cm.car_model_id
+FROM product p
 CROSS JOIN car_model cm
 WHERE p.sku IN (N'SKU001', N'SKU006', N'SKU007', N'SKU008', N'SKU009', N'SKU010')
   AND cm.brand IN (N'Mercedes-Benz', N'Porsche')
   AND NOT EXISTS (
       SELECT 1 FROM product_car_models existing
-      WHERE existing.product_id = p.id AND existing.car_model_id = cm.car_model_id
+      WHERE existing.product_id = p.product_id AND existing.car_model_id = cm.car_model_id
   );
 
 /* Customer vehicle demo for booking only */
-DECLARE @customer_id INT = (SELECT user_id FROM users WHERE email = N'customer@gearshift.vn');
-DECLARE @staff_id INT = (SELECT user_id FROM users WHERE email = N'staff@gearshift.vn');
+DECLARE @customer_id INT = (SELECT user_id FROM users WHERE email = N'customer@gearshift.local');
+DECLARE @staff_id INT = (SELECT user_id FROM users WHERE email = N'staff@gearshift.local');
 DECLARE @honda_civic_id INT = (
     SELECT TOP 1 car_model_id FROM car_model
     WHERE brand = N'Honda' AND model_name = N'Civic' AND [year] = 2022
@@ -241,12 +299,12 @@ AND NOT EXISTS (SELECT 1 FROM vehicle WHERE user_id = @customer_id AND license_p
 IF @customer_id IS NOT NULL
 AND NOT EXISTS (
     SELECT 1 FROM cart_item ci
-    JOIN products p ON p.id = ci.product_id
+    JOIN product p ON p.product_id = ci.product_id
     WHERE ci.user_id = @customer_id AND p.sku = N'SKU010'
 )
     INSERT INTO cart_item (user_id, product_id, quantity, fulfillment_type)
-    SELECT @customer_id, p.id, 2, N'SHIPPING'
-    FROM products p
+    SELECT @customer_id, p.product_id, 2, N'SHIPPING'
+    FROM product p
     WHERE p.sku = N'SKU010';
 
 /* Demo orders and order items */
@@ -257,14 +315,14 @@ AND NOT EXISTS (
       AND shipping_address = N'DEMO_SEED_ORDER_COMPLETED'
 )
 BEGIN
-    INSERT INTO orders (user_id, order_type, order_status, payment_status, product_total, deposit_amount, remaining_amount, shipping_address, created_at, updated_at)
-    VALUES (@customer_id, N'SHIPPING', N'COMPLETED', N'PAID', 2850.00, 0.00, 0.00, N'DEMO_SEED_ORDER_COMPLETED', DATEADD(DAY, -5, SYSDATETIME()), DATEADD(DAY, -5, SYSDATETIME()));
+    INSERT INTO orders (user_id, order_type, order_status, payment_status, product_total, shipping_address, created_at, updated_at)
+    VALUES (@customer_id, N'SHIPPING', N'COMPLETED', N'PAID', 10000, N'DEMO_SEED_ORDER_COMPLETED', DATEADD(DAY, -5, SYSDATETIME()), DATEADD(DAY, -5, SYSDATETIME()));
 
     DECLARE @completed_order_id INT = SCOPE_IDENTITY();
 
     INSERT INTO order_items (order_id, product_id, quantity, unit_price, line_total, product_name_snapshot, fulfillment_type, created_at)
-    SELECT @completed_order_id, p.id, 1, p.price, p.price, p.name, N'SHIPPING', DATEADD(DAY, -5, SYSDATETIME())
-    FROM products p
+    SELECT @completed_order_id, p.product_id, 1, p.price, p.price, p.product_name, N'SHIPPING', DATEADD(DAY, -5, SYSDATETIME())
+    FROM product p
     WHERE p.sku = N'SKU001';
 END;
 
@@ -275,23 +333,23 @@ AND NOT EXISTS (
       AND shipping_address = N'DEMO_SEED_ORDER_PENDING'
 )
 BEGIN
-    INSERT INTO orders (user_id, order_type, order_status, payment_status, product_total, deposit_amount, remaining_amount, shipping_address, created_at, updated_at)
-    VALUES (@customer_id, N'SHIPPING', N'PENDING_DEPOSIT', N'PENDING', 1280.00, 256.00, 1024.00, N'DEMO_SEED_ORDER_PENDING', DATEADD(DAY, -1, SYSDATETIME()), DATEADD(DAY, -1, SYSDATETIME()));
+    INSERT INTO orders (user_id, order_type, order_status, payment_status, product_total, shipping_address, created_at, updated_at)
+    VALUES (@customer_id, N'SHIPPING', N'PENDING_PAYMENT', N'PENDING', 22000, N'DEMO_SEED_ORDER_PENDING', DATEADD(DAY, -1, SYSDATETIME()), DATEADD(DAY, -1, SYSDATETIME()));
 
     DECLARE @pending_order_id INT = SCOPE_IDENTITY();
 
     INSERT INTO order_items (order_id, product_id, quantity, unit_price, line_total, product_name_snapshot, fulfillment_type, created_at)
-    SELECT @pending_order_id, p.id, 1, p.price, p.price, p.name, N'SHIPPING', DATEADD(DAY, -1, SYSDATETIME())
-    FROM products p
+    SELECT @pending_order_id, p.product_id, 1, p.price, p.price, p.product_name, N'SHIPPING', DATEADD(DAY, -1, SYSDATETIME())
+    FROM product p
     WHERE p.sku = N'SKU007';
 
     INSERT INTO inventory_reservations (product_id, order_id, quantity, reservation_status, expires_at, created_at, updated_at)
-    SELECT p.id, @pending_order_id, 1, N'HELD', DATEADD(HOUR, 24, SYSDATETIME()), SYSDATETIME(), SYSDATETIME()
-    FROM products p
+    SELECT p.product_id, @pending_order_id, 1, N'HELD', DATEADD(HOUR, 24, SYSDATETIME()), SYSDATETIME(), SYSDATETIME()
+    FROM product p
     WHERE p.sku = N'SKU007'
       AND NOT EXISTS (
           SELECT 1 FROM inventory_reservations existing
-          WHERE existing.order_id = @pending_order_id AND existing.product_id = p.id
+          WHERE existing.order_id = @pending_order_id AND existing.product_id = p.product_id
       );
 END;
 
@@ -314,13 +372,13 @@ BEGIN
     INSERT INTO bookings (
         user_id, vehicle_id, booking_date, start_time, end_time, time_slot,
         total_duration_minutes, estimated_min_amount, estimated_max_amount,
-        deposit_amount, final_amount, remaining_amount, booking_status, payment_status,
+        final_amount, booking_status, payment_status,
         payment_deadline, notes, created_at, updated_at
     )
     VALUES (
         @customer_id, @vehicle_id, CONVERT(date, DATEADD(DAY, 2, SYSDATETIME())),
         CONVERT(time, '09:00'), CONVERT(time, '11:00'), N'09:00 - 11:00',
-        120, 300.00, 530.00, 60.00, NULL, NULL, N'CONFIRMED', N'PAID',
+        120, 30000, 75000, 30000, N'CONFIRMED', N'PAID',
         DATEADD(HOUR, 24, SYSDATETIME()), N'DEMO_SEED_BOOKING_CONFIRMED',
         SYSDATETIME(), SYSDATETIME()
     );
@@ -336,9 +394,9 @@ BEGIN
         booking_id, product_id, description, quantity, unit_price, line_total,
         approval_status, created_by_staff_id, created_at, updated_at
     )
-    SELECT @booking_id, p.id, N'Thay dau dong co de xuat khi bao duong', 1, p.price, p.price,
+    SELECT @booking_id, p.product_id, N'Recommended engine oil change during maintenance', 1, p.price, p.price,
            N'PENDING', @staff_id, SYSDATETIME(), SYSDATETIME()
-    FROM products p
+    FROM product p
     WHERE p.sku = N'SKU010';
 END;
 
@@ -358,7 +416,7 @@ BEGIN
         payment_deadline, paid_at, raw_webhook_payload, created_at, updated_at
     )
     VALUES (
-        @customer_id, @demo_pending_order_id, N'900000001', 256.00, N'PENDING',
+        @customer_id, @demo_pending_order_id, N'900000001', 22000, N'PENDING',
         N'https://pay.payos.vn/demo/900000001', DATEADD(HOUR, 24, SYSDATETIME()),
         NULL, NULL, SYSDATETIME(), SYSDATETIME()
     );
@@ -371,7 +429,7 @@ SELECT
     (SELECT COUNT(*) FROM category) AS total_categories,
     (SELECT COUNT(*) FROM service) AS total_services,
     (SELECT COUNT(*) FROM car_model) AS total_car_models,
-    (SELECT COUNT(*) FROM products) AS total_products,
+    (SELECT COUNT(*) FROM product) AS total_products,
     (SELECT COUNT(*) FROM product_car_models) AS total_product_car_model_links,
     (SELECT COUNT(*) FROM bookings) AS total_bookings,
     (SELECT COUNT(*) FROM orders) AS total_orders;

@@ -12,6 +12,7 @@ import com.hsf302.carshowroom.entity.CartItem;
 import com.hsf302.carshowroom.entity.Order;
 import com.hsf302.carshowroom.entity.OrderItem;
 import com.hsf302.carshowroom.entity.Product;
+import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.repository.BookingRepository;
@@ -32,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -58,10 +58,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order checkout(User user, CheckoutForm form) {
+    public PaymentTransaction checkout(User user, CheckoutForm form) {
         List<CartItem> cartItems = cartItemRepository.findByUser(user);
         if (cartItems.isEmpty()) {
-            throw new RuntimeException("Giỏ hàng của bạn đang trống.");
+            throw new RuntimeException("Your cart is empty.");
         }
 
         Map<FulfillmentType, List<CartItem>> groupedItems = cartItems.stream()
@@ -89,15 +89,17 @@ public class OrderServiceImpl implements OrderService {
 
         if (parentOrder != null) {
             BigDecimal total = stockOrders.stream().map(Order::getProductTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal deposit = calculateDeposit(total.add(booking == null ? BigDecimal.ZERO : booking.getEstimatedMinAmount()));
             parentOrder.setProductTotal(total);
-            parentOrder.setDepositAmount(deposit);
-            parentOrder.setRemainingAmount(total.subtract(calculateDeposit(total)));
+            if (booking != null) {
+                booking.setFinalAmount(booking.getEstimatedMinAmount());
+            }
+            parentOrder.setPaymentStatus(PaymentStatus.PENDING);
+            parentOrder.setOrderStatus(OrderStatus.PENDING_PAYMENT);
             parentOrder = orderRepository.save(parentOrder);
         }
 
         inventoryReservationService.reserveStock(stockOrders);
-        paymentService.createPaymentLink(PayOSCreatePaymentLinkRequest.builder()
+        PaymentTransaction transaction = paymentService.createPaymentLink(PayOSCreatePaymentLinkRequest.builder()
                 .user(user)
                 .parentOrder(parentOrder)
                 .subOrders(stockOrders)
@@ -105,7 +107,7 @@ public class OrderServiceImpl implements OrderService {
                 .build());
         cartItemRepository.deleteByUser(user);
 
-        return parentOrder != null ? parentOrder : stockOrders.get(0);
+        return transaction;
     }
 
     @Override
@@ -116,7 +118,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order getOrderById(Integer id) {
         return orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với id: " + id));
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
     }
 
     @Override
@@ -124,7 +126,7 @@ public class OrderServiceImpl implements OrderService {
     public void updateOrderStatus(Integer id, String status) {
         Order order = getOrderById(id);
         OrderStatus nextStatus = OrderStatus.valueOf(status.toUpperCase());
-        if (nextStatus == OrderStatus.PROCESSING || nextStatus == OrderStatus.DEPOSITED) {
+        if (nextStatus == OrderStatus.PROCESSING) {
             order.setPaymentStatus(PaymentStatus.PAID);
             orderWorkflowService.processOrder(order);
         } else if (nextStatus == OrderStatus.SHIPPING) {
@@ -151,17 +153,15 @@ public class OrderServiceImpl implements OrderService {
         order.setUser(user);
         order.setParentOrder(parentOrder);
         order.setOrderType(orderType);
-        order.setOrderStatus(OrderStatus.PENDING_DEPOSIT);
+        order.setOrderStatus(OrderStatus.PENDING_PAYMENT);
         order.setPaymentStatus(PaymentStatus.PENDING);
         order.setShippingAddress(shippingAddress);
         order.setProductTotal(productTotal);
-        order.setDepositAmount(calculateDeposit(productTotal));
-        order.setRemainingAmount(productTotal.subtract(order.getDepositAmount()));
         Order savedOrder = orderRepository.save(order);
 
         for (CartItem cartItem : cartItems) {
             Product product = productRepository.findById(cartItem.getProduct().getId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
+                    .orElseThrow(() -> new RuntimeException("Product not found."));
             inventoryReservationService.checkStockAvailability(product, cartItem.getQuantity());
             OrderItem item = new OrderItem();
             item.setOrder(savedOrder);
@@ -179,14 +179,14 @@ public class OrderServiceImpl implements OrderService {
 
     private Booking createWorkshopBooking(User user, CheckoutForm form, Order relatedOrder) {
         com.hsf302.carshowroom.entity.Service service = serviceRepository.findById(form.getServiceId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ."));
+                .orElseThrow(() -> new RuntimeException("Service not found."));
         if (service.getStatus() != ServiceStatus.ACTIVE) {
-            throw new RuntimeException("Dịch vụ hiện không khả dụng.");
+            throw new RuntimeException("This service is currently unavailable.");
         }
         Vehicle vehicle = vehicleRepository.findById(form.getVehicleId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy xe."));
+                .orElseThrow(() -> new RuntimeException("Vehicle not found."));
         if (!vehicle.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Xe không thuộc tài khoản hiện tại.");
+            throw new RuntimeException("This vehicle does not belong to your account.");
         }
 
         Booking booking = new Booking();
@@ -200,9 +200,8 @@ public class OrderServiceImpl implements OrderService {
         booking.setTotalDurationMinutes(service.getDurationMinutes());
         booking.setEstimatedMinAmount(service.getMinPrice());
         booking.setEstimatedMaxAmount(service.getMaxPrice());
-        booking.setDepositAmount(calculateDeposit(service.getMinPrice()));
-        booking.setRemainingAmount(service.getMinPrice().subtract(booking.getDepositAmount()));
-        booking.setBookingStatus(com.hsf302.carshowroom.common.Enums.BookingStatus.PENDING_DEPOSIT);
+        booking.setFinalAmount(service.getMinPrice());
+        booking.setBookingStatus(com.hsf302.carshowroom.common.Enums.BookingStatus.PENDING_PAYMENT);
         booking.setPaymentStatus(PaymentStatus.PENDING);
         booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
         booking.setNotes(form.getNotes());
@@ -223,7 +222,7 @@ public class OrderServiceImpl implements OrderService {
 
     private void validateWorkshopCheckout(CheckoutForm form) {
         if (form.getVehicleId() == null || form.getServiceId() == null || form.getBookingDate() == null || form.getStartTime() == null) {
-            throw new RuntimeException("Vui lòng chọn xe, dịch vụ, ngày và giờ hẹn cho sản phẩm lắp tại xưởng.");
+            throw new RuntimeException("Please select a vehicle, service, date, and appointment time for workshop installation items.");
         }
     }
 
@@ -231,11 +230,6 @@ public class OrderServiceImpl implements OrderService {
         return items.stream()
                 .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private BigDecimal calculateDeposit(BigDecimal subtotal) {
-        return subtotal.multiply(BigDecimal.valueOf(20))
-                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
     }
 
     private String formatSlot(LocalTime startTime, LocalTime endTime) {

@@ -31,8 +31,7 @@ public class Enums {
 
     public enum OrderStatus {
         CREATED,
-        PENDING_DEPOSIT,
-        DEPOSITED,
+        PENDING_PAYMENT,
         PROCESSING,
         SHIPPING,
         COMPLETED,
@@ -42,7 +41,7 @@ public class Enums {
 
     public enum BookingStatus {
         CREATED,
-        PENDING_DEPOSIT,
+        PENDING_PAYMENT,
         CONFIRMED,
         IN_PROGRESS,
         PENDING_APPROVAL,

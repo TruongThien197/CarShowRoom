@@ -5,20 +5,19 @@
 <div th:replace="~{fragments :: navbar('shop')}"></div>
 
 <main class="container py-5">
-    <h1 class="section-title mb-4">Giỏ hàng</h1>
+    <h1 class="section-title mb-4">Cart</h1>
 
-    <div class="alert alert-light border" th:if="${#lists.isEmpty(cartItems)}">
-        Giỏ hàng của bạn đang trống. <a th:href="@{/shop}">Tiếp tục mua sắm</a>.
+    <div class="gs-empty-state surface-card" th:if="${#lists.isEmpty(cartItems)}">
+        <i class="bi bi-cart-x gs-empty-state-icon"></i>
+        <div class="gs-empty-state-title">Your cart is empty</div>
+        <p class="gs-empty-state-text mb-0">Browse the store to find the right parts. <a th:href="@{/shop}">Continue shopping</a>.</p>
     </div>
-
-    <!-- successMessage / errorMessage are now shown as a toast (see fragments/footer :: scripts) -->
 
     <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
         <div class="col-lg-8">
-            <div class="surface-card p-4 mb-3" th:each="item : ${cartItems}">
+            <div class="surface-card gs-stripe-top p-4 mb-3" th:each="item : ${cartItems}">
                 <div class="d-flex flex-wrap flex-sm-nowrap gap-3 align-items-start cart-item-row">
-                    <div class="rounded bg-light d-flex align-items-center justify-content-center"
-                         style="width: 120px; height: 100px">
+                    <div class="rounded bg-light d-flex align-items-center justify-content-center" style="width: 120px; height: 100px">
                         <img class="rounded object-fit-cover" width="120" height="100"
                              th:if="${item.product.imageUrl != null and !#strings.isEmpty(item.product.imageUrl)}"
                              th:src="${item.product.imageUrl}" alt="Product image">
@@ -29,25 +28,21 @@
                         <h5 class="fw-bold" th:text="${item.product.productName}">Product</h5>
                         <p class="text-secondary mb-2" th:text="${item.product.category.categoryName}">Category</p>
                         <span class="badge text-bg-info mb-2"
-                              th:text="${item.fulfillmentType.name() == 'AT_WORKSHOP' ? 'Lap dat tai xuong' : 'Giao hang'}">Fulfillment</span>
+                              th:text="${item.fulfillmentType.name() == 'AT_WORKSHOP' ? 'Install at Workshop' : 'Shipping'}">Fulfillment</span>
                         <form class="d-flex align-items-center gap-2" th:action="@{/cart/update}" method="post">
                             <input type="hidden" name="cartItemId" th:value="${item.id}">
                             <input class="form-control form-control-sm" style="width: 88px" type="number"
-                                   name="quantity"
-                                   th:value="${item.quantity}" min="0" th:max="${item.product.stockQuantity}">
+                                   name="quantity" th:value="${item.quantity}" min="0" th:max="${item.product.stockQuantity}">
                             <button class="btn btn-outline-secondary btn-sm" type="submit">Update</button>
                         </form>
                     </div>
 
                     <div class="text-end text-sm-end w-100 w-sm-auto">
-                        <div class="price mb-3"
-                             th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">
-                            $0
-                        </div>
-                        <form th:action="@{/cart/remove}" method="post" data-confirm="Xóa sản phẩm này khỏi giỏ hàng?">
+                        <div class="price gs-mono mb-3"
+                             th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">$0</div>
+                        <form th:action="@{/cart/remove}" method="post" data-confirm="Remove this product from the cart?">
                             <input type="hidden" name="cartItemId" th:value="${item.id}">
-                            <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Remove
-                            </button>
+                            <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Remove</button>
                         </form>
                     </div>
                 </div>
@@ -55,19 +50,18 @@
         </div>
         <div class="col-lg-4">
             <div class="surface-card p-4 position-sticky" style="top: 92px">
-                <h4 class="fw-bold mb-3">Tóm tắt đơn hàng</h4>
+                <h4 class="fw-bold mb-3">Order Summary</h4>
                 <div class="d-flex justify-content-between mb-2">
                     <span>Subtotal</span>
-                    <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
                 </div>
-                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><strong>Calculated later</strong>
-                </div>
+                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><strong>Calculated later</strong></div>
                 <hr>
                 <div class="d-flex justify-content-between fs-5 mb-4">
                     <span>Total</span>
-                    <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
                 </div>
-                <a class="btn btn-primary w-100 btn-lg" th:href="@{/orders/checkout}">Tiến hành thanh toán</a>
+                <a class="btn btn-amber w-100 btn-lg" th:href="@{/orders/checkout}">Proceed to Checkout</a>
             </div>
         </div>
     </div>

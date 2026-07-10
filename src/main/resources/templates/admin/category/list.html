@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Quan ly danh muc | GearShift Admin')}"></head>
+<head th:replace="~{fragments/header :: head('Manage Categories | GearShift Admin')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
@@ -11,46 +11,48 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
                 <div>
-                    <h1 class="admin-page-title mb-1"><i class="bi bi-tags me-2 text-primary"></i>Quan ly danh muc</h1>
-                    <p class="text-secondary small mb-0">Danh muc dung de phan nhom san pham phu tung. Khong lien quan den xe ca nhan customer.</p>
+                    <h1 class="admin-page-title mb-1"><i class="bi bi-tags me-2 text-primary"></i>Manage Categories</h1>
+                    <p class="text-secondary small mb-0">Categories are used to group parts products. They are not customer personal vehicles.</p>
                 </div>
                 <a th:href="@{/admin/categories/create}" class="btn btn-primary shadow-sm d-flex align-items-center gap-2">
-                    <i class="bi bi-plus-lg"></i><span>Them danh muc</span>
+                    <i class="bi bi-plus-lg"></i><span>Add Category</span>
                 </a>
             </div>
 
             <div th:replace="~{fragments/sidebar :: adminTabs('categories')}"></div>
 
-            <div class="surface-card p-0 overflow-hidden">
+            <div class="admin-table-card p-0 overflow-hidden">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                         <tr>
                             <th class="ps-4" style="width: 80px;">ID</th>
-                            <th style="width: 260px;">Ten danh muc</th>
-                            <th>Mo ta</th>
-                            <th class="text-end pe-4" style="width: 180px;">Thao tac</th>
+                            <th style="width: 260px;">Category Name</th>
+                            <th>Description</th>
+                            <th class="text-end pe-4" style="width: 180px;">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(categories)}">
-                            <td colspan="4" class="text-center py-5 text-secondary">
-                                Chua co danh muc nao trong he thong.
+                            <td colspan="4" class="gs-empty-state">
+                                <div class="gs-empty-state-icon"><i class="bi bi-tags"></i></div>
+                                <div class="gs-empty-state-title">No categories yet</div>
+                                <div class="gs-empty-state-text">No categories exist in the system yet.</div>
                             </td>
                         </tr>
                         <tr th:each="cat : ${categories}">
-                            <td class="ps-4 fw-bold text-secondary" th:text="${cat.id}">1</td>
+                            <td class="ps-4 fw-bold gs-mono text-secondary" th:text="${cat.id}">1</td>
                             <td>
                                 <span class="fw-semibold text-dark" th:text="${cat.categoryName}">Performance Parts</span>
                             </td>
-                            <td class="text-secondary small" th:text="${cat.description ?: 'Chua co mo ta'}">Mo ta danh muc</td>
-                            <td class="text-end pe-4">
-                                <a th:href="@{/admin/categories/edit/{id}(id=${cat.id})}" class="btn btn-outline-primary btn-sm me-1" title="Sua">
+                            <td class="text-secondary small" th:text="${cat.description ?: 'No description'}">Category description</td>
+                            <td class="text-end pe-4 table-action">
+                                <a th:href="@{/admin/categories/edit/{id}(id=${cat.id})}" class="btn btn-outline-primary btn-sm me-1" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
                                 <a th:href="@{/admin/categories/delete/{id}(id=${cat.id})}"
-                                   onclick="return confirm('Xoa danh muc nay?');"
-                                   class="btn btn-outline-danger btn-sm" title="Xoa">
+                                   onclick="return confirm('Delete this category?');"
+                                   class="btn btn-outline-danger btn-sm" title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </td>

@@ -4,25 +4,28 @@
 <body>
 <div th:replace="~{fragments :: navbar('login')}"></div>
 
-<main class="auth-shell d-flex align-items-center py-5">
+<main class="auth-shell gs-grid-texture d-flex align-items-center py-5">
     <div class="container">
         <div class="row justify-content-end">
             <div class="col-lg-6">
-                <form class="surface-card p-4 p-md-5 needs-validation" th:action="@{/auth/register}" method="post">
-                    <h1 class="section-title mb-2">Create your account</h1>
+                <form class="surface-card gs-stripe-top p-4 p-md-5 needs-validation" th:action="@{/auth/register}" method="post" novalidate>
+                    <h1 class="gs-h1 section-title mb-2">Create your account</h1>
                     <p class="text-secondary mb-4">Save vehicles, track orders, and book repairs faster.</p>
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Full name</label>
                             <input class="form-control" type="text" name="txtfullName" required>
+                            <div class="invalid-feedback">Full name is required.</div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Email</label>
                             <input class="form-control" type="email" name="txtEmail" required>
+                            <div class="invalid-feedback">Please enter a valid email address.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Password</label>
                             <input class="form-control" type="password" name="txtPassword" required>
+                            <div class="invalid-feedback">Password is required.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Phone</label>

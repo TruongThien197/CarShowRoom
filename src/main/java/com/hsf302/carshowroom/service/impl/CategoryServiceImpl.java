@@ -21,7 +21,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Category getCategoryById(Integer id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục với ID: " + id));
+                .orElseThrow(() -> new RuntimeException("Category not found with ID: " + id));
     }
 
     @Override
@@ -40,7 +40,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteCategory(Integer id) {
         if (!categoryRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy danh mục với ID: " + id);
+            throw new RuntimeException("Category not found with ID: " + id);
         }
         categoryRepository.deleteById(id);
     }

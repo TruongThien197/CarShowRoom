@@ -5,6 +5,7 @@ import com.hsf302.carshowroom.dto.ServiceForm;
 import com.hsf302.carshowroom.entity.*;
 import com.hsf302.carshowroom.repository.*;
 import com.hsf302.carshowroom.service.BookingService;
+import com.hsf302.carshowroom.service.FirebaseStorageService;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.ProductService;
 import com.hsf302.carshowroom.service.UserService;
@@ -19,6 +20,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -47,6 +49,7 @@ public class AdminController {
     private final OrderService orderService;
     private final BookingService bookingService;
     private final ProductService productService;
+    private final FirebaseStorageService firebaseStorageService;
 
     @GetMapping
     public String dashboard(Model model) {
@@ -72,8 +75,8 @@ public class AdminController {
         model.addAttribute("totalOrders", orders.size());
         model.addAttribute("totalBookings", bookings.size());
         model.addAttribute("activeProducts", products.stream().filter(product -> Enums.ProductStatus.ACTIVE.equals(product.getStatus())).count());
-        model.addAttribute("pendingOrders", orders.stream().filter(order -> Enums.OrderStatus.PENDING_DEPOSIT.equals(order.getOrderStatus())).count());
-        model.addAttribute("pendingBookings", bookings.stream().filter(booking -> Enums.BookingStatus.PENDING_DEPOSIT.equals(booking.getBookingStatus())).count());
+        model.addAttribute("pendingOrders", orders.stream().filter(order -> Enums.OrderStatus.PENDING_PAYMENT.equals(order.getOrderStatus())).count());
+        model.addAttribute("pendingBookings", bookings.stream().filter(booking -> Enums.BookingStatus.PENDING_PAYMENT.equals(booking.getBookingStatus())).count());
         model.addAttribute("today", LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")));
         model.addAttribute("todayVehicleCount", countTodayVehicles(bookings));
         model.addAttribute("todaySlotLoads", buildTodaySlotLoads(bookings));
@@ -132,7 +135,7 @@ public class AdminController {
         if (booking.getStartTime() != null) {
             return booking.getStartTime().toString();
         }
-        return "Chua co gio";
+        return "No time yet";
     }
 
     private record SlotLoad(String timeSlot, long vehicleCount, long bookingCount) {
@@ -161,9 +164,9 @@ public class AdminController {
             carModel.setModelName(modelName.trim());
             carModel.setYear(year);
             carModelRepository.save(carModel);
-            redirectAttributes.addFlashAttribute("successMessage", "Them dong xe thanh cong!");
+            redirectAttributes.addFlashAttribute("successMessage", "Car model added successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Co loi khi them dong xe: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error adding car model: " + e.getMessage());
         }
         return "redirect:/admin/car-models";
     }
@@ -172,9 +175,9 @@ public class AdminController {
     public String deleteCarModel(@RequestParam Integer id, RedirectAttributes redirectAttributes) {
         try {
             carModelRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Xoa dong xe thanh cong!");
+            redirectAttributes.addFlashAttribute("successMessage", "Car model deleted successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Co loi khi xoa dong xe: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting car model: " + e.getMessage());
         }
         return "redirect:/admin/car-models";
     }
@@ -193,9 +196,9 @@ public class AdminController {
             category.setCategoryName(categoryName);
             category.setDescription(description);
             categoryRepository.save(category);
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm danh mục thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Category added successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm danh mục: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error adding category: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -209,9 +212,9 @@ public class AdminController {
             category.setCategoryName(categoryName);
             category.setDescription(description);
             categoryRepository.save(category);
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm danh mục thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Category added successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm danh mục: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error adding category: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -234,9 +237,9 @@ public class AdminController {
             category.setCategoryName(categoryName);
             category.setDescription(description);
             categoryRepository.save(category);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật danh mục thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Category updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật danh mục: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating category: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -245,9 +248,9 @@ public class AdminController {
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             categoryRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Xóa danh mục thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Category deleted successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi xóa danh mục: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting category: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -290,6 +293,7 @@ public class AdminController {
                                       @RequestParam BigDecimal price,
                                       @RequestParam("stockQuantity") Integer physicalStock,
                                       @RequestParam(required = false) String imageUrl,
+                                      @RequestParam(required = false) MultipartFile imageFile,
                                       @RequestParam(required = false) List<Integer> carModelIds,
                                       @RequestParam(defaultValue = "ACTIVE") String status,
                                       RedirectAttributes redirectAttributes) {
@@ -303,14 +307,14 @@ public class AdminController {
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
-            product.setImageUrl(imageUrl);
+            product.setImageUrl(resolveImageUrl(imageFile, imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productRepository.save(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Product added successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm sản phẩm: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error adding product: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -333,6 +337,7 @@ public class AdminController {
                                     @RequestParam BigDecimal price,
                                     @RequestParam("stockQuantity") Integer physicalStock,
                                     @RequestParam(required = false) String imageUrl,
+                                    @RequestParam(required = false) MultipartFile imageFile,
                                     @RequestParam(required = false) List<Integer> carModelIds,
                                     @RequestParam(defaultValue = "ACTIVE") String status,
                                     RedirectAttributes redirectAttributes) {
@@ -347,14 +352,14 @@ public class AdminController {
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
-            product.setImageUrl(imageUrl);
+            product.setImageUrl(resolveImageUrl(imageFile, imageUrl, product.getImageUrl()));
             product.setStatus(Enums.ProductStatus.valueOf(status));
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productRepository.save(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật sản phẩm thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Product updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật sản phẩm: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating product: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -363,9 +368,9 @@ public class AdminController {
     public String deleteProduct(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             productRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Xóa sản phẩm thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Product deleted successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi xóa sản phẩm: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting product: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -378,6 +383,7 @@ public class AdminController {
                                 @RequestParam BigDecimal price,
                                 @RequestParam Integer physicalStock,
                                 @RequestParam(required = false) String imageUrl,
+                                @RequestParam(required = false) MultipartFile imageFile,
                                 @RequestParam(defaultValue = "ACTIVE") String status,
                                 RedirectAttributes redirectAttributes) {
         try {
@@ -390,12 +396,12 @@ public class AdminController {
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
-            product.setImageUrl(imageUrl);
+            product.setImageUrl(resolveImageUrl(imageFile, imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
             productRepository.save(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Product added successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm sản phẩm: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error adding product: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -416,9 +422,9 @@ public class AdminController {
             service.setDurationMinutes(duration);
             service.setStatus(Enums.ServiceStatus.ACTIVE);
             serviceRepository.save(service);
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm dịch vụ thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Service added successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm dịch vụ: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error adding service: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -446,9 +452,9 @@ public class AdminController {
             com.hsf302.carshowroom.entity.Service service = new com.hsf302.carshowroom.entity.Service();
             fillService(service, form);
             serviceRepository.save(service);
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm dịch vụ thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Service added successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm dịch vụ: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error adding service: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -483,9 +489,9 @@ public class AdminController {
         try {
             fillService(service, form);
             serviceRepository.save(service);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật dịch vụ thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Service updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật dịch vụ: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating service: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -494,9 +500,9 @@ public class AdminController {
     public String deleteService(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             serviceRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Xóa dịch vụ thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Service deleted successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi xóa dịch vụ: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting service: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -526,9 +532,9 @@ public class AdminController {
                     .orElseThrow(() -> new RuntimeException("Product not found"));
             product.setStatus(Enums.ProductStatus.valueOf(status));
             productRepository.save(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái sản phẩm thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Product status updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -538,9 +544,9 @@ public class AdminController {
                                     RedirectAttributes redirectAttributes) {
         try {
             orderService.updateOrderStatus(orderId, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Order status updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
         }
         return "redirect:/admin/orders";
     }
@@ -550,9 +556,9 @@ public class AdminController {
                                       RedirectAttributes redirectAttributes) {
         try {
             bookingService.updateStatus(bookingId, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái lịch hẹn thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Booking status updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
         }
         return "redirect:/admin/bookings";
     }
@@ -597,9 +603,9 @@ public class AdminController {
                              RedirectAttributes redirectAttributes) {
         try {
             userService.createUser(email, password, fullName, phone, address, role);
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm người dùng thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "User added successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi thêm người dùng: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error adding user: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
@@ -619,9 +625,9 @@ public class AdminController {
                            RedirectAttributes redirectAttributes) {
         try {
             userService.updateUser(id, fullName, phone, address, role);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật người dùng thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "User updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật người dùng: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating user: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
@@ -630,9 +636,9 @@ public class AdminController {
     public String changeStatus(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             userService.changeStatus(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái người dùng thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "User status updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
@@ -670,6 +676,16 @@ public class AdminController {
             base = "PART";
         }
         return base + "-" + System.currentTimeMillis();
+    }
+
+    private String resolveImageUrl(MultipartFile imageFile, String imageUrl, String currentImageUrl) {
+        if (imageFile != null && !imageFile.isEmpty()) {
+            return firebaseStorageService.uploadProductImage(imageFile);
+        }
+        if (imageUrl != null && !imageUrl.isBlank()) {
+            return imageUrl.trim();
+        }
+        return currentImageUrl;
     }
 
 
@@ -744,9 +760,9 @@ public class AdminController {
                                           RedirectAttributes redirectAttributes) {
         try {
             orderService.updateOrderStatus(id, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Order status updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
         }
         return "redirect:/admin/orders/" + id;
     }

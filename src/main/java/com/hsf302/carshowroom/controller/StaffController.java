@@ -57,8 +57,8 @@ public class StaffController {
         model.addAttribute("bookings", bookings);
         model.addAttribute("orderItems", orderItems);
         model.addAttribute("bookingServices", bookingServices);
-        model.addAttribute("pendingOrders", countOrderStatus(orders, "PENDING_DEPOSIT"));
-        model.addAttribute("pendingBookings", countBookingStatus(bookings, "PENDING_DEPOSIT"));
+        model.addAttribute("pendingOrders", countOrderStatus(orders, "PENDING_PAYMENT"));
+        model.addAttribute("pendingBookings", countBookingStatus(bookings, "PENDING_PAYMENT"));
         model.addAttribute("completedBookings", countBookingStatus(bookings, "COMPLETED"));
         model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
         model.addAttribute("carBrands", carModelRepository.findDistinctBrands());
@@ -71,9 +71,9 @@ public class StaffController {
                                     RedirectAttributes redirectAttributes) {
         try {
             orderService.updateOrderStatus(orderId, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Order status updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
         }
         return "redirect:/staff#orders";
     }
@@ -84,9 +84,9 @@ public class StaffController {
                                       RedirectAttributes redirectAttributes) {
         try {
             bookingService.updateStatus(bookingId, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái lịch hẹn thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Booking status updated successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi khi cập nhật trạng thái: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
         }
         return "redirect:/staff#bookings";
     }
@@ -102,9 +102,9 @@ public class StaffController {
             carModel.setModelName(modelName.trim());
             carModel.setYear(year);
             carModelRepository.save(carModel);
-            redirectAttributes.addFlashAttribute("successMessage", "Them dong xe catalog thanh cong!");
+            redirectAttributes.addFlashAttribute("successMessage", "Car model added to catalog successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Co loi khi them dong xe: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Error adding car model: " + e.getMessage());
         }
         return "redirect:/staff";
     }

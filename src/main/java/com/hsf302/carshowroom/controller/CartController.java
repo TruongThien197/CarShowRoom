@@ -23,9 +23,10 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    public String cart(Model model) {
+    public String cart(Model model, RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Please sign in to view your cart.");
             return "redirect:/auth/login";
         }
         List<CartItem> cartItems = cartService.getCartItems(user);
@@ -41,11 +42,12 @@ public class CartController {
                       RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Please sign in to add items to your cart.");
             return "redirect:/auth/login";
         }
         try{
             cartService.addToCart(user, productId, quantity, fulfillmentType);
-            redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm vào giỏ hàng thành công.");
+            redirectAttributes.addFlashAttribute("successMessage", "Product added to cart successfully.");
         }catch (RuntimeException ex){
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
@@ -54,9 +56,11 @@ public class CartController {
 
     @PostMapping("/update")
     public String update(@RequestParam Integer cartItemId,
-                         @RequestParam Integer quantity) {
+                         @RequestParam Integer quantity,
+                         RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Please sign in to update your cart.");
             return "redirect:/auth/login";
         }
         cartService.updateQuantity(user, cartItemId, quantity);
@@ -68,12 +72,13 @@ public class CartController {
                          RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Please sign in to remove items from your cart.");
             return "redirect:/auth/login";
         }
         cartService.removeItem(user, cartItemId);
         redirectAttributes.addFlashAttribute(
                 "successMessage",
-                "Xóa sản phẩm khỏi giỏ hàng thành công."
+                "Product removed from cart successfully."
         );
         return "redirect:/cart";
     }

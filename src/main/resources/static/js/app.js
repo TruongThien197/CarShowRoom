@@ -17,7 +17,7 @@
     function initConfirmActions() {
         document.querySelectorAll("form[data-confirm]").forEach(function (form) {
             form.addEventListener("submit", function (event) {
-                var message = form.getAttribute("data-confirm") || "Bạn có chắc chắn muốn thực hiện thao tác này?";
+                var message = form.getAttribute("data-confirm") || "Are you sure you want to do this?";
                 if (!window.confirm(message)) {
                     event.preventDefault();
                 }
@@ -26,7 +26,7 @@
 
         document.querySelectorAll("a[data-confirm]").forEach(function (link) {
             link.addEventListener("click", function (event) {
-                var message = link.getAttribute("data-confirm") || "Bạn có chắc chắn muốn thực hiện thao tác này?";
+                var message = link.getAttribute("data-confirm") || "Are you sure you want to do this?";
                 if (!window.confirm(message)) {
                     event.preventDefault();
                 }
@@ -96,11 +96,33 @@
         });
     }
 
+    /**
+     * 6) Car-model checkbox selector count.
+     * Any container with [data-car-model-count] is updated whenever a
+     * checkbox inside the same .car-model-select-card changes.
+     */
+    function initCarModelSelector() {
+        document.querySelectorAll("[data-car-model-count]").forEach(function (countEl) {
+            var card = countEl.closest(".car-model-select-card");
+            if (!card) return;
+            var checkboxes = card.querySelectorAll(".car-model-chip-input");
+            function updateCount() {
+                var checked = card.querySelectorAll(".car-model-chip-input:checked").length;
+                countEl.textContent = checked + " selected";
+            }
+            checkboxes.forEach(function (cb) {
+                cb.addEventListener("change", updateCount);
+            });
+            updateCount();
+        });
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         initConfirmActions();
         initFormValidation();
         initFlashToasts();
         initAutoDismissAlerts();
         initTooltips();
+        initCarModelSelector();
     });
 })();

@@ -7,9 +7,9 @@
 <main class="container py-5">
     <div class="row g-5 align-items-start">
         <div class="col-lg-5">
-            <h1 class="section-title">Schedule Service Appointment</h1>
+            <h1 class="gs-h1 section-title">Schedule Service Appointment</h1>
             <p class="lead text-secondary">Book diagnostics, repair, maintenance, or performance tuning with the showroom team.</p>
-            <div class="surface-card p-4 mt-4">
+            <div class="surface-card gs-stripe-top p-4 mt-4">
                 <p class="mb-2"><i class="bi bi-check-circle text-primary me-2"></i>Service catalog is loaded from database</p>
                 <p class="mb-2"><i class="bi bi-check-circle text-primary me-2"></i>Appointment is linked to your account</p>
                 <p class="mb-0"><i class="bi bi-check-circle text-primary me-2"></i>Price is saved at booking time</p>
@@ -44,7 +44,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Preferred date</label>
-                        <input class="form-control" type="date" th:field="*{bookingDate}" required>
+                        <input class="form-control gs-mono" type="date" th:field="*{bookingDate}" required>
                         <div class="text-danger small" th:if="${#fields.hasErrors('bookingDate')}" th:errors="*{bookingDate}"></div>
                     </div>
                     <div class="col-md-6">
@@ -65,7 +65,7 @@
                         <textarea class="form-control" rows="4" th:field="*{notes}"></textarea>
                     </div>
                     <div class="col-12">
-                        <button class="btn btn-primary btn-lg w-100" type="submit">Book Appointment</button>
+                        <button class="btn btn-amber btn-lg w-100" type="submit">Book Appointment</button>
                     </div>
                 </div>
             </form>
@@ -73,9 +73,10 @@
     </div>
 
     <section class="mt-5">
-        <h2 class="h4 fw-bold mb-3">My Bookings</h2>
-        <div class="alert alert-light border" th:if="${#lists.isEmpty(bookings)}">
-            You have no bookings yet.
+        <h2 class="gs-h4 fw-bold mb-3">My Bookings</h2>
+        <div class="gs-empty-state surface-card" th:if="${#lists.isEmpty(bookings)}">
+            <i class="bi bi-calendar-x gs-empty-state-icon d-block"></i>
+            <div class="gs-empty-state-title">You have no bookings yet.</div>
         </div>
         <div class="surface-card p-0 overflow-hidden" th:if="${!#lists.isEmpty(bookings)}">
             <div class="table-responsive">
@@ -92,12 +93,16 @@
                     </thead>
                     <tbody>
                     <tr th:each="booking : ${bookings}">
-                        <td class="fw-bold" th:text="'#BK-' + ${booking.id}">#BK-1</td>
-                        <td th:text="${booking.bookingDate}">2026-07-01</td>
-                        <td th:text="${booking.timeSlot}">09:30</td>
+                        <td class="fw-bold gs-mono" th:text="'#BK-' + ${booking.id}">#BK-1</td>
+                        <td class="gs-mono" th:text="${booking.bookingDate}">2026-07-01</td>
+                        <td class="gs-mono" th:text="${booking.timeSlot}">09:30</td>
                         <td th:text="${bookingServices[booking.id]}">Service</td>
-                        <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}">Vehicle</td>
-                        <td><span class="badge text-bg-primary" th:text="${booking.bookingStatus}">PENDING</span></td>
+                        <td class="gs-mono" th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}">Vehicle</td>
+                        <td>
+                            <span class="gs-badge"
+                                  th:classappend="${booking.bookingStatus.name() == 'PENDING_PAYMENT'} ? 'gs-badge--neutral' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS'} ? 'gs-badge--warning' : (${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : 'gs-badge--danger')))"
+                                  th:text="${booking.bookingStatus}">PENDING</span>
+                        </td>
                     </tr>
                     </tbody>
                 </table>

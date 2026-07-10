@@ -5,14 +5,14 @@
 <div th:replace="~{fragments :: navbar('home')}"></div>
 
 <main>
-    <section class="hero d-flex align-items-center text-white">
+    <section class="hero gs-grid-texture d-flex align-items-center text-white">
         <div class="container">
             <div class="col-lg-7">
-                <span class="text-uppercase fw-bold text-info">Excellence in Motion</span>
-                <h1 class="display-4 fw-bold mt-3 mb-4">Mastering Performance Through Precision Engineering.</h1>
+                <span class="text-uppercase fw-bold text-info gs-mono" style="letter-spacing:.08em;">Excellence in Motion</span>
+                <h1 class="gs-h1 text-white mt-3 mb-4">Mastering Performance Through Precision Engineering.</h1>
                 <p class="lead mb-4">Experience automotive care that goes beyond repair. From high-performance tuning to factory-certified maintenance, GearShift Pro is your trusted partner on the road.</p>
                 <div class="d-flex flex-wrap gap-3">
-                    <a class="btn btn-primary btn-lg" th:href="@{/booking}"><i class="bi bi-calendar-check me-2"></i>Book Repair</a>
+                    <a class="btn btn-primary btn-lg gs-cut" th:href="@{/booking}"><i class="bi bi-calendar-check me-2"></i>Book Service</a>
                     <a class="btn btn-outline-light btn-lg" th:href="@{/shop}"><i class="bi bi-bag me-2"></i>Shop Parts</a>
                 </div>
             </div>
@@ -22,34 +22,34 @@
     <section class="container py-5">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
             <div>
-                <h2 class="section-title">Expert Repair Services</h2>
+                <h2 class="gs-h2 section-title">Expert Repair Services</h2>
                 <p class="text-secondary mb-0">Certified technicians using factory-grade diagnostics for your vehicle.</p>
             </div>
             <a class="fw-bold text-decoration-none" th:href="@{/booking}">View services <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="surface-card h-100 p-4">
+                <div class="surface-card gs-stripe-top h-100 p-4">
                     <span class="icon-box mb-3"><i class="bi bi-tools"></i></span>
-                    <h5 class="fw-bold">Engine Performance</h5>
+                    <h5 class="gs-h4 fw-bold">Engine Performance</h5>
                     <p class="text-secondary">Comprehensive rebuilds, precision tuning, and advanced calibration for peak output.</p>
                     <p class="mb-1"><i class="bi bi-check-circle text-primary me-2"></i>Dyno Testing</p>
                     <p class="mb-0"><i class="bi bi-check-circle text-primary me-2"></i>ECU Remapping</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="surface-card h-100 p-4">
+                <div class="surface-card gs-stripe-top h-100 p-4">
                     <span class="icon-box mb-3"><i class="bi bi-disc"></i></span>
-                    <h5 class="fw-bold">Brake & Chassis</h5>
+                    <h5 class="gs-h4 fw-bold">Brake &amp; Chassis</h5>
                     <p class="text-secondary">High-performance braking systems and laser-accurate suspension alignment.</p>
                     <p class="mb-1"><i class="bi bi-check-circle text-primary me-2"></i>Ceramic Upgrades</p>
                     <p class="mb-0"><i class="bi bi-check-circle text-primary me-2"></i>3D Alignment</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="surface-card h-100 p-4">
+                <div class="surface-card gs-stripe-top h-100 p-4">
                     <span class="icon-box mb-3"><i class="bi bi-cpu"></i></span>
-                    <h5 class="fw-bold">Digital Diagnostics</h5>
+                    <h5 class="gs-h4 fw-bold">Digital Diagnostics</h5>
                     <p class="text-secondary">Advanced electronic scanning to detect issues before they become failures.</p>
                     <p class="mb-1"><i class="bi bi-check-circle text-primary me-2"></i>Electrical Audit</p>
                     <p class="mb-0"><i class="bi bi-check-circle text-primary me-2"></i>Hybrid Systems</p>
@@ -61,7 +61,7 @@
     <section class="bg-white py-5">
         <div class="container">
             <div class="text-center mb-4">
-                <h2 class="section-title">Premium Auto Parts</h2>
+                <h2 class="gs-h2 section-title">Premium Auto Parts</h2>
                 <p class="text-secondary">Only the highest grade components for those who demand more.</p>
             </div>
             <div class="row g-4">
@@ -70,10 +70,10 @@
                         <img class="w-100 product-image" th:src="@{/images/turbocharger.jpg}" alt="Turbo kit">
                         <div class="p-3">
                             <span class="small text-primary fw-bold">Engine Performance</span>
-                            <h5 class="fw-bold mt-1">Stage 3 Turbo Kit</h5>
+                            <h5 class="gs-h4 fw-bold mt-1">Stage 3 Turbo Kit</h5>
                             <p class="small text-secondary">Forged components for ultimate durability under boost.</p>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="price">$1,299</span>
+                                <span class="price gs-mono">$1,299</span>
                                 <a class="btn btn-primary btn-sm" th:href="@{/shop}"><i class="bi bi-eye"></i></a>
                             </div>
                         </div>
@@ -83,11 +83,11 @@
                     <div class="surface-card product-card overflow-hidden h-100">
                         <img class="w-100 product-image" th:src="@{/images/forged-rims.jpg}" alt="Forged rims">
                         <div class="p-3">
-                            <span class="small text-primary fw-bold">Exterior & Wheel</span>
-                            <h5 class="fw-bold mt-1">Forged Alloy Rims</h5>
+                            <span class="small text-primary fw-bold">Exterior &amp; Wheel</span>
+                            <h5 class="gs-h4 fw-bold mt-1">Forged Alloy Rims</h5>
                             <p class="small text-secondary">Ultra-lightweight multi-spoke design in satin black.</p>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="price">$2,450</span>
+                                <span class="price gs-mono">$2,450</span>
                                 <a class="btn btn-primary btn-sm" th:href="@{/shop}"><i class="bi bi-eye"></i></a>
                             </div>
                         </div>
@@ -97,11 +97,11 @@
                     <div class="surface-card product-card overflow-hidden h-100">
                         <img class="w-100 product-image" th:src="@{/images/track-tire.jpg}" alt="Track tire">
                         <div class="p-3">
-                            <span class="small text-primary fw-bold">Tires & Grip</span>
-                            <h5 class="fw-bold mt-1">Track-Ready Tires</h5>
+                            <span class="small text-primary fw-bold">Tires &amp; Grip</span>
+                            <h5 class="gs-h4 fw-bold mt-1">Track-Ready Tires</h5>
                             <p class="small text-secondary">Maximum grip compound for track days and street.</p>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="price">$320</span>
+                                <span class="price gs-mono">$320</span>
                                 <a class="btn btn-primary btn-sm" th:href="@{/shop}"><i class="bi bi-eye"></i></a>
                             </div>
                         </div>
@@ -112,10 +112,10 @@
                         <img class="w-100 product-image" th:src="@{/images/suspension-service.jpg}" alt="Suspension kit">
                         <div class="p-3">
                             <span class="small text-primary fw-bold">Suspension</span>
-                            <h5 class="fw-bold mt-1">Adjustable Coilovers</h5>
+                            <h5 class="gs-h4 fw-bold mt-1">Adjustable Coilovers</h5>
                             <p class="small text-secondary">Fully adjustable ride height and dampening control.</p>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="price">$1,890</span>
+                                <span class="price gs-mono">$1,890</span>
                                 <a class="btn btn-primary btn-sm" th:href="@{/shop}"><i class="bi bi-eye"></i></a>
                             </div>
                         </div>

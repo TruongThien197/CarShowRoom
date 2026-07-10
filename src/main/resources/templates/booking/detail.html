@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Chi tiet lich dat | GearShift Pro')}"></head>
+<head th:replace="~{fragments/header :: head('Booking Details | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('booking')}"></div>
 
@@ -11,54 +11,56 @@
         <section class="col-lg-9">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
-                    <h1 class="section-title mb-1" th:text="'Booking BK-' + ${booking.id}">Booking</h1>
-                    <p class="text-secondary mb-0">Chi tiet lich hen va dich vu da chon.</p>
+                    <h1 class="gs-h1 section-title mb-1" th:text="'Booking BK-' + ${booking.id}">Booking</h1>
+                    <p class="text-secondary mb-0">Review your appointment details and selected services.</p>
                 </div>
-                <a class="btn btn-outline-secondary" th:href="@{/booking/my-bookings}">Quay lai</a>
+                <a class="btn btn-outline-secondary" th:href="@{/booking/my-bookings}">Back</a>
             </div>
 
             <div th:replace="~{fragments/sidebar :: historyTabs('bookings')}"></div>
 
-            <div class="surface-card p-4 mb-4">
+            <div class="surface-card gs-stripe-top p-4 mb-4">
                 <div class="row g-4">
                     <div class="col-md-4">
-                        <div class="small text-secondary">Ngay gio</div>
-                        <div class="fw-bold" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</div>
+                        <div class="small text-secondary">Date &amp; Time</div>
+                        <div class="fw-bold gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</div>
                     </div>
                     <div class="col-md-4">
-                        <div class="small text-secondary">Trang thai</div>
-                        <span class="badge text-bg-primary" th:text="${booking.bookingStatus}">PENDING</span>
+                        <div class="small text-secondary">Status</div>
+                        <span class="gs-badge"
+                              th:classappend="${booking.bookingStatus.name() == 'PENDING_PAYMENT'} ? 'gs-badge--neutral' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS'} ? 'gs-badge--warning' : (${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : 'gs-badge--danger')))"
+                              th:text="${booking.bookingStatus}">PENDING</span>
                     </div>
                     <div class="col-md-4">
-                        <div class="small text-secondary">Xe</div>
-                        <div class="fw-bold"
-                             th:text="${booking.vehicle != null ? booking.vehicle.brand + ' ' + booking.vehicle.modelName + ' ' + booking.vehicle.year + ' - ' + booking.vehicle.licensePlate : 'Chua chon xe'}">
+                        <div class="small text-secondary">Vehicle</div>
+                        <div class="fw-bold gs-mono"
+                             th:text="${booking.vehicle != null ? booking.vehicle.brand + ' ' + booking.vehicle.modelName + ' ' + booking.vehicle.year + ' - ' + booking.vehicle.licensePlate : 'No vehicle selected'}">
                             Vehicle
                         </div>
                     </div>
                     <div class="col-12">
-                        <div class="small text-secondary">Ghi chu</div>
-                        <div th:text="${booking.notes ?: 'Khong co ghi chu'}">Notes</div>
+                        <div class="small text-secondary">Notes</div>
+                        <div th:text="${booking.notes ?: 'No notes'}">Notes</div>
                     </div>
                 </div>
             </div>
 
             <div class="surface-card p-4">
-                <h4 class="fw-bold mb-3">Dich vu</h4>
+                <h4 class="gs-h4 fw-bold mb-3">Service</h4>
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
                         <thead class="table-light">
                         <tr>
-                            <th>Dich vu</th>
-                            <th>Mo ta</th>
-                            <th class="text-end">Gia tu</th>
+                            <th>Service</th>
+                            <th>Description</th>
+                            <th class="text-end">Starting Price</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:each="detail : ${bookingServices}">
                             <td class="fw-bold" th:text="${detail.serviceNameSnapshot}">Service</td>
-                            <td th:text="${detail.service.description ?: 'Khong co mo ta'}">Description</td>
-                            <td class="text-end fw-bold"
+                            <td th:text="${detail.service.description ?: 'No description'}">Description</td>
+                            <td class="text-end fw-bold gs-mono"
                                 th:text="${#numbers.formatDecimal(detail.minPriceSnapshot, 0, 'COMMA', 0, 'POINT')} + ' VND'">0</td>
                         </tr>
                         </tbody>

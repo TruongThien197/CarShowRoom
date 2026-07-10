@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Lỗi hệ thống | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('System Error | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('error')}"></div>
 
-<main class="container py-5 text-center">
-    <div class="py-5">
-        <div class="display-1 fw-bold text-danger mb-3">500</div>
-        <h1 class="section-title mb-3">Đã có lỗi xảy ra phía máy chủ</h1>
-        <p class="text-secondary mb-4 mx-auto" style="max-width: 480px">
-            Rất tiếc, hệ thống gặp sự cố khi xử lý yêu cầu của bạn. Đội ngũ kỹ thuật đã được ghi nhận.
-            Vui lòng thử lại sau ít phút.
-        </p>
-        <div class="d-flex justify-content-center gap-3">
-            <a class="btn btn-primary btn-lg" th:href="@{/}"><i class="bi bi-house-door me-2"></i>Về trang chủ</a>
-            <a class="btn btn-outline-primary btn-lg" href="javascript:location.reload()"><i class="bi bi-arrow-clockwise me-2"></i>Thử lại</a>
+<main class="auth-shell gs-grid-texture d-flex align-items-center py-5 text-center">
+    <div class="container">
+        <div class="py-5">
+            <div class="gs-mono fw-bold mb-3" style="font-size: clamp(4rem, 12vw, 8rem); color: var(--gs-amber); line-height: 1;">500</div>
+            <h1 class="gs-h1 text-white mb-3">A server-side error has occurred</h1>
+            <p class="mb-4 mx-auto" style="max-width: 480px; color: #dbe4f0;">
+                We're sorry, the system encountered an issue while processing your request. Our technical team has been notified.
+                Please try again in a few minutes.
+            </p>
+            <div class="d-flex justify-content-center flex-wrap gap-3">
+                <a class="btn btn-primary btn-lg gs-cut" th:href="@{/}"><i class="bi bi-house-door me-2"></i>Back to Home</a>
+                <a class="btn btn-outline-light btn-lg" href="javascript:location.reload()"><i class="bi bi-arrow-clockwise me-2"></i>Try Again</a>
+            </div>
         </div>
     </div>
 </main>

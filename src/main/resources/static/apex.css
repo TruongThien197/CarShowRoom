@@ -7,6 +7,17 @@
     --apex-bg: #f5f7fb;
     --apex-dark: #151a22;
     --apex-accent: #16a3c7;
+    --gs-primary: var(--apex-primary);
+    --gs-primary-soft: var(--apex-primary-soft);
+    --gs-accent: var(--apex-accent);
+    --gs-amber: #f59e0b;
+    --gs-amber-dark: #b45309;
+    --gs-success: #047857;
+    --gs-danger: #b91c1c;
+    --gs-warning: #b45309;
+    --gs-info: #0369a1;
+    --gs-neutral: #4b5563;
+    --gs-nav-height: 72px;
 }
 
 body {
@@ -15,8 +26,15 @@ body {
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+.gs-navbar {
+    min-height: var(--gs-nav-height);
+    background: #111827;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    box-shadow: 0 10px 24px rgba(17, 24, 39, .16);
+}
+
 .navbar-brand {
-    color: var(--apex-primary);
+    color: #fff !important;
     font-weight: 800;
     letter-spacing: .01em;
 }
@@ -27,7 +45,15 @@ body {
 
 .nav-link.active,
 .nav-link:hover {
-    color: var(--apex-primary) !important;
+    color: var(--apex-accent) !important;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, .82);
+}
+
+.navbar-dark .navbar-nav .nav-link.active {
+    color: #fff !important;
 }
 
 .btn-primary {
@@ -42,6 +68,191 @@ body {
     --bs-btn-border-color: var(--apex-primary);
     --bs-btn-hover-bg: var(--apex-primary);
     --bs-btn-hover-border-color: var(--apex-primary);
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: #374151;
+    --bs-btn-border-color: #cbd5e1;
+    --bs-btn-hover-bg: #374151;
+    --bs-btn-hover-border-color: #374151;
+    --bs-btn-hover-color: #fff;
+}
+
+.btn-amber {
+    --bs-btn-color: #111827;
+    --bs-btn-bg: var(--gs-amber);
+    --bs-btn-border-color: var(--gs-amber);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--gs-amber-dark);
+    --bs-btn-hover-border-color: var(--gs-amber-dark);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #92400e;
+    --bs-btn-active-border-color: #92400e;
+    font-weight: 700;
+}
+
+.gs-mono {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.gs-h1,
+.gs-h2,
+.gs-h3,
+.gs-h4 {
+    font-family: "Rajdhani", "Inter", system-ui, sans-serif;
+    letter-spacing: 0;
+}
+
+.gs-h1 {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    line-height: 1;
+    font-weight: 800;
+}
+
+.gs-h2 {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    line-height: 1.05;
+    font-weight: 800;
+}
+
+.gs-h4 {
+    font-size: 1.25rem;
+    line-height: 1.2;
+    font-weight: 750;
+}
+
+.gs-cut {
+    border-radius: .35rem;
+}
+
+.gs-grid-texture {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+.gs-stripe-top,
+.gs-stripe-top--neutral,
+.gs-stripe-top--info,
+.gs-stripe-top--amber {
+    position: relative;
+    overflow: hidden;
+}
+
+.gs-stripe-top::before,
+.gs-stripe-top--neutral::before,
+.gs-stripe-top--info::before,
+.gs-stripe-top--amber::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: var(--apex-primary);
+}
+
+.gs-stripe-top--neutral::before {
+    background: #64748b;
+}
+
+.gs-stripe-top--info::before {
+    background: var(--gs-info);
+}
+
+.gs-stripe-top--amber::before {
+    background: var(--gs-amber);
+}
+
+.gs-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    min-height: 1.75rem;
+    padding: .28rem .62rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: .78rem;
+    line-height: 1;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.gs-badge--success {
+    color: var(--gs-success);
+    background: #dcfce7;
+    border-color: #bbf7d0;
+}
+
+.gs-badge--danger {
+    color: var(--gs-danger);
+    background: #fee2e2;
+    border-color: #fecaca;
+}
+
+.gs-badge--warning {
+    color: var(--gs-warning);
+    background: #fef3c7;
+    border-color: #fde68a;
+}
+
+.gs-badge--info {
+    color: var(--gs-info);
+    background: #e0f2fe;
+    border-color: #bae6fd;
+}
+
+.gs-badge--neutral {
+    color: var(--gs-neutral);
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+}
+
+.gs-empty-state {
+    padding: 3rem 1.25rem;
+    text-align: center;
+    color: var(--apex-muted);
+}
+
+.gs-empty-state-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+    border-radius: 50%;
+    background: var(--apex-primary-soft);
+    color: var(--apex-primary);
+    font-size: 2rem;
+}
+
+.gs-empty-state-title {
+    color: var(--apex-ink);
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.gs-empty-state-text {
+    max-width: 520px;
+    margin: .35rem auto 0;
+}
+
+.gs-sidebar-header,
+.account-sidebar-header {
+    background: var(--apex-primary);
+    color: #fff;
+}
+
+.gs-chevron-divider {
+    display: inline-block;
+    width: 1px;
+    height: 1.5rem;
+    margin-left: .75rem;
+    background: var(--apex-line);
+}
+
+.gs-toast {
+    box-shadow: 0 18px 42px rgba(17, 24, 39, .2);
 }
 
 .hero {
@@ -172,6 +383,31 @@ body {
     }
 }
 
+@media (max-width: 991.98px) {
+    .admin-page {
+        min-height: auto;
+    }
+
+    .ops-sidebar {
+        min-height: auto;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .ops-sidebar nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ops-sidebar a {
+        min-height: 44px;
+        padding: .68rem .75rem;
+    }
+
+    .admin-content {
+        padding: 1.25rem 1rem 2.25rem;
+    }
+}
+
 
 /* Unified admin workspace */
 .ops-shell {
@@ -180,11 +416,16 @@ body {
 }
 
 .admin-page {
-    min-height: calc(100vh - 73px);
+    min-height: calc(100vh - var(--gs-nav-height));
+}
+
+.admin-page > .row {
+    --bs-gutter-x: 0;
+    --bs-gutter-y: 0;
 }
 
 .ops-sidebar {
-    min-height: calc(100vh - 73px);
+    min-height: calc(100vh - var(--gs-nav-height));
     background: #1f2429;
     color: #e8edf3;
     border-right: 1px solid rgba(255, 255, 255, .08);
@@ -299,7 +540,12 @@ body {
 .admin-tabbar .nav-link:hover {
     background: #0d6efd;
     border-color: #0d6efd;
-    color: #fff;
+    color: #fff !important;
+}
+
+.admin-tabbar .nav-link.active i,
+.admin-tabbar .nav-link:hover i {
+    color: inherit;
 }
 
 .admin-link-card {
@@ -328,11 +574,48 @@ body {
     color: #374151;
 }
 
+.car-model-select-card {
+    border: 1px solid #d7dfeb;
+    border-radius: .75rem;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    padding: 1rem;
+}
+
+.car-model-select-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: .8rem;
+}
+
+.car-model-multiselect {
+    min-height: 18rem;
+    border-radius: .7rem;
+    border: 1px solid #c8d4e6;
+    background: #fff;
+    box-shadow: inset 0 1px 2px rgba(17, 24, 39, .04);
+    padding: .45rem;
+}
+
+.car-model-multiselect option {
+    border-radius: .5rem;
+    padding: .7rem .8rem;
+    margin-bottom: .2rem;
+}
+
+.car-model-multiselect option:checked {
+    background: linear-gradient(135deg, #0d6efd 0%, #3b82f6 100%);
+    color: #fff;
+}
+
 @media (min-width: 992px) {
     .admin-fixed-shell .ops-sidebar {
         position: fixed;
-        top: 73px;
+        top: var(--gs-nav-height);
         bottom: 0;
+        margin-top: 0;
+        padding-top: 1rem;
         left: 0;
         overflow-y: auto;
         z-index: 100;
@@ -347,4 +630,81 @@ body {
     .admin-fixed-shell main > .row > .admin-content {
         margin-left: 16.666667%;
     }
+}
+
+@media (max-width: 991.98px) {
+    .admin-page > .row.min-vh-100 {
+        min-height: auto !important;
+    }
+
+    .admin-page {
+        min-height: auto;
+    }
+
+    .ops-sidebar {
+        min-height: auto;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .ops-sidebar nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-content {
+        padding: 1.25rem 1rem 2.25rem;
+    }
+}
+
+.car-model-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    max-height: 22rem;
+    overflow-y: auto;
+    padding: .25rem 0;
+}
+
+.car-model-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .45rem .9rem;
+    border: 1.5px solid #d7dfeb;
+    border-radius: 2rem;
+    background: #fff;
+    cursor: pointer;
+    transition: all .15s ease;
+    user-select: none;
+}
+
+.car-model-chip:hover {
+    border-color: #0d6efd;
+    background: #f0f6ff;
+}
+
+.car-model-chip-input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: #0d6efd;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.car-model-chip-label {
+    font-size: .875rem;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
+.car-model-chip:has(.car-model-chip-input:checked) {
+    border-color: #0d6efd;
+    background: #e8f0fe;
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, .15);
+}
+
+.car-model-chip:has(.car-model-chip-input:checked) .car-model-chip-label {
+    font-weight: 600;
+    color: #0d6efd;
 }

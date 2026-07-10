@@ -1,56 +1,63 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('User Detail | GearShift Pro')}"></head>
-<body class="ops-shell">
+<body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments :: navbar('admin')}"></div>
 
-<main class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="section-title mb-1">User Detail</h1>
-            <p class="text-secondary mb-0">Review account identity, role, and status.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" th:href="@{/admin/users}">Back</a>
-            <a class="btn btn-primary" th:href="@{/admin/users/edit/{id}(id=${user.id})}">
-                <i class="bi bi-pencil me-2"></i>Edit
-            </a>
-        </div>
-    </div>
+<main class="container-fluid admin-page">
+    <div class="row min-vh-100">
+        <aside th:replace="~{fragments/sidebar :: adminSidebar('users')}"></aside>
+        <section class="col-lg-9 col-xl-10 admin-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="admin-page-title mb-1">User Detail</h1>
+                    <p class="text-secondary mb-0">Review account identity, role, and status.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-outline-secondary" th:href="@{/admin/users}">Back</a>
+                    <a class="btn btn-primary" th:href="@{/admin/users/edit/{id}(id=${user.id})}">
+                        <i class="bi bi-pencil me-2"></i>Edit
+                    </a>
+                </div>
+            </div>
 
-    <div class="surface-card p-4 p-md-5">
-        <div class="d-flex align-items-center gap-3 mb-4">
-            <div class="icon-box fs-4"><i class="bi bi-person"></i></div>
-            <div>
-                <h4 class="fw-bold mb-1" th:text="${user.fullName}">User</h4>
-                <div class="text-secondary" th:text="${user.email}">email@example.com</div>
-            </div>
-        </div>
+            <div class="surface-card gs-stripe-top p-4 p-md-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="icon-box fs-4"><i class="bi bi-person"></i></div>
+                    <div>
+                        <h4 class="fw-bold mb-1" th:text="${user.fullName}">User</h4>
+                        <div class="text-secondary gs-mono" th:text="${user.email}">email@example.com</div>
+                    </div>
+                </div>
 
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="small text-secondary">User ID</div>
-                <div class="fw-bold" th:text="${user.id}">1</div>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="small text-secondary">User ID</div>
+                        <div class="fw-bold gs-mono" th:text="${user.id}">1</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-secondary">Role</div>
+                        <span class="gs-badge"
+                              th:classappend="${user.role == 'ADMIN'} ? 'gs-badge--danger' : (${user.role == 'STAFF'} ? 'gs-badge--info' : 'gs-badge--neutral')"
+                              th:text="${user.role}">CUSTOMER</span>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-secondary">Status</div>
+                        <span class="gs-badge"
+                              th:classappend="${user.status == 'ACTIVE'} ? 'gs-badge--success' : (${user.status == 'INACTIVE'} ? 'gs-badge--neutral' : 'gs-badge--danger')"
+                              th:text="${user.status}">ACTIVE</span>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-secondary">Phone</div>
+                        <div class="fw-bold gs-mono" th:text="${user.phone ?: 'No phone'}">Phone</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-secondary">Address</div>
+                        <div class="fw-bold" th:text="${user.address ?: 'No address'}">Address</div>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-4">
-                <div class="small text-secondary">Role</div>
-                <span class="badge text-bg-light" th:text="${user.role}">CUSTOMER</span>
-            </div>
-            <div class="col-md-4">
-                <div class="small text-secondary">Status</div>
-                <span class="badge"
-                      th:classappend="${user.status == 'ACTIVE'} ? ' text-bg-success' : ' text-bg-secondary'"
-                      th:text="${user.status}">ACTIVE</span>
-            </div>
-            <div class="col-md-6">
-                <div class="small text-secondary">Phone</div>
-                <div class="fw-bold" th:text="${user.phone ?: 'No phone'}">Phone</div>
-            </div>
-            <div class="col-md-6">
-                <div class="small text-secondary">Address</div>
-                <div class="fw-bold" th:text="${user.address ?: 'No address'}">Address</div>
-            </div>
-        </div>
+        </section>
     </div>
 </main>
 

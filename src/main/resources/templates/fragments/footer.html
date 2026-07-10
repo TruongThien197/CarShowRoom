@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
-<footer th:fragment="footer" class="footer-dark mt-auto py-5 bg-dark text-white"
+<footer th:fragment="footer" class="footer-dark gs-grid-texture mt-auto py-5 text-white"
         th:with="role=${currentUser != null ? currentUser.role : 'GUEST'}">
     <div class="container">
         <div class="row g-4 mb-4">
             <div class="col-lg-4">
-                <h5 class="fw-bold text-primary mb-3">
-                    <i class="bi bi-speedometer2 me-2"></i>GearShift Pro
+                <h5 class="gs-h4 mb-3">
+                    <i class="bi bi-speedometer2 me-2 footer-brand-icon"></i>GearShift Pro
                 </h5>
                 <p class="text-secondary small mb-3">
-                    Hệ thống đặt lịch sửa chữa bảo dưỡng xe ô tô & bán phụ tùng ô tô trực tuyến uy tín hàng đầu.
+                    Trusted automotive booking, maintenance, and online parts ordering for modern workshops and drivers.
                 </p>
                 <div class="d-flex gap-3 fs-5 text-secondary">
                     <a href="#" class="text-secondary"><i class="bi bi-facebook"></i></a>
@@ -19,50 +19,46 @@
                 </div>
             </div>
             <div class="col-md-4 col-lg-2">
-                <h6 class="text-uppercase fw-semibold mb-3">Dịch vụ</h6>
+                <h6 class="text-uppercase fw-semibold mb-3">Services</h6>
                 <ul class="list-unstyled small mb-0">
-                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/shop}">Mua phụ tùng</a></li>
+                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/shop}">Browse Parts</a></li>
                     <li class="mb-2" th:if="${role == 'CUSTOMER'}">
-                        <a class="text-secondary text-decoration-none" th:href="@{/booking}">Đặt lịch sửa chữa</a>
+                        <a class="text-secondary text-decoration-none" th:href="@{/booking}">Book a Service</a>
                     </li>
-                    <li class="mb-2"><a class="text-secondary text-decoration-none" href="#">Tư vấn bảo dưỡng</a></li>
+                    <li class="mb-2"><a class="text-secondary text-decoration-none" href="#">Maintenance Consulting</a></li>
                 </ul>
             </div>
             <div class="col-md-4 col-lg-2" th:if="${role == 'CUSTOMER'}">
-                <h6 class="text-uppercase fw-semibold mb-3">Tài khoản</h6>
+                <h6 class="text-uppercase fw-semibold mb-3">Account</h6>
                 <ul class="list-unstyled small mb-0">
-                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/account}">Hồ sơ cá nhân</a></li>
-                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/orders}">Lịch sử đơn hàng</a></li>
-                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/cart}">Giỏ hàng</a></li>
+                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/account}">My Profile</a></li>
+                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/orders}">Order History</a></li>
+                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/cart}">Cart</a></li>
                 </ul>
             </div>
             <div class="col-md-4 col-lg-4">
-                <h6 class="text-uppercase fw-semibold mb-3">Liên hệ ShowRoom</h6>
-                <p class="small text-secondary mb-2"><i class="bi bi-geo-alt me-2 text-primary"></i>Khu Công Nghệ Cao, Đại học FPT</p>
-                <p class="small text-secondary mb-2"><i class="bi bi-telephone me-2 text-primary"></i>Hotline: 0988 123 456</p>
-                <p class="small text-secondary mb-0"><i class="bi bi-clock me-2 text-primary"></i>Thứ 2 - Chủ Nhật: 8:00 - 18:00</p>
+                <h6 class="text-uppercase fw-semibold mb-3">Showroom Contact</h6>
+                <p class="small text-secondary mb-2"><i class="bi bi-geo-alt me-2 footer-contact-icon"></i>High Tech Park, FPT University</p>
+                <p class="small text-secondary mb-2"><i class="bi bi-telephone me-2 footer-contact-icon"></i>Hotline: 0988 123 456</p>
+                <p class="small text-secondary mb-0"><i class="bi bi-clock me-2 footer-contact-icon"></i>Monday - Sunday: 8:00 - 18:00</p>
             </div>
         </div>
-        <hr class="border-secondary opacity-25">
+        <hr>
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center small text-secondary">
             <span>&copy; 2026 GearShift Pro Automotive. All rights reserved.</span>
-            <span>Đồ án môn học HSF302 - Java Spring Boot</span>
+            <span>HSF302 Course Project - Java Spring Boot</span>
         </div>
     </div>
 </footer>
 
 <div th:fragment="scripts">
-    <!-- Flash message toast: rendered whenever a controller sets successMessage / errorMessage
-         as a redirect flash attribute. app.js picks this up and shows it as an auto-dismissing
-         Bootstrap toast instead of every page needing its own static alert banner. Included
-         inside :: scripts so every page gets it automatically, no per-template wiring needed. -->
     <div th:if="${successMessage != null or errorMessage != null}"
          class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
-        <div id="flashToast" class="toast align-items-center border-0"
+        <div id="flashToast" class="toast align-items-center border-0 gs-toast"
              th:classappend="${errorMessage != null} ? 'text-bg-danger' : 'text-bg-success'"
              role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
-                <div class="toast-body" th:text="${errorMessage != null ? errorMessage : successMessage}">Thông báo</div>
+                <div class="toast-body" th:text="${errorMessage != null ? errorMessage : successMessage}">Notification</div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>

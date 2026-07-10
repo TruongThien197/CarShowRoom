@@ -15,22 +15,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RegisterRequest {
 
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Định dạng email không hợp lệ")
-    @Size(max = 255, message = "Email tối đa 255 ký tự")
+    @NotBlank(message = "Email must not be blank")
+    @Email(message = "Invalid email format")
+    @Size(max = 255, message = "Email must be at most 255 characters")
     private String email;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
-    @Size(min = 6, max = 50, message = "Mật khẩu phải từ 6 đến 50 ký tự")
+    @NotBlank(message = "Password must not be blank")
+    @Size(min = 6, max = 50, message = "Password must be between 6 and 50 characters")
     private String password;
 
-    @NotBlank(message = "Họ và tên không được để trống")
-    @Size(max = 150, message = "Họ và tên tối đa 150 ký tự")
+    @NotBlank(message = "Full name must not be blank")
+    @Size(max = 150, message = "Full name must be at most 150 characters")
     private String fullName;
 
-    @Pattern(regexp = "^$|^[0-9]{9,15}$", message = "Số điện thoại chỉ gồm chữ số từ 9 đến 15 ký tự")
+    @Pattern(regexp = "^$|^[0-9]{9,15}$", message = "Phone number must contain only 9 to 15 digits")
     private String phone;
 
-    @Size(max = 255, message = "Địa chỉ tối đa 255 ký tự")
+    @Size(max = 255, message = "Address must be at most 255 characters")
     private String address;
 }

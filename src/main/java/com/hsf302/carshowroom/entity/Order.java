@@ -54,12 +54,6 @@ public class Order {
 
     @Column(name = "product_total", nullable = false)
     private BigDecimal productTotal = BigDecimal.ZERO;
-
-    @Column(name = "deposit_amount", nullable = false)
-    private BigDecimal depositAmount = BigDecimal.ZERO;
-
-    @Column(name = "remaining_amount", nullable = false)
-    private BigDecimal remainingAmount = BigDecimal.ZERO;
     
     @Column(name = "shipping_address")
     private String shippingAddress;

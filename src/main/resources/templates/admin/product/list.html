@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Quan ly san pham | GearShift Admin')}"></head>
+<head th:replace="~{fragments/header :: head('Manage Products | GearShift Admin')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
@@ -11,11 +11,11 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
                 <div>
-                    <h1 class="admin-page-title mb-1"><i class="bi bi-box-seam me-2 text-primary"></i>Quan ly phu tung</h1>
-                    <p class="text-secondary small mb-0">Loc theo nhom phu tung hoac dong xe catalog do admin/staff quan ly.</p>
+                    <h1 class="gs-h1 mb-1"><i class="bi bi-box-seam me-2 text-primary"></i>Product Management</h1>
+                    <p class="text-secondary small mb-0">Filter by parts category or catalog car model managed by admin/staff.</p>
                 </div>
                 <a th:href="@{/admin/products/create}" class="btn btn-primary shadow-sm d-flex align-items-center gap-2">
-                    <i class="bi bi-plus-lg"></i><span>Them phu tung</span>
+                    <i class="bi bi-plus-lg"></i><span>Add Part</span>
                 </a>
             </div>
 
@@ -24,36 +24,36 @@
             <form class="surface-card p-3 mb-4" th:action="@{/admin/products}" method="get">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label">Tu khoa</label>
-                        <input class="form-control" name="keyword" th:value="${keyword}" placeholder="Ten hoac SKU">
+                        <label class="form-label">Keyword</label>
+                        <input class="form-control" name="keyword" th:value="${keyword}" placeholder="Name or SKU">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Nhom phu tung</label>
+                        <label class="form-label">Parts Category</label>
                         <select class="form-select" name="categoryId">
-                            <option value="">Tat ca</option>
+                            <option value="">All</option>
                             <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.categoryName}"
                                     th:selected="${selectedCategoryId != null and selectedCategoryId == cat.id}">Category</option>
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Hang xe</label>
+                        <label class="form-label">Brand</label>
                         <select class="form-select" name="brand">
-                            <option value="">Tat ca</option>
+                            <option value="">All</option>
                             <option th:each="brand : ${carBrands}" th:value="${brand}" th:text="${brand}"
                                     th:selected="${brand == selectedBrand}">Brand</option>
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Dong xe catalog</label>
+                        <label class="form-label">Compatible Car Models</label>
                         <select class="form-select" name="carModelId">
-                            <option value="">Tat ca dong xe</option>
+                            <option value="">All car models</option>
                             <option th:each="model : ${carModels}" th:value="${model.id}"
                                     th:text="${model.brand + ' ' + model.modelName + ' ' + model.year}"
                                     th:selected="${selectedCarModelId != null and selectedCarModelId == model.id}">Model</option>
                         </select>
                     </div>
                     <div class="col-md-1">
-                        <label class="form-label">Doi</label>
+                        <label class="form-label">Year</label>
                         <input class="form-control" name="year" type="number" th:value="${selectedYear}">
                     </div>
                     <div class="col-md-1 d-grid">
@@ -62,31 +62,35 @@
                 </div>
             </form>
 
-            <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="admin-table-card p-0 overflow-hidden">
                 <div class="table-responsive">
                     <table id="productsTable" class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                         <tr>
                             <th class="ps-4">ID</th>
-                            <th>Anh</th>
-                            <th>Ten phu tung</th>
-                            <th>Nhom</th>
-                            <th>Dong xe</th>
-                            <th>Gia</th>
-                            <th>Kho</th>
-                            <th>Trang thai</th>
-                            <th class="text-end pe-4">Thao tac</th>
+                            <th>Image</th>
+                            <th>Part Name</th>
+                            <th>Category</th>
+                            <th>Car Model</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(products)}">
-                            <td colspan="9" class="text-center py-5 text-secondary">Chua co san pham phu hop.</td>
+                            <td colspan="9" class="gs-empty-state">
+                                <div class="gs-empty-state-icon"><i class="bi bi-box-seam"></i></div>
+                                <div class="gs-empty-state-title">No products yet</div>
+                                <div class="gs-empty-state-text">No products match the current filters.</div>
+                            </td>
                         </tr>
                         <tr th:each="prod : ${products}">
-                            <td class="ps-4 fw-bold text-secondary" th:text="${prod.id}">1</td>
+                            <td class="ps-4 fw-bold gs-mono text-secondary" th:text="${prod.id}">1</td>
                             <td>
                                 <img th:if="${prod.imageUrl != null and !#strings.isEmpty(prod.imageUrl)}"
-                                     th:src="${prod.imageUrl}" alt="img" class="rounded object-fit-cover shadow-sm" style="width:48px;height:48px;">
+                                     th:src="${prod.imageUrl}" alt="img" class="product-image rounded shadow-sm" style="width:48px;height:48px;">
                                 <div th:if="${prod.imageUrl == null or #strings.isEmpty(prod.imageUrl)}"
                                      class="bg-light rounded d-flex align-items-center justify-content-center border" style="width:48px;height:48px;">
                                     <i class="bi bi-tools text-secondary"></i>
@@ -94,22 +98,22 @@
                             </td>
                             <td>
                                 <div class="fw-bold text-dark" th:text="${prod.productName}">Product</div>
-                                <small class="text-secondary" th:text="${prod.sku}">SKU</small>
+                                <small class="text-secondary gs-mono" th:text="${prod.sku}">SKU</small>
                             </td>
                             <td><span class="badge bg-light text-dark border" th:text="${prod.category != null ? prod.category.categoryName : 'N/A'}">Category</span></td>
                             <td class="small text-secondary">
-                                <span th:if="${#sets.isEmpty(prod.compatibleCarModels)}">Chua gan dong xe</span>
+                                <span th:if="${#sets.isEmpty(prod.compatibleCarModels)}">No car models assigned</span>
                                 <span th:if="${!#sets.isEmpty(prod.compatibleCarModels)}"
                                       th:text="${#strings.listJoin(prod.compatibleCarModels.![brand + ' ' + modelName + ' ' + year], ', ')}">Models</span>
                             </td>
-                            <td class="fw-bold text-primary" th:text="${#numbers.formatDecimal(prod.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">0</td>
-                            <td th:text="${prod.stockQuantity}">0</td>
-                            <td><span class="badge" th:classappend="${'ACTIVE'.equalsIgnoreCase(prod.status) ? 'bg-success-subtle text-success border border-success' : 'bg-danger-subtle text-danger border border-danger'}" th:text="${prod.status}">ACTIVE</span></td>
-                            <td class="text-end pe-4">
-                                <a th:href="@{/admin/products/edit/{id}(id=${prod.id})}" class="btn btn-outline-primary btn-sm me-1" title="Sua">
+                            <td class="fw-bold text-primary gs-mono" th:text="${#numbers.formatDecimal(prod.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">0</td>
+                            <td class="gs-mono" th:text="${prod.stockQuantity}">0</td>
+                            <td><span class="gs-badge" th:classappend="${'ACTIVE'.equalsIgnoreCase(prod.status) ? 'gs-badge--success' : 'gs-badge--neutral'}" th:text="${prod.status}">ACTIVE</span></td>
+                            <td class="text-end pe-4 table-action">
+                                <a th:href="@{/admin/products/edit/{id}(id=${prod.id})}" class="btn btn-outline-primary btn-sm me-1" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <a th:href="@{/admin/products/delete/{id}(id=${prod.id})}" onclick="return confirm('Xoa san pham nay?');" class="btn btn-outline-danger btn-sm" title="Xoa">
+                                <a th:href="@{/admin/products/delete/{id}(id=${prod.id})}" onclick="return confirm('Delete this product?');" class="btn btn-outline-danger btn-sm" title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </td>

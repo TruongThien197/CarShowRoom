@@ -6,5 +6,7 @@ import com.hsf302.carshowroom.entity.PaymentTransaction;
 
 public interface PaymentService {
     PaymentTransaction createPaymentLink(PayOSCreatePaymentLinkRequest request);
+    PaymentTransaction syncPaymentStatus(String orderCode);
     void handlePayOSWebhook(PayOSWebhookRequest webhookRequest);
+    void expirePendingPayments();
 }

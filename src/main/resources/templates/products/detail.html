@@ -6,64 +6,64 @@
 
 <main class="container py-5 min-vh-100">
     <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Trang chu</a></li>
-            <li class="breadcrumb-item"><a th:href="@{/products}" class="text-decoration-none">Cua hang phu tung</a></li>
-            <li class="breadcrumb-item active" aria-current="page" th:text="${product.productName}">Chi tiet</li>
+        <ol class="breadcrumb gs-mono small">
+            <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/products}" class="text-decoration-none">Parts Store</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="${product.productName}">Details</li>
         </ol>
     </nav>
 
     <div class="row g-5">
         <div class="col-lg-6">
-            <div class="surface-card card border-0 shadow overflow-hidden bg-light d-flex align-items-center justify-content-center position-relative" style="min-height: 420px">
+            <div class="surface-card gs-stripe-top overflow-hidden bg-light d-flex align-items-center justify-content-center position-relative" style="min-height: 420px">
                 <img class="w-100 h-100 object-fit-cover"
                      th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
                      th:src="${product.imageUrl}" alt="Product image">
                 <i class="bi bi-tools display-1 text-secondary opacity-25"
                    th:if="${product.imageUrl == null or #strings.isEmpty(product.imageUrl)}"></i>
                 <span class="badge bg-primary fs-6 position-absolute top-0 start-0 m-4 shadow"
-                      th:text="${product.category.categoryName}">Danh muc</span>
+                      th:text="${product.category.categoryName}">Category</span>
             </div>
         </div>
 
         <div class="col-lg-6 d-flex flex-column justify-content-between">
             <div>
-                <h1 class="fw-bold text-dark mb-3" th:text="${product.productName}">Ten phu tung</h1>
-                <div class="fs-2 fw-bold text-primary mb-4"
+                <h1 class="gs-h2 text-dark mb-3" th:text="${product.productName}">Part Name</h1>
+                <div class="price gs-mono mb-4" style="font-size: 2rem;"
                      th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</div>
 
-                <h6 class="fw-semibold text-uppercase text-secondary mb-2">Mo ta san pham</h6>
+                <h2 class="gs-h4 text-uppercase text-secondary mb-2">Product Description</h2>
                 <p class="lead text-secondary fs-6 mb-4 lh-lg"
-                   th:text="${product.description ?: 'San pham phu tung o to chinh hang, do ben cao.'}">Mo ta</p>
+                   th:text="${product.description ?: 'Genuine automotive part, built for durability.'}">Description</p>
 
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6">
-                        <div class="card border-0 bg-light p-3 rounded-3 text-center shadow-sm">
-                            <div class="small text-secondary mb-1"><i class="bi bi-check-circle me-1"></i>Trang thai</div>
-                            <span class="badge"
-                                  th:classappend="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0} ? 'bg-success text-white' : 'bg-danger text-white'"
-                                  th:text="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0 ? 'Con hang' : 'Het hang'}">Tinh trang</span>
+                        <div class="surface-card p-3 text-center">
+                            <div class="small text-secondary mb-1"><i class="bi bi-check-circle me-1"></i>Status</div>
+                            <span class="gs-badge"
+                                  th:classappend="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0} ? 'gs-badge--success' : 'gs-badge--danger'"
+                                  th:text="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock'}">Status</span>
                         </div>
                     </div>
                     <div class="col-sm-6">
-                        <div class="card border-0 bg-light p-3 rounded-3 text-center shadow-sm">
-                            <div class="small text-secondary mb-1"><i class="bi bi-tag me-1"></i>Phan loai</div>
+                        <div class="surface-card p-3 text-center">
+                            <div class="small text-secondary mb-1"><i class="bi bi-tag me-1"></i>Category</div>
                             <strong class="fs-6 text-dark" th:text="${product.category.categoryName}">Parts</strong>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card border border-primary-subtle bg-light p-4 rounded-4 shadow-sm">
-                <form class="d-flex flex-column flex-sm-row gap-3 align-items-sm-center" th:action="@{/cart/add}" method="post">
+            <div class="surface-card gs-stripe-top--amber p-4">
+                <form class="d-flex flex-wrap gap-3 align-items-center" th:action="@{/cart/add}" method="post">
                     <input type="hidden" name="productId" th:value="${product.id}">
-                    <select class="form-select form-select-lg" name="fulfillmentType" required>
-                        <option value="SHIPPING">Giao hang tan noi</option>
-                        <option value="AT_WORKSHOP">Lap dat tai xuong</option>
+                    <select class="form-select form-select-lg" style="min-width: 190px; flex: 1 1 190px;" name="fulfillmentType" required>
+                        <option value="SHIPPING">Home Delivery</option>
+                        <option value="AT_WORKSHOP">Install at Workshop</option>
                     </select>
                     <div class="d-flex align-items-center gap-2">
-                        <label class="fw-semibold text-dark mb-0 me-1">So luong</label>
-                        <input class="form-control form-control-lg text-center fw-bold border-secondary-subtle"
+                        <label class="fw-semibold text-dark mb-0 me-1">Quantity</label>
+                        <input class="form-control form-control-lg text-center fw-bold gs-mono border-secondary-subtle"
                                style="width: 100px"
                                type="number"
                                name="quantity"
@@ -72,13 +72,14 @@
                                th:max="${product.stockQuantity}"
                                th:disabled="${product.status.name() != 'ACTIVE' or product.stockQuantity <= 0}">
                     </div>
-                    <button class="btn btn-primary btn-lg flex-grow-1 shadow-sm d-flex align-items-center justify-content-center gap-2"
+                    <button class="btn btn-amber btn-lg text-nowrap d-flex align-items-center justify-content-center gap-2"
+                            style="flex: 2 1 220px;"
                             type="submit"
                             th:disabled="${product.status.name() != 'ACTIVE' or product.stockQuantity <= 0}">
                         <i class="bi bi-cart-plus fs-5"></i>
-                        <span>Them vao gio hang</span>
+                        <span>Add to Cart</span>
                     </button>
-                    <a class="btn btn-outline-secondary btn-lg" th:href="@{/products}" title="Quay lai danh sach">
+                    <a class="btn btn-outline-secondary btn-lg" th:href="@{/products}" title="Back to List">
                         <i class="bi bi-arrow-left"></i>
                     </a>
                 </form>

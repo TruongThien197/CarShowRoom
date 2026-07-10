@@ -60,11 +60,14 @@ public class DataSeeder implements CommandLineRunner {
 
     private List<Category> seedCategories() {
         if (categoryRepository.count() == 0) {
-            categoryRepository.save(createCategory("Engine Parts", "Turbo, intake, exhaust, and engine performance parts."));
+            categoryRepository.save(createCategory("Engine", "Turbochargers, air filters, spark plugs, exhausts, and engine performance parts."));
             categoryRepository.save(createCategory("Brakes", "Brake pads, rotors, calipers, and brake upgrade kits."));
-            categoryRepository.save(createCategory("Tires & Wheels", "Performance tires, forged wheels, and fitment parts."));
-            categoryRepository.save(createCategory("Suspension", "Coilovers, springs, arms, and handling upgrades."));
-            categoryRepository.save(createCategory("Oil & Fluids", "Engine oil, coolant, brake fluid, and service fluids."));
+            categoryRepository.save(createCategory("Tires & Wheels", "Performance tires, forged rims, and alignment accessories."));
+            categoryRepository.save(createCategory("Suspension", "Coilovers, springs, sway bars, and parts to improve handling stability."));
+            categoryRepository.save(createCategory("Oil & Fluids", "Engine oil, coolant, brake fluid, and maintenance fluids."));
+            categoryRepository.save(createCategory("Electrical & Sensors", "Sensors, batteries, lights, and vehicle electrical accessories."));
+            categoryRepository.save(createCategory("Interior", "Cabin accessories, floor mats, seats, and trim details."));
+            categoryRepository.save(createCategory("Car Care", "Wash solutions, protective coatings, towels, and detailing tools."));
         }
         return categoryRepository.findAll();
     }
@@ -80,30 +83,30 @@ public class DataSeeder implements CommandLineRunner {
         if (productRepository.count() > 0 || categories.isEmpty()) {
             return;
         }
-        Category engine = findCategory(categories, "Engine Parts");
+        Category engine = findCategory(categories, "Engine");
         Category brakes = findCategory(categories, "Brakes");
         Category wheels = findCategory(categories, "Tires & Wheels");
         Category suspension = findCategory(categories, "Suspension");
         Category fluids = findCategory(categories, "Oil & Fluids");
 
-        productRepository.save(createProduct(engine, "Hybrid Series Turbocharger","SKU001",
-                "Direct bolt-on turbo upgrade for high horsepower builds.",
-                "2850.00", 8, "/images/turbocharger.jpg"));
+        productRepository.save(createProduct(engine, "Hybrid Series Turbocharger Kit","SKU001",
+                "A direct-fit upgrade turbo kit built for high-output engine setups.",
+                "10000", 8, "/images/turbocharger.jpg"));
         productRepository.save(createProduct(brakes, "Stage 2 Performance Brake Kit","SKU002",
-                "Street and track brake kit with upgraded rotors and pads.",
-                "1249.99", 12, "/images/suspension-service.jpg"));
+                "A street and track brake kit featuring upgraded rotors and pads.",
+                "12000", 12, "/images/suspension-service.jpg"));
         productRepository.save(createProduct(wheels, "Forged Alloy Rims","SKU003",
-                "Lightweight satin black forged wheel set.",
-                "2450.00", 6, "/images/forged-rims.jpg"));
+                "Lightweight forged rims finished in satin black.",
+                "14000", 6, "/images/forged-rims.jpg"));
         productRepository.save(createProduct(wheels, "Track-Ready Tire Set","SKU004",
-                "High-grip tire set for daily performance and weekend track use.",
-                "1280.00", 16, "/images/track-tire.jpg"));
+                "High-grip tires built for daily-driven and weekend performance cars.",
+                "16000", 16, "/images/track-tire.jpg"));
         productRepository.save(createProduct(suspension, "Track-Spec Coilover Kit","SKU005",
-                "Adjustable coilover kit for sharper handling and ride control.",
-                "1890.00", 10, "/images/suspension-service.jpg"));
+                "An adjustable coilover kit that improves handling stability and driving feel.",
+                "18000", 10, "/images/suspension-service.jpg"));
         productRepository.save(createProduct(fluids, "0W-30 Full Synthetic Oil","SKU006",
-                "Premium engine oil for modern turbocharged engines.",
-                "74.99", 50, "/images/turbocharger.jpg"));
+                "Premium engine oil formulated for modern turbocharged engines.",
+                "20000", 50, "/images/turbocharger.jpg"));
     }
 
     private Category findCategory(List<Category> categories, String name) {
@@ -136,7 +139,7 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
 
-        Enums.OrderStatus[] statuses = {Enums.OrderStatus.PENDING_DEPOSIT, Enums.OrderStatus.PROCESSING, Enums.OrderStatus.SHIPPING, Enums.OrderStatus.COMPLETED, Enums.OrderStatus.CANCELED, Enums.OrderStatus.COMPLETED, Enums.OrderStatus.PENDING_DEPOSIT, Enums.OrderStatus.PROCESSING};
+        Enums.OrderStatus[] statuses = {Enums.OrderStatus.PENDING_PAYMENT, Enums.OrderStatus.PROCESSING, Enums.OrderStatus.SHIPPING, Enums.OrderStatus.COMPLETED, Enums.OrderStatus.CANCELED, Enums.OrderStatus.COMPLETED, Enums.OrderStatus.PENDING_PAYMENT, Enums.OrderStatus.PROCESSING};
         for (int i = 0; i < statuses.length; i++) {
             Product product = products.get(i % products.size());
             int quantity = (i % 3) + 1;
@@ -166,10 +169,10 @@ public class DataSeeder implements CommandLineRunner {
         if (serviceRepository.count() > 0) {
             return;
         }
-        serviceRepository.save(createService("Digital Diagnostics", "Full electronic scan and health report.", "120.00", "150.00", 30));
-        serviceRepository.save(createService("Brake & Chassis Inspection", "Brake, suspension, and underbody inspection.", "280.00", "350.00", 60));
-        serviceRepository.save(createService("Engine Performance Tuning", "ECU check, calibration review, and tuning session.", "450.00", "600.00", 90));
-        serviceRepository.save(createService("Regular Maintenance", "Oil, fluids, filters, and general maintenance check.", "180.00", "250.00", 45));
+        serviceRepository.save(createService("Digital Diagnostics", "A full vehicle error scan with a system health report.", "20000", "30000", 30));
+        serviceRepository.save(createService("Brake & Chassis Inspection", "Inspection of brakes, suspension, and undercarriage components.", "35000", "45000", 60));
+        serviceRepository.save(createService("Engine Performance Tuning", "ECU inspection, configuration review, and performance tuning.", "40000", "60000", 90));
+        serviceRepository.save(createService("Regular Maintenance", "Oil change, fluid check, filter replacement, and basic maintenance items.", "30000", "45000", 45));
     }
 
     private com.hsf302.carshowroom.entity.Service createService(String name, String description, String minPrice, String maxPrice, int duration) {

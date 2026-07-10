@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Sua phu tung | GearShift Admin')}"></head>
-<body>
+<head th:replace="~{fragments/header :: head('Edit Product | GearShift Admin')}"></head>
+<body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
-<div class="container-fluid py-4">
+<main class="container-fluid admin-page">
     <div class="row min-vh-100">
         <aside th:replace="~{fragments/sidebar :: adminSidebar('products')}"></aside>
-        <main class="col-md-9 col-lg-10 px-md-4">
-            <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-4 border-bottom">
+        <section class="col-lg-9 col-xl-10 admin-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
                 <div>
-                    <h1 class="h2 fw-bold text-dark">Sua phu tung</h1>
-                    <p class="text-secondary small mb-0" th:text="'ID: #' + ${product.id}">ID</p>
+                    <h1 class="gs-h1 mb-1"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Product</h1>
+                    <p class="text-secondary small mb-0 gs-mono" th:text="'ID: #' + ${product.id}">ID</p>
                 </div>
-                <a th:href="@{/admin/products}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Quay lai</a>
+                <a th:href="@{/admin/products}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-left"></i><span>Back</span>
+                </a>
             </div>
 
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4 p-md-5">
-                    <form th:action="@{/admin/products/edit/{id}(id=${product.id})}" method="post">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <form class="surface-card gs-stripe-top p-4 p-md-5" th:action="@{/admin/products/edit/{id}(id=${product.id})}" method="post" enctype="multipart/form-data">
                         <div class="row g-4 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Ten phu tung *</label>
+                                <label class="form-label fw-semibold">Part Name *</label>
                                 <input type="text" class="form-control form-control-lg" name="productName" th:value="${product.productName}" required maxlength="200">
                             </div>
                             <div class="col-md-3">
@@ -29,7 +31,7 @@
                                 <input type="text" class="form-control form-control-lg" name="sku" th:value="${product.sku}">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold">Nhom phu tung *</label>
+                                <label class="form-label fw-semibold">Category *</label>
                                 <select class="form-select form-select-lg" name="categoryId" required>
                                     <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.categoryName}"
                                             th:selected="${product.category != null and product.category.id == cat.id}">Category</option>
@@ -39,15 +41,15 @@
 
                         <div class="row g-4 mb-4">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Gia ban *</label>
+                                <label class="form-label fw-semibold">Price *</label>
                                 <input type="number" step="1" min="0" class="form-control form-control-lg" name="price" th:value="${product.price}" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Ton kho *</label>
+                                <label class="form-label fw-semibold">Stock *</label>
                                 <input type="number" min="0" class="form-control form-control-lg" name="stockQuantity" th:value="${product.physicalStock}" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Trang thai</label>
+                                <label class="form-label fw-semibold">Status</label>
                                 <select class="form-select form-select-lg" name="status">
                                     <option value="ACTIVE" th:selected="${product.status.name() == 'ACTIVE'}">ACTIVE</option>
                                     <option value="INACTIVE" th:selected="${product.status.name() == 'INACTIVE'}">INACTIVE</option>
@@ -56,36 +58,59 @@
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-semibold">Dong xe catalog</label>
-                            <select class="form-select" name="carModelIds" multiple size="8">
-                                <option th:each="model : ${carModels}" th:value="${model.id}"
-                                        th:text="${model.brand + ' ' + model.modelName + ' ' + model.year}"
-                                        th:selected="${product.compatibleCarModels.contains(model)}">Model</option>
-                            </select>
-                            <div class="form-text">Bo trong neu chua muon phan loai theo dong xe.</div>
+                            <label class="form-label fw-semibold">Compatible Car Models</label>
+                            <div class="car-model-select-card">
+                                <div class="car-model-select-head">
+                                    <span class="gs-badge gs-badge--info">Multi-select</span>
+                                    <span class="text-secondary small">Click any model to toggle compatibility.</span>
+                                    <span class="ms-auto text-secondary small car-model-count" data-car-model-count>0 selected</span>
+                                </div>
+                                <div class="car-model-grid">
+                                    <label class="car-model-chip" th:each="model : ${carModels}">
+                                        <input type="checkbox" name="carModelIds" th:value="${model.id}" class="car-model-chip-input"
+                                               th:checked="${product.compatibleCarModels.contains(model)}">
+                                        <span class="car-model-chip-label" th:text="${model.brand + ' ' + model.modelName + ' ' + model.year}">Model</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" th:if="${product.imageUrl}">
+                            <label class="form-label fw-semibold d-block">Current Image</label>
+                            <img th:src="${product.imageUrl}" alt="Product image" class="img-thumbnail" style="max-height: 180px">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Replace Image on Firebase</label>
+                            <div class="gs-file-drop">
+                                <i class="bi bi-cloud-arrow-up gs-file-drop-icon"></i>
+                                <input type="file" class="form-control gs-file-drop-input" name="imageFile"
+                                       accept="image/jpeg,image/png,image/webp,image/gif">
+                            </div>
+                            <div class="form-text">Leave blank to keep the current image. JPG, PNG, WebP, or GIF; maximum 5 MB.</div>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-semibold">URL hinh anh</label>
-                            <input type="text" class="form-control" name="imageUrl" th:value="${product.imageUrl}" placeholder="/images/turbocharger.jpg hoac https://...">
-                            <div class="form-text">Chap nhan duong dan noi bo nhu /images/turbocharger.jpg hoac URL day du.</div>
+                            <label class="form-label fw-semibold">Image URL (optional)</label>
+                            <input type="text" class="form-control" name="imageUrl" th:value="${product.imageUrl}" placeholder="/images/turbocharger.jpg or https://...">
+                            <div class="form-text">A newly uploaded file, if any, takes priority over this URL.</div>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-semibold">Mo ta</label>
+                            <label class="form-label fw-semibold">Description</label>
                             <textarea class="form-control" name="description" rows="4" th:text="${product.description}"></textarea>
                         </div>
 
                         <div class="d-flex gap-2 justify-content-end pt-3 border-top">
-                            <a th:href="@{/admin/products}" class="btn btn-outline-secondary px-4">Huy</a>
-                            <button type="submit" class="btn btn-primary px-5"><i class="bi bi-check2-circle me-1"></i>Cap nhat</button>
+                            <a th:href="@{/admin/products}" class="btn btn-outline-secondary px-4">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-5"><i class="bi bi-check2-circle me-1"></i>Update</button>
                         </div>
                     </form>
                 </div>
             </div>
-        </main>
+        </section>
     </div>
-</div>
+</main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 <div th:replace="~{fragments/footer :: scripts}"></div>

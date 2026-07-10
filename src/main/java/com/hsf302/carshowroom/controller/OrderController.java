@@ -4,6 +4,7 @@ import com.hsf302.carshowroom.common.Enums.FulfillmentType;
 import com.hsf302.carshowroom.dto.CheckoutForm;
 import com.hsf302.carshowroom.entity.CartItem;
 import com.hsf302.carshowroom.entity.Order;
+import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.ServiceRepository;
@@ -63,8 +64,14 @@ public class OrderController {
             populateCheckoutModel(model, user, cartItems, form);
             return "order/checkout";
         }
-        orderService.checkout(user, form);
-        return "redirect:/orders";
+        try {
+            PaymentTransaction transaction = orderService.checkout(user, form);
+            return "redirect:" + transaction.getCheckoutUrl();
+        } catch (RuntimeException exception) {
+            model.addAttribute("errorMessage", "Unable to create PayOS payment: " + exception.getMessage());
+            populateCheckoutModel(model, user, cartItems, form);
+            return "order/checkout";
+        }
     }
 
     @GetMapping

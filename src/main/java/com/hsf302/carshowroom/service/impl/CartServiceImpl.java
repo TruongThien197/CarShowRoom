@@ -60,9 +60,9 @@ public class CartServiceImpl implements CartService {
         int requestedQuantity = quantity == null || quantity < 1 ? 1 : quantity;
         FulfillmentType resolvedFulfillmentType = resolveFulfillmentType(fulfillmentType);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
+                .orElseThrow(() -> new RuntimeException("Product not found."));
         if (product.getStatus() != ProductStatus.ACTIVE) {
-            throw new RuntimeException("Sản phẩm hiện không khả dụng.");
+            throw new RuntimeException("This product is currently unavailable.");
         }
 
         CartItem cartItem = cartItemRepository.findByUserAndProductAndFulfillmentType(user, product, resolvedFulfillmentType).orElseGet(() -> {
@@ -109,10 +109,10 @@ public class CartServiceImpl implements CartService {
 
     private CartItem getOwnedCartItem(User user, Integer cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm trong giỏ hàng."));
+                .orElseThrow(() -> new RuntimeException("Item not found in cart."));
 
         if (!cartItem.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Sản phẩm này không thuộc giỏ hàng của bạn.");
+            throw new RuntimeException("This item does not belong to your cart.");
         }
         return cartItem;
     }
@@ -137,9 +137,9 @@ public class CartServiceImpl implements CartService {
     private void validateStock(Product product, int quantity) {
         if (product.getAvailableStock() < quantity) {
             throw new RuntimeException(
-                    "Số lượng sản phẩm " + product.getProductName() +
-                            " trong kho không đủ. Vui lòng giảm số lượng xuống còn " +
-                            product.getAvailableStock() + " hoặc ít hơn."
+                    "Not enough stock for " + product.getProductName() +
+                            ". Please reduce the quantity to " +
+                            product.getAvailableStock() + " or fewer."
             );
         }
     }
@@ -148,7 +148,7 @@ public class CartServiceImpl implements CartService {
         try {
             return FulfillmentType.valueOf((fulfillmentType == null ? "" : fulfillmentType).trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
-            throw new RuntimeException("Vui lòng chọn hình thức nhận hàng hợp lệ.");
+            throw new RuntimeException("Please select a valid fulfillment method.");
         }
     }
 }
