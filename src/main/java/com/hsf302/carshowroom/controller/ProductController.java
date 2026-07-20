@@ -99,6 +99,12 @@ public class ProductController {
         model.addAttribute("selectedModelName", modelName);
         model.addAttribute("selectedYear", year);
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", productPage.getTotalPages());
+        int totalPages = productPage.getTotalPages();
+        int paginationStart = Math.max(0, page - 2);
+        int paginationEnd = Math.min(totalPages - 1, paginationStart + 4);
+        paginationStart = Math.max(0, paginationEnd - 4);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("paginationStart", paginationStart);
+        model.addAttribute("paginationEnd", paginationEnd);
     }
 }

@@ -3,6 +3,7 @@ package com.hsf302.carshowroom.entity;
 import com.hsf302.carshowroom.common.Enums.OrderStatus;
 import com.hsf302.carshowroom.common.Enums.OrderType;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
+import com.hsf302.carshowroom.common.Enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -52,11 +53,27 @@ public class Order {
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method")
+    private PaymentMethod paymentMethod;
+
     @Column(name = "product_total", nullable = false)
     private BigDecimal productTotal = BigDecimal.ZERO;
     
     @Column(name = "shipping_address")
     private String shippingAddress;
+
+    @Column(name = "receiver_phone")
+    private String receiverPhone;
+
+    @Column(name = "cancellation_reason")
+    private String cancellationReason;
+
+    @Column(name = "shipping_carrier")
+    private String shippingCarrier;
+
+    @Column(name = "tracking_code")
+    private String trackingCode;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();

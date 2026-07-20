@@ -138,12 +138,25 @@ public class PaymentServiceImpl implements PaymentService {
         paymentTransactionRepository.saveAll(expiredTransactions);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Integer getOrderIdByPayOSCode(String orderCode) {
+        PaymentTransaction transaction = paymentTransactionRepository.findByPayosOrderCode(orderCode)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch PayOS."));
+        if (transaction.getParentOrder() != null) {
+            return transaction.getParentOrder().getId();
+        }
+        if (transaction.getOrder() != null) {
+            return transaction.getOrder().getId();
+        }
+        throw new IllegalArgumentException("Giao dịch PayOS không có đơn hàng liên kết.");
+    }
+
     private void applyStatus(PaymentTransaction transaction, PaymentLinkStatus status) {
         if (status == PaymentLinkStatus.PAID) {
             markPaid(transaction);
         } else if (status == PaymentLinkStatus.CANCELLED) {
-            markUnpaidTerminal(transaction, PaymentStatus.CANCELED,
-                    OrderStatus.CANCELED, BookingStatus.CANCELED);
+            markCancelledForRetry(transaction);
         } else if (status == PaymentLinkStatus.EXPIRED) {
             markUnpaidTerminal(transaction, PaymentStatus.EXPIRED,
                     OrderStatus.EXPIRED_PAYMENT, BookingStatus.EXPIRED_PAYMENT);
@@ -213,6 +226,29 @@ public class PaymentServiceImpl implements PaymentService {
         inventoryReservationService.releaseReservation(order);
         order.setPaymentStatus(paymentStatus);
         order.setOrderStatus(orderStatus);
+        orderRepository.save(order);
+    }
+
+    private void markCancelledForRetry(PaymentTransaction transaction) {
+        if (transaction.getStatus() == PaymentStatus.PAID) {
+            return;
+        }
+        transaction.setStatus(PaymentStatus.CANCELED);
+        Order parent = transaction.getParentOrder();
+        if (parent != null) {
+            parent.setPaymentStatus(PaymentStatus.PENDING);
+            parent.setOrderStatus(OrderStatus.PENDING_PAYMENT);
+            orderRepository.save(parent);
+            parent.getSubOrders().forEach(this::resetOrderForPaymentRetry);
+        } else if (transaction.getOrder() != null) {
+            resetOrderForPaymentRetry(transaction.getOrder());
+        }
+    }
+
+    private void resetOrderForPaymentRetry(Order order) {
+        inventoryReservationService.releaseReservation(order);
+        order.setPaymentStatus(PaymentStatus.PENDING);
+        order.setOrderStatus(OrderStatus.PENDING_PAYMENT);
         orderRepository.save(order);
     }
 

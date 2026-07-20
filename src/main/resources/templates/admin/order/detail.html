@@ -86,7 +86,7 @@
                                 <select id="status" name="status" class="form-select">
                                     <option value="PENDING_PAYMENT" th:selected="${order.orderStatus.name() == 'PENDING_PAYMENT'}">Chờ thanh toán</option>
                                     <option value="PROCESSING" th:selected="${order.orderStatus.name() == 'PROCESSING'}">Đang xử lý</option>
-                                    <option value="SHIPPING" th:selected="${order.orderStatus.name() == 'SHIPPING'}">SHIPPING</option>
+                                    <option value="SHIPPING" th:selected="${order.orderStatus.name() == 'SHIPPING'}">Đang giao hàng</option>
                                     <option value="COMPLETED" th:selected="${order.orderStatus.name() == 'COMPLETED'}">Hoàn tất</option>
                                     <option value="CANCELED" th:selected="${order.orderStatus.name() == 'CANCELED'}">Đã hủy</option>
                                 </select>
@@ -94,6 +94,22 @@
                             <button class="btn btn-primary w-100" type="submit">
                                 <i class="bi bi-check2-circle me-2"></i>Cập nhật trạng thái
                             </button>
+                        </form>
+                    </div>
+
+                    <div class="surface-card p-4 mb-4" th:if="${order.orderType.name() == 'SHIPPING'}">
+                        <h4 class="fw-bold mb-3"><i class="bi bi-truck me-2 text-primary"></i>Thông tin vận chuyển</h4>
+                        <form th:action="@{/admin/orders/{id}/shipment(id=${order.id})}" method="post">
+                            <div class="mb-3">
+                                <label class="form-label" for="shippingCarrier">Đơn vị vận chuyển</label>
+                                <input id="shippingCarrier" class="form-control" name="shippingCarrier" required th:value="${order.shippingCarrier}" placeholder="Ví dụ: Giao Hàng Nhanh">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="trackingCode">Mã vận đơn</label>
+                                <input id="trackingCode" class="form-control gs-mono" name="trackingCode" required th:value="${order.trackingCode}" placeholder="Mã vận đơn">
+                            </div>
+                            <div class="form-text mb-3">Chỉ cập nhật được sau khi đơn chuyển sang trạng thái Đang giao hàng.</div>
+                            <button class="btn btn-outline-primary w-100" type="submit">Lưu thông tin vận chuyển</button>
                         </form>
                     </div>
 

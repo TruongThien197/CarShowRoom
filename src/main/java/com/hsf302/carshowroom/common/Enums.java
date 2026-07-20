@@ -121,6 +121,15 @@ public class Enums {
         }
     }
 
+    public enum PaymentMethod {
+        PAYOS,
+        COD;
+
+        @Override public String toString() {
+            return this == COD ? "Thanh toán khi nhận hàng" : "Thanh toán trực tuyến qua PayOS";
+        }
+    }
+
     public enum ReservationStatus {
         HELD,
         CONFIRMED,

@@ -31,6 +31,10 @@ public class PaymentController {
         }
         try {
             PaymentTransaction transaction = paymentService.syncPaymentStatus(orderCode);
+            if (transaction.getStatus().name().equals("CANCELED")) {
+                attributes.addFlashAttribute("errorMessage", "Bạn đã hủy thanh toán PayOS. Vui lòng chọn lại phương thức thanh toán.");
+                return "redirect:/orders/" + paymentService.getOrderIdByPayOSCode(orderCode) + "/payment";
+            }
             attributes.addFlashAttribute("successMessage",
                     transaction.getStatus().name().equals("PAID")
                             ? "PayOS payment successful."
@@ -45,14 +49,19 @@ public class PaymentController {
     @GetMapping("/cancel")
     public String paymentCancel(@RequestParam(required = false) String orderCode,
                                 RedirectAttributes attributes) {
+        Integer orderId = null;
         if (orderCode != null && !orderCode.isBlank()) {
             try {
+                orderId = paymentService.getOrderIdByPayOSCode(orderCode);
                 paymentService.syncPaymentStatus(orderCode);
             } catch (Exception ignored) {
-                // The user still needs a safe redirect even if PayOS is temporarily unavailable.
+                // Keep a safe redirect even if PayOS is temporarily unavailable.
             }
         }
-        attributes.addFlashAttribute("errorMessage", "You have canceled the PayOS payment.");
+        attributes.addFlashAttribute("errorMessage", "Bạn đã hủy thanh toán PayOS. Vui lòng chọn lại phương thức thanh toán.");
+        if (orderId != null) {
+            return "redirect:/orders/" + orderId + "/payment";
+        }
         return "redirect:/orders";
     }
 

@@ -15,6 +15,9 @@ public class CheckoutForm {
 
     private String phone;
 
+    @NotBlank
+    private String paymentMethod = "PAYOS";
+
     private Integer vehicleId;
 
     private Integer serviceId;

@@ -776,4 +776,18 @@ public class AdminController {
         }
         return "redirect:/admin/orders/" + id;
     }
+
+    @PostMapping("/orders/{id}/shipment")
+    public String updateOrderShipment(@PathVariable Integer id,
+                                      @RequestParam String shippingCarrier,
+                                      @RequestParam String trackingCode,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            orderService.updateShipment(id, shippingCarrier, trackingCode);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật thông tin vận chuyển.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
 }
