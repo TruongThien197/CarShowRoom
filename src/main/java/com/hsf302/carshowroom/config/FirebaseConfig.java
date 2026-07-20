@@ -31,7 +31,7 @@ public class FirebaseConfig {
         }
         Path credentialsPath = Path.of(serviceAccountPath).toAbsolutePath().normalize();
         if (!Files.isRegularFile(credentialsPath)) {
-            throw new IllegalStateException("Firebase service account file not found: " + credentialsPath);
+            throw new IllegalStateException("Không tìm thấy tệp tài khoản dịch vụ Firebase: " + credentialsPath);
         }
         try (InputStream credentials = Files.newInputStream(credentialsPath)) {
             FirebaseOptions options = FirebaseOptions.builder()

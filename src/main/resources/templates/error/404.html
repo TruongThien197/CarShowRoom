@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Page Not Found | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('error')}"></div>
@@ -8,13 +8,13 @@
     <div class="container">
         <div class="py-5">
             <div class="gs-mono fw-bold mb-3" style="font-size: clamp(4rem, 12vw, 8rem); color: var(--gs-accent); line-height: 1;">404</div>
-            <h1 class="gs-h1 text-white mb-3">The page you requested could not be found</h1>
+            <h1 class="gs-h1 text-white mb-3">Không tìm thấy trang bạn yêu cầu</h1>
             <p class="mb-4 mx-auto" style="max-width: 480px; color: #dbe4f0;">
                 The page may have been removed, moved, or the link you entered is incorrect.
             </p>
             <div class="d-flex justify-content-center flex-wrap gap-3">
-                <a class="btn btn-primary btn-lg gs-cut" th:href="@{/}"><i class="bi bi-house-door me-2"></i>Back to Home</a>
-                <a class="btn btn-outline-light btn-lg" th:href="@{/shop}"><i class="bi bi-bag me-2"></i>Browse the Shop</a>
+                <a class="btn btn-primary btn-lg gs-cut" th:href="@{/}"><i class="bi bi-house-door me-2"></i> Về trang chủ </a>
+                <a class="btn btn-outline-light btn-lg" th:href="@{/shop}"><i class="bi bi-bag me-2"></i>Xem cửa hàng</a>
             </div>
         </div>
     </div>

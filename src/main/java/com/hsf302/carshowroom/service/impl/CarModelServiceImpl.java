@@ -32,7 +32,7 @@ public class CarModelServiceImpl implements CarModelService {
     @Override
     public CarModel getCarModel(Integer id) {
         return carModelRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Car model not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu xe"));
     }
 
     @Override

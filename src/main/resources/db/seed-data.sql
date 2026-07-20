@@ -338,13 +338,13 @@ IF NOT EXISTS (SELECT 1 FROM users WHERE email = N'customer@gearshift.local')
     INSERT INTO users (email, password_hash, full_name, phone, address, role, status)
     VALUES (N'customer@gearshift.local', @password_hash, N'Customer Demo', N'0900000003', N'123 Demo Street', N'CUSTOMER', N'ACTIVE');
 
-IF NOT EXISTS (SELECT 1 FROM category WHERE category_name = N'Engine Parts')
+IF NOT EXISTS (SELECT 1 FROM category WHERE category_name = N'Phụ tùng động cơ')
     INSERT INTO category (category_name, description) VALUES
-    (N'Engine Parts', N'Turbo, intake, exhaust, and engine performance parts.'),
-    (N'Brakes', N'Brake pads, rotors, calipers, and brake upgrade kits.'),
-    (N'Tires & Wheels', N'Performance tires, forged wheels, and fitment parts.'),
-    (N'Suspension', N'Coilovers, springs, arms, and handling upgrades.'),
-    (N'Oil & Fluids', N'Engine oil, coolant, brake fluid, and service fluids.');
+    (N'Phụ tùng động cơ', N'Bộ tăng áp, hệ thống nạp, ống xả và phụ tùng hiệu năng động cơ.'),
+    (N'Hệ thống phanh', N'Má phanh, đĩa phanh, heo phanh và bộ nâng cấp phanh.'),
+    (N'Lốp và mâm xe', N'Lốp hiệu năng, mâm rèn và phụ tùng lắp đặt.'),
+    (N'Hệ thống treo', N'Phuộc điều chỉnh, lò xo, tay đòn và phụ tùng tăng khả năng vận hành.'),
+    (N'Dầu nhớt và dung dịch', N'Dầu động cơ, nước làm mát, dầu phanh và các dung dịch bảo dưỡng.');
 
 IF NOT EXISTS (SELECT 1 FROM car_model WHERE brand = N'BMW' AND model_name = N'M4 G82' AND [year] = 2024)
     INSERT INTO car_model (brand, model_name, [year]) VALUES
@@ -357,20 +357,20 @@ IF NOT EXISTS (SELECT 1 FROM product WHERE sku = N'SKU001')
 BEGIN
     INSERT INTO product (category_id, product_name, sku, description, price, stock_quantity, reserved_stock, image_url, status, version, created_at, updated_at)
     VALUES
-    ((SELECT category_id FROM category WHERE category_name = N'Engine Parts'), N'Hybrid Series Turbocharger', N'SKU001', N'Direct bolt-on turbo upgrade for high horsepower builds.', 10000, 8, 0, N'/images/turbocharger.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Brakes'), N'Stage 2 Performance Brake Kit', N'SKU002', N'Street and track brake kit with upgraded rotors and pads.', 12000, 12, 0, N'/images/suspension-service.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Tires & Wheels'), N'Forged Alloy Rims', N'SKU003', N'Lightweight satin black forged wheel set.', 14000, 6, 0, N'/images/forged-rims.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Tires & Wheels'), N'Track-Ready Tire Set', N'SKU004', N'High-grip tire set for daily performance and weekend track use.', 16000, 16, 0, N'/images/track-tire.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Suspension'), N'Track-Spec Coilover Kit', N'SKU005', N'Adjustable coilover kit for sharper handling and ride control.', 18000, 10, 0, N'/images/suspension-service.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Oil & Fluids'), N'0W-30 Full Synthetic Oil', N'SKU006', N'Premium synthetic oil for modern engines.', 20000, 50, 0, N'/images/turbocharger.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME());
+    ((SELECT category_id FROM category WHERE category_name = N'Phụ tùng động cơ'), N'Bộ tăng áp Hybrid Series', N'SKU001', N'Bộ tăng áp nâng cấp lắp trực tiếp cho động cơ công suất cao.', 10000, 8, 0, N'/images/turbocharger.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Hệ thống phanh'), N'Bộ phanh hiệu năng Stage 2', N'SKU002', N'Bộ phanh dùng cho đường phố và đường đua với đĩa và má phanh nâng cấp.', 12000, 12, 0, N'/images/suspension-service.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Lốp và mâm xe'), N'Mâm hợp kim rèn', N'SKU003', N'Bộ mâm rèn nhẹ với lớp sơn đen mờ.', 14000, 6, 0, N'/images/forged-rims.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Lốp và mâm xe'), N'Bộ lốp sẵn sàng đường đua', N'SKU004', N'Bộ lốp bám đường cao cho xe sử dụng hằng ngày và cuối tuần đi đường đua.', 16000, 16, 0, N'/images/track-tire.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Hệ thống treo'), N'Bộ phuộc điều chỉnh Track-Spec', N'SKU005', N'Bộ phuộc điều chỉnh giúp xe ổn định và lái chính xác hơn.', 18000, 10, 0, N'/images/suspension-service.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Dầu nhớt và dung dịch'), N'Dầu động cơ tổng hợp 0W-30', N'SKU006', N'Dầu tổng hợp cao cấp cho động cơ hiện đại.', 20000, 50, 0, N'/images/turbocharger.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME());
 END
 
-IF NOT EXISTS (SELECT 1 FROM service WHERE service_name = N'Digital Diagnostics')
+IF NOT EXISTS (SELECT 1 FROM service WHERE service_name = N'Chẩn đoán điện tử')
     INSERT INTO service (service_name, description, min_price, max_price, duration_minutes, status) VALUES
-    (N'Digital Diagnostics', N'Full vehicle scan and system health report.', 20000, 30000, 60, N'ACTIVE'),
-    (N'Brake & Chassis Inspection', N'Inspection of brakes, suspension, and undercarriage.', 35000, 45000, 90, N'ACTIVE'),
-    (N'Engine Performance Tuning', N'ECU check, configuration review, and performance tuning.', 40000, 60000, 120, N'ACTIVE'),
-    (N'Regular Maintenance', N'Oil change, fluid check, filters, and basic maintenance items.', 30000, 45000, 60, N'ACTIVE');
+    (N'Chẩn đoán điện tử', N'Quét lỗi toàn bộ xe và lập báo cáo tình trạng hệ thống.', 20000, 30000, 60, N'ACTIVE'),
+    (N'Kiểm tra phanh và gầm xe', N'Kiểm tra phanh, hệ thống treo và các chi tiết gầm xe.', 35000, 45000, 90, N'ACTIVE'),
+    (N'Tinh chỉnh hiệu năng động cơ', N'Kiểm tra ECU, rà soát cấu hình và tinh chỉnh hiệu năng.', 40000, 60000, 120, N'ACTIVE'),
+    (N'Bảo dưỡng định kỳ', N'Thay dầu, kiểm tra dung dịch, thay lọc và bảo dưỡng cơ bản.', 30000, 45000, 60, N'ACTIVE');
 
 DECLARE @customer_id INT = (SELECT user_id FROM users WHERE email = N'customer@gearshift.local');
 DECLARE @bmw_model_id INT = (SELECT TOP 1 car_model_id FROM car_model WHERE brand = N'BMW' AND model_name = N'M4 G82');

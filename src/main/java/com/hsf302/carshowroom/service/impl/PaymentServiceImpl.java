@@ -218,17 +218,17 @@ public class PaymentServiceImpl implements PaymentService {
 
     private void validateAmount(PaymentTransaction transaction, Long remoteAmount) {
         if (remoteAmount == null || transaction.getAmount().compareTo(BigDecimal.valueOf(remoteAmount)) != 0) {
-            throw new IllegalStateException("The PayOS amount does not match the transaction in the system.");
+            throw new IllegalStateException("Số tiền PayOS không khớp với giao dịch trong hệ thống.");
         }
     }
 
     private long toPayOSAmount(BigDecimal amount) {
         if (amount == null || amount.stripTrailingZeros().scale() > 0) {
-            throw new IllegalArgumentException("The PayOS amount must be a whole VND value.");
+            throw new IllegalArgumentException("Số tiền PayOS phải là số nguyên VND.");
         }
         long value = amount.setScale(0, RoundingMode.UNNECESSARY).longValueExact();
         if (value < MIN_PAYOS_AMOUNT) {
-            throw new IllegalArgumentException("PayOS requires a minimum payment amount of 2,000 VND.");
+            throw new IllegalArgumentException("PayOS yêu cầu số tiền thanh toán tối thiểu là 2.000 VND.");
         }
         return value;
     }
@@ -240,10 +240,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     private void requireConfigured() {
         if (!properties.hasCredentials()) {
-            throw new IllegalStateException("Missing PAYOS_CLIENT_ID, PAYOS_API_KEY, or PAYOS_CHECKSUM_KEY.");
+            throw new IllegalStateException("Thiếu PAYOS_CLIENT_ID, PAYOS_API_KEY hoặc PAYOS_CHECKSUM_KEY.");
         }
         if (!hasText(properties.returnUrl()) || !hasText(properties.cancelUrl())) {
-            throw new IllegalStateException("Missing PAYOS_RETURN_URL or PAYOS_CANCEL_URL.");
+            throw new IllegalStateException("Thiếu PAYOS_RETURN_URL hoặc PAYOS_CANCEL_URL.");
         }
     }
 

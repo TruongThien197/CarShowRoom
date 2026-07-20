@@ -1,6 +1,6 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Create Vehicle Service Booking | GearShift Pro')}"></head>
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Tạo lịch hẹn dịch vụ xe | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('booking')}"></div>
 
@@ -11,8 +11,8 @@
         <section class="col-lg-9">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3 mb-3">
                 <div>
-                    <h1 class="gs-h1 section-title mb-1">Create Vehicle Service Booking</h1>
-                    <p class="text-secondary mb-0">Select a vehicle, service, and time, and preview the price range before booking.</p>
+                    <h1 class="gs-h1 section-title mb-1">Tạo lịch hẹn dịch vụ xe</h1>
+                    <p class="text-secondary mb-0">Chọn xe, dịch vụ, thời gian và xem trước khoảng giá trước khi đặt lịch.</p>
                 </div>
             </div>
 
@@ -23,36 +23,32 @@
                     <div class="col-12">
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <span class="step-pill">1</span>
-                            <h5 class="fw-bold mb-0">Vehicle &amp; Service Information<span class="gs-chevron-divider"></span></h5>
+                            <h5 class="fw-bold mb-0">Thông tin xe và dịch vụ<span class="gs-chevron-divider"></span></h5>
                         </div>
-                        <p class="text-secondary small mb-0">Service price is shown as a min-max range so you can review the expected cost before booking.</p>
+                        <p class="text-secondary small mb-0">Giá dịch vụ hiển thị theo khoảng thấp–cao để bạn xem chi phí dự kiến trước khi đặt lịch.</p>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Your Vehicle</label>
+                        <label class="form-label fw-semibold">Xe của bạn</label>
                         <select class="form-select" th:field="*{vehicleId}">
-                            <option value="">No vehicle selected</option>
+                            <option value="">Chưa chọn xe</option>
                             <option th:each="vehicle : ${vehicles}"
                                     th:value="${vehicle.id}"
-                                    th:text="${vehicle.brand + ' ' + vehicle.modelName + ' ' + vehicle.year + ' - ' + vehicle.licensePlate}">
-                                Vehicle
-                            </option>
+                                    th:text="${vehicle.brand + ' ' + vehicle.modelName + ' ' + vehicle.year + ' - ' + vehicle.licensePlate}"> Xe </option>
                         </select>
                         <div class="form-text">
-                            <a th:href="@{/vehicles/add}">Add a new vehicle</a> if it isn't in the list yet.
+                            <a th:href="@{/vehicles/add}">Thêm xe mới</a> nếu xe chưa có trong danh sách.
                         </div>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Service</label>
+                        <label class="form-label fw-semibold"> Dịch vụ </label>
                         <select class="form-select" id="serviceSelect" th:field="*{serviceId}" required>
-                            <option value="">Select a Service</option>
+                            <option value=""> Chọn dịch vụ </option>
                             <option th:each="service : ${services}"
                                     th:value="${service.id}"
                                     th:attr="data-min=${service.minPrice},data-max=${service.maxPrice},data-duration=${service.durationMinutes},data-description=${service.description}"
-                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(service.maxPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}">
-                                Service
-                            </option>
+                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(service.maxPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}"> Dịch vụ </option>
                         </select>
                         <div class="text-danger small" th:if="${#fields.hasErrors('serviceId')}" th:errors="*{serviceId}"></div>
                     </div>
@@ -61,24 +57,24 @@
                         <div id="serviceSummary" class="surface-card gs-stripe-top p-3 d-none">
                             <div class="row g-3 align-items-center">
                                 <div class="col-md-4">
-                                    <div class="small text-secondary">Service Price Range</div>
+                                    <div class="small text-secondary">Khoảng giá dịch vụ</div>
                                     <div class="fs-5 fw-bold text-primary gs-mono">
-                                        <span id="serviceMinPrice">0 VND</span>
+                                        <span id="serviceMinGiá">0 VND</span>
                                         <span class="text-secondary fw-normal"> - </span>
-                                        <span id="serviceMaxPrice">0 VND</span>
+                                        <span id="serviceMaxGiá">0 VND</span>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="small text-secondary">Estimated Starting Price</div>
+                                    <div class="small text-secondary">Estimated Giá khởi điểm</div>
                                     <div class="fw-bold gs-mono" id="servicePayable">0 VND</div>
                                 </div>
                                 <div class="col-md-2">
-                                    <div class="small text-secondary">Duration</div>
+                                    <div class="small text-secondary"> Thời lượng </div>
                                     <div class="fw-bold"><span class="gs-mono" id="serviceDuration">0</span> min</div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="small text-secondary">Final Price</div>
-                                    <div class="small text-secondary">Confirmed after staff inspect the vehicle.</div>
+                                    <div class="small text-secondary">Giá cuối cùng</div>
+                                    <div class="small text-secondary">Được xác nhận sau khi nhân viên kiểm tra xe.</div>
                                 </div>
                             </div>
                             <div class="small text-secondary mt-2" id="serviceDescription"></div>
@@ -88,19 +84,19 @@
                     <div class="col-12">
                         <div class="d-flex align-items-center gap-2 mt-2 mb-2">
                             <span class="step-pill">2</span>
-                            <h5 class="fw-bold mb-0">Appointment Time</h5>
+                            <h5 class="fw-bold mb-0">Thời gian hẹn</h5>
                         </div>
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Appointment Date</label>
+                        <label class="form-label fw-semibold"> Ngày hẹn </label>
                         <input class="form-control gs-mono" type="date" th:field="*{bookingDate}" required>
                         <div class="text-danger small" th:if="${#fields.hasErrors('bookingDate')}" th:errors="*{bookingDate}"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Time Slot</label>
+                        <label class="form-label fw-semibold">Khung giờ</label>
                         <select class="form-select" th:field="*{timeSlot}" required>
-                            <option value="">Select time</option>
+                            <option value="">Chọn giờ</option>
                             <option value="08:00">08:00</option>
                             <option value="09:30">09:30</option>
                             <option value="11:00">11:00</option>
@@ -112,13 +108,13 @@
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label fw-semibold">Notes</label>
+                        <label class="form-label fw-semibold"> Ghi chú </label>
                         <textarea class="form-control" rows="4" th:field="*{notes}" placeholder="Describe the issue, noise, or vehicle condition..."></textarea>
                     </div>
 
                     <div class="col-12 d-flex flex-wrap gap-2 justify-content-end align-items-center">
                         <button class="btn btn-amber btn-lg" type="submit">
-                            <i class="bi bi-calendar-plus me-2"></i>Create Booking
+                            <i class="bi bi-calendar-plus me-2"></i>Tạo mới Booking
                         </button>
                     </div>
                 </div>
@@ -133,8 +129,8 @@
     (() => {
         const select = document.getElementById('serviceSelect');
         const summary = document.getElementById('serviceSummary');
-        const minPrice = document.getElementById('serviceMinPrice');
-        const maxPrice = document.getElementById('serviceMaxPrice');
+        const minPrice = document.getElementById('serviceMinGiá');
+        const maxPrice = document.getElementById('serviceMaxGiá');
         const payable = document.getElementById('servicePayable');
         const duration = document.getElementById('serviceDuration');
         const description = document.getElementById('serviceDescription');

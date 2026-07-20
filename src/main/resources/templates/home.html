@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Apex Automotive | Professional Service & Parts')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('home')}"></div>
@@ -8,12 +8,12 @@
     <section class="hero gs-grid-texture d-flex align-items-center text-white">
         <div class="container">
             <div class="col-lg-7">
-                <span class="text-uppercase fw-bold text-info gs-mono" style="letter-spacing:.08em;">Excellence in Motion</span>
+                <span class="text-uppercase fw-bold text-info gs-mono" style="letter-spacing:.08em;">Chuyển động hoàn hảo</span>
                 <h1 class="gs-h1 text-white mt-3 mb-4">Mastering Performance Through Precision Engineering.</h1>
-                <p class="lead mb-4">Experience automotive care that goes beyond repair. From high-performance tuning to factory-certified maintenance, GearShift Pro is your trusted partner on the road.</p>
+                <p class="lead mb-4">Trải nghiệm dịch vụ chăm sóc xe vượt ngoài sửa chữa. Từ tinh chỉnh hiệu năng đến bảo dưỡng đạt chuẩn, GearShift Pro là người bạn đồng hành đáng tin cậy trên mọi hành trình.</p>
                 <div class="d-flex flex-wrap gap-3">
-                    <a class="btn btn-primary btn-lg gs-cut" th:href="@{/booking}"><i class="bi bi-calendar-check me-2"></i>Book Service</a>
-                    <a class="btn btn-outline-light btn-lg" th:href="@{/shop}"><i class="bi bi-bag me-2"></i>Shop Parts</a>
+                    <a class="btn btn-primary btn-lg gs-cut" th:href="@{/booking}"><i class="bi bi-calendar-check me-2"></i> Đặt dịch vụ </a>
+                    <a class="btn btn-outline-light btn-lg" th:href="@{/shop}"><i class="bi bi-bag me-2"></i>Mua phụ tùng</a>
                 </div>
             </div>
         </div>
@@ -22,18 +22,18 @@
     <section class="container py-5">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
             <div>
-                <h2 class="gs-h2 section-title">Expert Repair Services</h2>
-                <p class="text-secondary mb-0">Certified technicians using factory-grade diagnostics for your vehicle.</p>
+                <h2 class="gs-h2 section-title">Dịch vụ sửa chữa chuyên nghiệp</h2>
+                <p class="text-secondary mb-0">Kỹ thuật viên chuyên nghiệp sử dụng công cụ chẩn đoán đạt chuẩn cho xe của bạn.</p>
             </div>
-            <a class="fw-bold text-decoration-none" th:href="@{/booking}">View services <i class="bi bi-arrow-right"></i></a>
+            <a class="fw-bold text-decoration-none" th:href="@{/booking}">Xem dịch vụ <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="surface-card gs-stripe-top h-100 p-4">
                     <span class="icon-box mb-3"><i class="bi bi-tools"></i></span>
                     <h5 class="gs-h4 fw-bold">Engine Performance</h5>
-                    <p class="text-secondary">Comprehensive rebuilds, precision tuning, and advanced calibration for peak output.</p>
-                    <p class="mb-1"><i class="bi bi-check-circle text-primary me-2"></i>Dyno Testing</p>
+                    <p class="text-secondary">Đại tu toàn diện, tinh chỉnh chính xác và hiệu chỉnh chuyên sâu để đạt hiệu suất tối ưu.</p>
+                    <p class="mb-1"><i class="bi bi-check-circle text-primary me-2"></i>Kiểm tra công suất động cơ</p>
                     <p class="mb-0"><i class="bi bi-check-circle text-primary me-2"></i>ECU Remapping</p>
                 </div>
             </div>
@@ -41,7 +41,7 @@
                 <div class="surface-card gs-stripe-top h-100 p-4">
                     <span class="icon-box mb-3"><i class="bi bi-disc"></i></span>
                     <h5 class="gs-h4 fw-bold">Brake &amp; Chassis</h5>
-                    <p class="text-secondary">High-performance braking systems and laser-accurate suspension alignment.</p>
+                    <p class="text-secondary">Hệ thống phanh hiệu năng cao và cân chỉnh hệ thống treo chính xác.</p>
                     <p class="mb-1"><i class="bi bi-check-circle text-primary me-2"></i>Ceramic Upgrades</p>
                     <p class="mb-0"><i class="bi bi-check-circle text-primary me-2"></i>3D Alignment</p>
                 </div>
@@ -50,7 +50,7 @@
                 <div class="surface-card gs-stripe-top h-100 p-4">
                     <span class="icon-box mb-3"><i class="bi bi-cpu"></i></span>
                     <h5 class="gs-h4 fw-bold">Digital Diagnostics</h5>
-                    <p class="text-secondary">Advanced electronic scanning to detect issues before they become failures.</p>
+                    <p class="text-secondary">Quét điện tử chuyên sâu để phát hiện vấn đề trước khi trở thành hư hỏng.</p>
                     <p class="mb-1"><i class="bi bi-check-circle text-primary me-2"></i>Electrical Audit</p>
                     <p class="mb-0"><i class="bi bi-check-circle text-primary me-2"></i>Hybrid Systems</p>
                 </div>
@@ -61,8 +61,8 @@
     <section class="bg-white py-5">
         <div class="container">
             <div class="text-center mb-4">
-                <h2 class="gs-h2 section-title">Premium Auto Parts</h2>
-                <p class="text-secondary">Only the highest grade components for those who demand more.</p>
+                <h2 class="gs-h2 section-title">Phụ tùng ô tô cao cấp</h2>
+                <p class="text-secondary">Chỉ sử dụng linh kiện chất lượng cao dành cho người yêu cầu sự hoàn hảo.</p>
             </div>
             <div class="row g-4">
                 <div class="col-md-6 col-lg-3">
@@ -71,7 +71,7 @@
                         <div class="p-3">
                             <span class="small text-primary fw-bold">Engine Performance</span>
                             <h5 class="gs-h4 fw-bold mt-1">Stage 3 Turbo Kit</h5>
-                            <p class="small text-secondary">Forged components for ultimate durability under boost.</p>
+                            <p class="small text-secondary">Linh kiện rèn có độ bền vượt trội khi vận hành hiệu năng cao.</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="price gs-mono">$1,299</span>
                                 <a class="btn btn-primary btn-sm" th:href="@{/shop}"><i class="bi bi-eye"></i></a>
@@ -85,7 +85,7 @@
                         <div class="p-3">
                             <span class="small text-primary fw-bold">Exterior &amp; Wheel</span>
                             <h5 class="gs-h4 fw-bold mt-1">Forged Alloy Rims</h5>
-                            <p class="small text-secondary">Ultra-lightweight multi-spoke design in satin black.</p>
+                            <p class="small text-secondary">Thiết kế đa chấu siêu nhẹ với lớp sơn đen mờ.</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="price gs-mono">$2,450</span>
                                 <a class="btn btn-primary btn-sm" th:href="@{/shop}"><i class="bi bi-eye"></i></a>
@@ -99,7 +99,7 @@
                         <div class="p-3">
                             <span class="small text-primary fw-bold">Tires &amp; Grip</span>
                             <h5 class="gs-h4 fw-bold mt-1">Track-Ready Tires</h5>
-                            <p class="small text-secondary">Maximum grip compound for track days and street.</p>
+                            <p class="small text-secondary">Hợp chất bám đường tối đa cho đường đua và đường phố.</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="price gs-mono">$320</span>
                                 <a class="btn btn-primary btn-sm" th:href="@{/shop}"><i class="bi bi-eye"></i></a>
@@ -113,7 +113,7 @@
                         <div class="p-3">
                             <span class="small text-primary fw-bold">Suspension</span>
                             <h5 class="gs-h4 fw-bold mt-1">Adjustable Coilovers</h5>
-                            <p class="small text-secondary">Fully adjustable ride height and dampening control.</p>
+                            <p class="small text-secondary">Có thể điều chỉnh hoàn toàn độ cao gầm và độ giảm chấn.</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="price gs-mono">$1,890</span>
                                 <a class="btn btn-primary btn-sm" th:href="@{/shop}"><i class="bi bi-eye"></i></a>

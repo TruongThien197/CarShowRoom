@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head(${product.productName + ' | GearShift Pro'})}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('shop')}"></div>
@@ -7,9 +7,9 @@
 <main class="container py-5 min-vh-100">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb gs-mono small">
-            <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Home</a></li>
-            <li class="breadcrumb-item"><a th:href="@{/products}" class="text-decoration-none">Parts Store</a></li>
-            <li class="breadcrumb-item active" aria-current="page" th:text="${product.productName}">Details</li>
+            <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none"> Trang chủ </a></li>
+            <li class="breadcrumb-item"><a th:href="@{/products}" class="text-decoration-none">Cửa hàng phụ tùng</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="${product.productName}"> Chi tiết </li>
         </ol>
     </nav>
 
@@ -22,32 +22,32 @@
                 <i class="bi bi-tools display-1 text-secondary opacity-25"
                    th:if="${product.imageUrl == null or #strings.isEmpty(product.imageUrl)}"></i>
                 <span class="badge bg-primary fs-6 position-absolute top-0 start-0 m-4 shadow"
-                      th:text="${product.category.categoryName}">Category</span>
+                      th:text="${product.category.categoryName}"> Danh mục </span>
             </div>
         </div>
 
         <div class="col-lg-6 d-flex flex-column justify-content-between">
             <div>
-                <h1 class="gs-h2 text-dark mb-3" th:text="${product.productName}">Part Name</h1>
+                <h1 class="gs-h2 text-dark mb-3" th:text="${product.productName}">Tên phụ tùng</h1>
                 <div class="price gs-mono mb-4" style="font-size: 2rem;"
                      th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</div>
 
-                <h2 class="gs-h4 text-uppercase text-secondary mb-2">Product Description</h2>
+                <h2 class="gs-h4 text-uppercase text-secondary mb-2">Mô tả sản phẩm</h2>
                 <p class="lead text-secondary fs-6 mb-4 lh-lg"
-                   th:text="${product.description ?: 'Genuine automotive part, built for durability.'}">Description</p>
+                   th:text="${product.description ?: 'Genuine automotive part, built for durability.'}"> Mô tả </p>
 
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6">
                         <div class="surface-card p-3 text-center">
-                            <div class="small text-secondary mb-1"><i class="bi bi-check-circle me-1"></i>Status</div>
+                            <div class="small text-secondary mb-1"><i class="bi bi-check-circle me-1"></i> Trạng thái </div>
                             <span class="gs-badge"
                                   th:classappend="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0} ? 'gs-badge--success' : 'gs-badge--danger'"
-                                  th:text="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock'}">Status</span>
+                                  th:text="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0 ? 'Còn hàng' : 'Hết hàng'}"> Trạng thái </span>
                         </div>
                     </div>
                     <div class="col-sm-6">
                         <div class="surface-card p-3 text-center">
-                            <div class="small text-secondary mb-1"><i class="bi bi-tag me-1"></i>Category</div>
+                            <div class="small text-secondary mb-1"><i class="bi bi-tag me-1"></i> Danh mục </div>
                             <strong class="fs-6 text-dark" th:text="${product.category.categoryName}">Parts</strong>
                         </div>
                     </div>
@@ -58,11 +58,11 @@
                 <form class="d-flex flex-wrap gap-3 align-items-center" th:action="@{/cart/add}" method="post">
                     <input type="hidden" name="productId" th:value="${product.id}">
                     <select class="form-select form-select-lg" style="min-width: 190px; flex: 1 1 190px;" name="fulfillmentType" required>
-                        <option value="SHIPPING">Home Delivery</option>
+                        <option value="SHIPPING">Giao hàng tận nhà</option>
                         <option value="AT_WORKSHOP">Install at Workshop</option>
                     </select>
                     <div class="d-flex align-items-center gap-2">
-                        <label class="fw-semibold text-dark mb-0 me-1">Quantity</label>
+                        <label class="fw-semibold text-dark mb-0 me-1"> Số lượng </label>
                         <input class="form-control form-control-lg text-center fw-bold gs-mono border-secondary-subtle"
                                style="width: 100px"
                                type="number"
@@ -77,9 +77,9 @@
                             type="submit"
                             th:disabled="${product.status.name() != 'ACTIVE' or product.stockQuantity <= 0}">
                         <i class="bi bi-cart-plus fs-5"></i>
-                        <span>Add to Cart</span>
+                        <span>Thêm vào giỏ hàng</span>
                     </button>
-                    <a class="btn btn-outline-secondary btn-lg" th:href="@{/products}" title="Back to List">
+                    <a class="btn btn-outline-secondary btn-lg" th:href="@{/products}" title="Quay lại danh sách">
                         <i class="bi bi-arrow-left"></i>
                     </a>
                 </form>

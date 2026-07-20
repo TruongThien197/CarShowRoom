@@ -30,7 +30,7 @@ public class FirebaseStorageService {
     public String uploadProductImage(MultipartFile file) {
         validate(file);
         if (FirebaseApp.getApps().isEmpty()) {
-            throw new IllegalStateException("Firebase Storage has not been configured.");
+            throw new IllegalStateException("Firebase Storage chưa được cấu hình.");
         }
 
         String extension = extensionOf(file.getOriginalFilename());
@@ -44,7 +44,7 @@ public class FirebaseStorageService {
             Storage storage = StorageClient.getInstance().bucket().getStorage();
             storage.create(blobInfo, file.getBytes());
         } catch (IOException exception) {
-            throw new IllegalStateException("Unable to read the image file to upload to Firebase.", exception);
+            throw new IllegalStateException("Không thể đọc tệp ảnh để tải lên Firebase.", exception);
         }
 
         String encodedName = URLEncoder.encode(objectName, StandardCharsets.UTF_8);
@@ -54,13 +54,13 @@ public class FirebaseStorageService {
 
     private void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Image file must not be empty.");
+            throw new IllegalArgumentException("Tệp ảnh không được để trống.");
         }
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new IllegalArgumentException("Image must not exceed 5 MB.");
+            throw new IllegalArgumentException("Ảnh không được vượt quá 5 MB.");
         }
         if (!ALLOWED_TYPES.contains(file.getContentType())) {
-            throw new IllegalArgumentException("Only JPG, PNG, WebP, or GIF images are supported.");
+            throw new IllegalArgumentException("Chỉ hỗ trợ ảnh JPG, PNG, WebP hoặc GIF.");
         }
     }
 

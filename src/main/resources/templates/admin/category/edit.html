@@ -1,6 +1,6 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Edit Category | GearShift Admin')}"></head>
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Chỉnh sửa danh mục | GearShift Admin')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
@@ -11,13 +11,13 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
                 <div>
-                    <h1 class="gs-h1 mb-1"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Category</h1>
-                    <p class="text-secondary small mb-0 gs-mono" th:text="'Update information for category ID: #' + ${category.id}">Update category information.</p>
+                    <h1 class="gs-h1 mb-1"><i class="bi bi-pencil-square me-2 text-primary"></i>Chỉnh sửa danh mục</h1>
+                    <p class="text-secondary small mb-0 gs-mono" th:text="'Cập nhật thông tin cho danh mục có mã: #' + ${category.id}">Cập nhật thông tin danh mục.</p>
                 </div>
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <a th:href="@{/admin/categories}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
                         <i class="bi bi-arrow-left"></i>
-                        <span>Back to List</span>
+                        <span>Quay lại danh sách</span>
                     </a>
                 </div>
             </div>
@@ -26,25 +26,25 @@
                 <div class="col-lg-8">
                     <form class="surface-card gs-stripe-top p-4 p-md-5" th:action="@{/admin/categories/edit/{id}(id=${category.id})}" method="post">
                         <div class="mb-4">
-                            <label class="form-label fw-semibold text-dark">Category ID</label>
+                            <label class="form-label fw-semibold text-dark">Mã danh mục</label>
                             <input type="text" class="form-control bg-light gs-mono" th:value="${category.id}" readonly disabled>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-semibold text-dark">Category Name <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold text-dark">Tên danh mục <span class="text-danger">*</span></label>
                             <input type="text" class="form-control form-control-lg" name="categoryName" th:value="${category.categoryName}" required maxlength="100">
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-semibold text-dark">Category Description</label>
+                            <label class="form-label fw-semibold text-dark">Mô tả danh mục</label>
                             <textarea class="form-control" name="description" rows="4" th:text="${category.description}"></textarea>
                         </div>
 
                         <div class="d-flex gap-2 justify-content-end pt-3 border-top">
-                            <a th:href="@{/admin/categories}" class="btn btn-outline-secondary px-4">Cancel</a>
+                            <a th:href="@{/admin/categories}" class="btn btn-outline-secondary px-4"> Hủy </a>
                             <button type="submit" class="btn btn-primary px-5 shadow-sm d-flex align-items-center gap-2">
                                 <i class="bi bi-check2-circle"></i>
-                                <span>Update Category</span>
+                                <span>Cập nhật danh mục</span>
                             </button>
                         </div>
                     </form>

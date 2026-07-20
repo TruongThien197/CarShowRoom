@@ -26,7 +26,7 @@ public class CartController {
     public String cart(Model model, RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Please sign in to view your cart.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng đăng nhập để xem giỏ hàng.");
             return "redirect:/auth/login";
         }
         List<CartItem> cartItems = cartService.getCartItems(user);
@@ -42,7 +42,7 @@ public class CartController {
                       RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Please sign in to add items to your cart.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
             return "redirect:/auth/login";
         }
         try{
@@ -60,7 +60,7 @@ public class CartController {
                          RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Please sign in to update your cart.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng đăng nhập để cập nhật giỏ hàng.");
             return "redirect:/auth/login";
         }
         cartService.updateQuantity(user, cartItemId, quantity);
@@ -72,7 +72,7 @@ public class CartController {
                          RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Please sign in to remove items from your cart.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng đăng nhập để xóa sản phẩm khỏi giỏ hàng.");
             return "redirect:/auth/login";
         }
         cartService.removeItem(user, cartItemId);

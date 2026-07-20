@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,16 +27,16 @@
         <div id="mainNav" class="collapse navbar-collapse">
             <ul class="navbar-nav mx-auto gap-lg-2">
                 <li class="nav-item">
-                    <a th:classappend="${active == 'home'} ? 'active fw-semibold'" class="nav-link" th:href="@{/}">Home</a>
+                    <a th:classappend="${active == 'home'} ? 'active fw-semibold'" class="nav-link" th:href="@{/}"> Trang chủ </a>
                 </li>
                 <li class="nav-item">
-                    <a th:classappend="${active == 'shop'} ? 'active fw-semibold'" class="nav-link" th:href="@{/shop}">Parts Store</a>
+                    <a th:classappend="${active == 'shop'} ? 'active fw-semibold'" class="nav-link" th:href="@{/shop}">Cửa hàng phụ tùng</a>
                 </li>
                 <li class="nav-item" th:if="${role == 'GUEST' or role == 'CUSTOMER'}">
-                    <a th:classappend="${active == 'booking'} ? 'active fw-semibold'" class="nav-link" th:href="@{/booking}">Book Service</a>
+                    <a th:classappend="${active == 'booking'} ? 'active fw-semibold'" class="nav-link" th:href="@{/booking}"> Đặt dịch vụ </a>
                 </li>
                 <li class="nav-item" th:if="${role == 'CUSTOMER'}">
-                    <a th:classappend="${active == 'orders'} ? 'active fw-semibold'" class="nav-link" th:href="@{/orders}">My Orders</a>
+                    <a th:classappend="${active == 'orders'} ? 'active fw-semibold'" class="nav-link" th:href="@{/orders}">Đơn hàng của tôi</a>
                 </li>
                 <li class="nav-item" th:if="${role == 'ADMIN'}">
                     <a th:classappend="${active == 'admin'} ? 'active fw-semibold text-danger'" class="nav-link" th:href="@{/admin}">
@@ -44,18 +44,18 @@
                     </a>
                 </li>
                 <li class="nav-item" th:if="${role == 'STAFF'}">
-                    <a th:classappend="${active == 'staff'} ? 'active fw-semibold'" class="nav-link" th:href="@{/staff}">Staff Workspace</a>
+                    <a th:classappend="${active == 'staff'} ? 'active fw-semibold'" class="nav-link" th:href="@{/staff}"> Khu vực nhân viên </a>
                 </li>
             </ul>
             <div class="d-flex align-items-center gap-2">
                 <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-primary btn-sm" th:href="@{/cart}" title="Cart">
                     <i class="bi bi-cart3"></i>
                 </a>
-                <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-secondary btn-sm" th:href="@{/account}" title="Account">
+                <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-secondary btn-sm" th:href="@{/account}" title="Tài khoản">
                     <i class="bi bi-person-circle"></i>
                     <span class="ms-1 d-none d-md-inline" th:text="${currentUser.fullName}">User</span>
                 </a>
-                <a th:if="${currentUser == null}" class="btn btn-primary btn-sm px-3" th:href="@{/auth/login}">Sign In</a>
+                <a th:if="${currentUser == null}" class="btn btn-primary btn-sm px-3" th:href="@{/auth/login}">Đăng nhập</a>
                 <a th:if="${currentUser != null}" class="btn btn-outline-danger btn-sm" th:href="@{/auth/logout}" title="Sign Out">
                     <i class="bi bi-box-arrow-right"></i>
                 </a>

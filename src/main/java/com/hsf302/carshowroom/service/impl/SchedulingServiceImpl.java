@@ -44,16 +44,16 @@ public class SchedulingServiceImpl implements SchedulingService {
     @Override
     public void validateSlot(Booking booking) {
         if (booking.getBookingDate() == null || booking.getStartTime() == null || booking.getEndTime() == null) {
-            throw new RuntimeException("Please select a complete appointment date and time.");
+            throw new RuntimeException("Vui lòng chọn đầy đủ ngày và giờ hẹn.");
         }
         if (booking.getBookingDate().isBefore(LocalDate.now())) {
-            throw new RuntimeException("You cannot book an appointment in the past.");
+            throw new RuntimeException("Bạn không thể đặt lịch trong quá khứ.");
         }
         if (booking.getStartTime().isBefore(WORK_START) || booking.getEndTime().isAfter(WORK_END)) {
-            throw new RuntimeException("This time slot is outside the workshop's business hours.");
+            throw new RuntimeException("Khung giờ này nằm ngoài giờ làm việc của xưởng.");
         }
         if (hasCapacityConflict(booking)) {
-            throw new RuntimeException("This slot is fully booked. Please choose a different time.");
+            throw new RuntimeException("Khung giờ này đã kín. Vui lòng chọn giờ khác.");
         }
     }
 

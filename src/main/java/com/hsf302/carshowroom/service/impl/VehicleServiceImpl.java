@@ -40,7 +40,7 @@ public class VehicleServiceImpl implements VehicleService {
     @Transactional
     public void deleteVehicle(User user, Integer vehicleId) {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy xe"));
         if (!vehicle.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Vehicle does not belong to current user");
         }

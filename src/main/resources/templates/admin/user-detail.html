@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('User Detail | GearShift Pro')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments :: navbar('admin')}"></div>
@@ -11,13 +11,12 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h1 class="admin-page-title mb-1">User Detail</h1>
-                    <p class="text-secondary mb-0">Review account identity, role, and status.</p>
+                    <p class="text-secondary mb-0">Xem thông tin tài khoản, vai trò và trạng thái.</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a class="btn btn-outline-secondary" th:href="@{/admin/users}">Back</a>
+                    <a class="btn btn-outline-secondary" th:href="@{/admin/users}"> Quay lại </a>
                     <a class="btn btn-primary" th:href="@{/admin/users/edit/{id}(id=${user.id})}">
-                        <i class="bi bi-pencil me-2"></i>Edit
-                    </a>
+                        <i class="bi bi-pencil me-2"></i> Sửa </a>
                 </div>
             </div>
 
@@ -36,24 +35,24 @@
                         <div class="fw-bold gs-mono" th:text="${user.id}">1</div>
                     </div>
                     <div class="col-md-4">
-                        <div class="small text-secondary">Role</div>
+                        <div class="small text-secondary"> Vai trò </div>
                         <span class="gs-badge"
                               th:classappend="${user.role == 'ADMIN'} ? 'gs-badge--danger' : (${user.role == 'STAFF'} ? 'gs-badge--info' : 'gs-badge--neutral')"
-                              th:text="${user.role}">CUSTOMER</span>
+                              th:text="${user.role}">Khách hàng</span>
                     </div>
                     <div class="col-md-4">
-                        <div class="small text-secondary">Status</div>
+                        <div class="small text-secondary"> Trạng thái </div>
                         <span class="gs-badge"
                               th:classappend="${user.status == 'ACTIVE'} ? 'gs-badge--success' : (${user.status == 'INACTIVE'} ? 'gs-badge--neutral' : 'gs-badge--danger')"
-                              th:text="${user.status}">ACTIVE</span>
+                              th:text="${user.status}">Đang hoạt động</span>
                     </div>
                     <div class="col-md-6">
-                        <div class="small text-secondary">Phone</div>
-                        <div class="fw-bold gs-mono" th:text="${user.phone ?: 'No phone'}">Phone</div>
+                        <div class="small text-secondary"> Số điện thoại </div>
+                        <div class="fw-bold gs-mono" th:text="${user.phone ?: 'Chưa có số điện thoại'}"> Số điện thoại </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="small text-secondary">Address</div>
-                        <div class="fw-bold" th:text="${user.address ?: 'No address'}">Address</div>
+                        <div class="small text-secondary"> Địa chỉ </div>
+                        <div class="fw-bold" th:text="${user.address ?: 'No address'}"> Địa chỉ </div>
                     </div>
                 </div>
             </div>

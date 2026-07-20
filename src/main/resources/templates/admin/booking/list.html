@@ -1,6 +1,6 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Booking Management | GearShift Admin')}"></head>
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Quản lý lịch hẹn | GearShift Admin')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
@@ -11,8 +11,8 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
                 <div>
-                    <h1 class="admin-page-title mb-1"><i class="bi bi-calendar-check me-2 text-primary"></i>Booking Management</h1>
-                    <p class="text-secondary mb-0">Monitor and update customer appointment statuses.</p>
+                    <h1 class="admin-page-title mb-1"><i class="bi bi-calendar-check me-2 text-primary"></i>Quản lý lịch hẹn</h1>
+                    <p class="text-secondary mb-0">Theo dõi và cập nhật trạng thái lịch hẹn của khách hàng.</p>
                 </div>
             </div>
 
@@ -21,43 +21,43 @@
             <div class="admin-table-card p-0 overflow-hidden">
                 <div class="p-3 border-bottom">
                     <input type="search" class="form-control" style="max-width: 360px"
-                           placeholder="Search by customer, vehicle, or status..."
-                           data-table-filter="#bookingsTable" aria-label="Search bookings">
+                           placeholder="Tìm kiếm by customer, vehicle, or status..."
+                           data-table-filter="#bookingsTable" aria-label="Tìm kiếm bookings">
                 </div>
                 <div class="table-responsive">
                     <table id="bookingsTable" class="table align-middle mb-0">
                         <thead class="table-light">
                         <tr>
-                            <th class="ps-4">ID</th>
-                            <th>Customer</th>
-                            <th>Vehicle</th>
-                            <th>Date &amp; Time</th>
-                            <th>Service</th>
-                            <th>Status</th>
-                            <th class="text-end pe-4">Actions</th>
+                            <th class="ps-4">STT</th>
+                            <th> Khách hàng </th>
+                            <th> Xe </th>
+                            <th>Ngày và giờ</th>
+                            <th> Dịch vụ </th>
+                            <th> Trạng thái </th>
+                            <th class="text-end pe-4"> Thao tác </th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(bookings)}">
                             <td colspan="7" class="gs-empty-state">
                                 <div class="gs-empty-state-icon"><i class="bi bi-calendar-check"></i></div>
-                                <div class="gs-empty-state-title">No bookings yet</div>
-                                <div class="gs-empty-state-text">No bookings have been created yet.</div>
+                                <div class="gs-empty-state-title">Chưa có lịch hẹn</div>
+                                <div class="gs-empty-state-text">Chưa có lịch hẹn nào được tạo.</div>
                             </td>
                         </tr>
-                        <tr th:each="booking : ${bookings}">
-                            <td class="ps-4 fw-bold gs-mono" th:text="'BK-' + ${booking.id}">BK-1</td>
+                        <tr th:each="booking, stat : ${bookings}">
+                            <td class="ps-4 fw-bold gs-mono" th:text="${stat.count}">1</td>
                             <td>
-                                <div class="fw-semibold" th:text="${booking.user.fullName}">Customer</div>
+                                <div class="fw-semibold" th:text="${booking.user.fullName}"> Khách hàng </div>
                                 <small class="text-secondary" th:text="${booking.user.email}">email</small>
                             </td>
-                            <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}">Vehicle</td>
-                            <td class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</td>
-                            <td th:text="${bookingServices[booking.id]}">Service</td>
+                            <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}"> Xe </td>
+                            <td class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}"> Ngày </td>
+                            <td th:text="${bookingServices[booking.id]}"> Dịch vụ </td>
                             <td>
                                 <span class="gs-badge"
                                       th:classappend="${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${booking.bookingStatus.name() == 'CANCELED' or booking.bookingStatus.name() == 'EXPIRED_PAYMENT' or booking.bookingStatus.name() == 'EXPIRED_NO_SHOW'} ? 'gs-badge--danger' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS' or booking.bookingStatus.name() == 'PENDING_APPROVAL'} ? 'gs-badge--warning' : 'gs-badge--neutral')))"
-                                      th:text="${booking.bookingStatus}">PENDING</span>
+                                      th:text="${booking.bookingStatus}">Chờ xử lý</span>
                             </td>
                             <td class="text-end pe-4 table-action">
                                 <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/bookings/{id}(id=${booking.id})}">
@@ -71,7 +71,7 @@
                                 <form class="d-inline" th:action="@{/admin/bookings/status}" method="post">
                                     <input type="hidden" name="bookingId" th:value="${booking.id}">
                                     <input type="hidden" name="status" value="CANCELED">
-                                    <button class="btn btn-outline-danger btn-sm" type="submit">Cancel</button>
+                                    <button class="btn btn-outline-danger btn-sm" type="submit"> Hủy </button>
                                 </form>
                             </td>
                         </tr>
