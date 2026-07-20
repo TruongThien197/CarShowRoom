@@ -1,6 +1,6 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Add Booking Service | GearShift Admin')}"></head>
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Thêm dịch vụ đặt lịch | GearShift Admin')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
@@ -11,12 +11,12 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
                 <div>
-                    <h1 class="gs-h1 mb-1"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Booking Service</h1>
-                    <p class="text-secondary small mb-0">Define a repair service with an expected price range and duration.</p>
+                    <h1 class="gs-h1 mb-1"><i class="bi bi-plus-circle me-2 text-primary"></i>Thêm dịch vụ đặt lịch</h1>
+                    <p class="text-secondary small mb-0">Khai báo dịch vụ sửa chữa với khoảng giá và thời lượng dự kiến.</p>
                 </div>
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <a class="btn btn-outline-secondary d-flex align-items-center gap-2" th:href="@{/admin/services}">
-                        <i class="bi bi-arrow-left"></i><span>Back</span>
+                        <i class="bi bi-arrow-left"></i><span> Quay lại </span>
                     </a>
                 </div>
             </div>
@@ -28,7 +28,7 @@
                     <form class="surface-card gs-stripe-top p-4 p-md-5" th:action="@{/admin/services/create}" th:object="${serviceForm}" method="post">
                         <div class="row g-3">
                             <div class="col-md-8">
-                                <label class="form-label fw-semibold text-dark">Service Name <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold text-dark"> Tên dịch vụ <span class="text-danger">*</span></label>
                                 <input class="form-control form-control-lg" th:field="*{serviceName}" required>
                                 <div class="gs-field-error" th:if="${#fields.hasErrors('serviceName')}" th:errors="*{serviceName}"></div>
                             </div>
@@ -38,24 +38,24 @@
                                 <div class="gs-field-error" th:if="${#fields.hasErrors('durationMinutes')}" th:errors="*{durationMinutes}"></div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold text-dark">Min Price <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold text-dark"> Giá thấp nhất <span class="text-danger">*</span></label>
                                 <input class="form-control" type="number" min="0" step="0.01" th:field="*{minPrice}" required>
                                 <div class="gs-field-error" th:if="${#fields.hasErrors('minPrice')}" th:errors="*{minPrice}"></div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold text-dark">Max Price <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold text-dark"> Giá cao nhất <span class="text-danger">*</span></label>
                                 <input class="form-control" type="number" min="0" step="0.01" th:field="*{maxPrice}" required>
                                 <div class="gs-field-error" th:if="${#fields.hasErrors('maxPrice')}" th:errors="*{maxPrice}"></div>
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-semibold text-dark">Description</label>
+                                <label class="form-label fw-semibold text-dark"> Mô tả </label>
                                 <textarea class="form-control" rows="4" th:field="*{description}"></textarea>
                             </div>
                         </div>
                         <div class="d-flex gap-2 justify-content-end pt-4 mt-3 border-top">
-                            <a class="btn btn-outline-secondary px-4" th:href="@{/admin/services}">Cancel</a>
+                            <a class="btn btn-outline-secondary px-4" th:href="@{/admin/services}"> Hủy </a>
                             <button class="btn btn-primary px-5 shadow-sm d-flex align-items-center gap-2" type="submit">
-                                <i class="bi bi-save"></i><span>Save Service</span>
+                                <i class="bi bi-save"></i><span>Lưu dịch vụ</span>
                             </button>
                         </div>
                     </form>

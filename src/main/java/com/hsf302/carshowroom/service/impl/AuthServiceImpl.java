@@ -19,12 +19,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public User getUserByid(Integer id) {
-        return userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found."));
+        return userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
     }
 
     @Override
     public User register(String email, String password, String fullname, String phone, String address) {
-        if ( userRepository.findByEmail(email) != null ) throw new RuntimeException("This email is already registered.");
+        if ( userRepository.findByEmail(email) != null ) throw new RuntimeException("Email này đã được đăng ký.");
         User user = User.builder()
                 .email(email)
                 .passwordHash(passwordEncoder.encode(password))
@@ -40,9 +40,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public User login(String email, String password) {
         User user = userRepository.findByEmail(email);
-        if ( user == null ) throw new RuntimeException("No account found with this email.");
-        if ( !passwordEncoder.matches(password, user.getPasswordHash()) ) throw new RuntimeException("Incorrect password.");
-        if ( user.getStatus().equals("LOCK") ) throw new RuntimeException("This account has been locked.");
+        if ( user == null ) throw new RuntimeException("Không tìm thấy tài khoản với email này.");
+        if ( !passwordEncoder.matches(password, user.getPasswordHash()) ) throw new RuntimeException("Mật khẩu không chính xác.");
+        if ( user.getStatus().equals("LOCK") ) throw new RuntimeException("Tài khoản này đã bị khóa.");
         return user;
     }
 
@@ -63,7 +63,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        if ( auth == null || !auth.isAuthenticated() ) throw new RuntimeException("Your session has expired. Please sign in again.");
+        if ( auth == null || !auth.isAuthenticated() ) throw new RuntimeException("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
         return (User) auth.getPrincipal();
     }
 }

@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('GearShift Pro | Auto Parts')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('shop')}"></div>
@@ -9,17 +9,17 @@
         <div>
             <nav aria-label="breadcrumb" class="mb-3">
                 <ol class="breadcrumb mb-0 gs-mono small">
-                    <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none">Home</a></li>
-                    <li class="breadcrumb-item" th:if="${selectedCategoryId == null}" aria-current="page">Products</li>
+                    <li class="breadcrumb-item"><a th:href="@{/}" class="text-decoration-none"> Trang chủ </a></li>
+                    <li class="breadcrumb-item" th:if="${selectedCategoryId == null}" aria-current="page"> Sản phẩm </li>
                     <li class="breadcrumb-item" th:if="${selectedCategoryId != null}">
-                        <a th:href="@{/products}" class="text-decoration-none">Products</a>
+                        <a th:href="@{/products}" class="text-decoration-none"> Sản phẩm </a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page"
-                        th:if="${selectedCategoryId != null}" th:text="${selectedCategoryName}">Category</li>
+                        th:if="${selectedCategoryId != null}" th:text="${selectedCategoryName}"> Danh mục </li>
                 </ol>
             </nav>
-            <h1 class="gs-h1 section-title mb-1">Auto Parts</h1>
-            <p class="text-secondary mb-0">Part categories are organized by admin/staff. Catalog car model filters are only used to find compatible products.</p>
+            <h1 class="gs-h1 section-title mb-1"> Phụ tùng ô tô </h1>
+            <p class="text-secondary mb-0">Danh mục phụ tùng do quản trị viên/nhân viên sắp xếp. Bộ lọc dòng xe chỉ dùng để tìm sản phẩm tương thích.</p>
         </div>
         <form class="d-flex gap-2 align-self-xl-start" th:action="@{/products}" method="get">
             <input type="hidden" name="categoryId" th:if="${selectedCategoryId != null}" th:value="${selectedCategoryId}">
@@ -27,15 +27,15 @@
             <input type="hidden" name="brand" th:if="${selectedBrand != null}" th:value="${selectedBrand}">
             <input type="hidden" name="modelName" th:if="${selectedModelName != null}" th:value="${selectedModelName}">
             <input type="hidden" name="year" th:if="${selectedYear != null}" th:value="${selectedYear}">
-            <input class="form-control shadow-sm" name="keyword" th:value="${keyword}" placeholder="Search parts...">
-            <button class="btn btn-primary px-4 shadow-sm" type="submit"><i class="bi bi-search me-2"></i>Search</button>
+            <input class="form-control shadow-sm" name="keyword" th:value="${keyword}" placeholder="Tìm kiếm phụ tùng...">
+            <button class="btn btn-primary px-4 shadow-sm" type="submit"><i class="bi bi-search me-2"></i> Tìm kiếm </button>
         </form>
     </div>
 
     <section class="mb-4">
         <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
-            <h2 class="gs-h4 fw-bold mb-0">Product Categories</h2>
-            <span class="small text-secondary">Quick category picker</span>
+            <h2 class="gs-h4 fw-bold mb-0">Danh mục sản phẩm</h2>
+            <span class="small text-secondary">Chọn nhanh danh mục</span>
         </div>
         <nav class="category-tabbar nav nav-pills flex-nowrap gap-2 overflow-auto pb-2" aria-label="Product categories">
             <a class="nav-link text-nowrap px-3"
@@ -47,7 +47,7 @@
                th:each="category : ${categories}"
                th:classappend="${selectedCategoryId == category.id} ? 'active fw-semibold'"
                th:href="@{/products(categoryId=${category.id}, carModelId=${selectedCarModelId}, brand=${selectedBrand}, modelName=${selectedModelName}, year=${selectedYear}, keyword=${keyword})}">
-                <i class="bi bi-tag me-2"></i><span th:text="${category.categoryName}">Category</span>
+                <i class="bi bi-tag me-2"></i><span th:text="${category.categoryName}"> Danh mục </span>
             </a>
         </nav>
     </section>
@@ -56,41 +56,41 @@
         <form class="row g-3 align-items-end" th:action="@{/products}" method="get">
             <input type="hidden" name="categoryId" th:if="${selectedCategoryId != null}" th:value="${selectedCategoryId}">
             <div class="col-md-3">
-                <label class="form-label fw-semibold small">Catalog Brand</label>
+                <label class="form-label fw-semibold small">Hãng xe trong danh mục</label>
                 <select id="brandSelect" class="form-select" name="brand">
-                    <option value="">All brands</option>
+                    <option value=""> Tất cả hãng xe </option>
                     <option th:each="brand : ${carBrands}" th:value="${brand}" th:text="${brand}"
-                            th:selected="${brand == selectedBrand}">Brand</option>
+                            th:selected="${brand == selectedBrand}"> Hãng xe </option>
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold small">Compatible Car Models</label>
+                <label class="form-label fw-semibold small">Dòng xe tương thích</label>
                 <select id="carModelSelect" class="form-select" name="carModelId">
-                    <option value="">All car models</option>
+                    <option value=""> Tất cả mẫu xe </option>
                     <option th:each="model : ${carModels}"
                             th:value="${model.id}"
                             th:attr="data-brand=${model.brand}"
                             th:text="${model.brand + ' ' + model.modelName + ' ' + model.year}"
-                            th:selected="${selectedCarModelId != null and selectedCarModelId == model.id}">Model</option>
+                            th:selected="${selectedCarModelId != null and selectedCarModelId == model.id}"> Mẫu xe </option>
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label fw-semibold small">Model Year</label>
-                <input class="form-control" name="year" type="number" placeholder="Year" th:value="${selectedYear}">
+                <label class="form-label fw-semibold small">Năm sản xuất</label>
+                <input class="form-control" name="year" type="number" placeholder="Năm" th:value="${selectedYear}">
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-semibold small">Keyword</label>
+                <label class="form-label fw-semibold small">Từ khóa</label>
                 <div class="d-flex gap-2">
-                    <input class="form-control" name="keyword" placeholder="Part Name" th:value="${keyword}">
+                    <input class="form-control" name="keyword" placeholder="Tên phụ tùng" th:value="${keyword}">
                     <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
                 </div>
             </div>
             <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
                 <a class="btn btn-outline-secondary btn-sm" th:href="@{/products}">
-                    <i class="bi bi-x-circle me-1"></i>Clear Filters
+                    <i class="bi bi-x-circle me-1"></i>Xóa bộ lọc
                 </a>
                 <span class="gs-badge gs-badge--info" th:if="${selectedCarModelId != null or selectedBrand != null or selectedYear != null}">
-                    <i class="bi bi-funnel-fill"></i>Filtering by catalog car model
+                    <i class="bi bi-funnel-fill"></i>Đang lọc theo dòng xe trong danh mục
                 </span>
             </div>
         </form>
@@ -98,8 +98,8 @@
 
     <div class="gs-empty-state surface-card" th:if="${#lists.isEmpty(products)}">
         <i class="bi bi-search gs-empty-state-icon"></i>
-        <div class="gs-empty-state-title">No parts found</div>
-        <p class="gs-empty-state-text mb-0">No products match the current filters. Try changing the keyword or clearing some filter conditions.</p>
+        <div class="gs-empty-state-title"> Không tìm thấy phụ tùng </div>
+        <p class="gs-empty-state-text mb-0">Không có sản phẩm phù hợp. Hãy đổi từ khóa hoặc xóa bớt điều kiện lọc.</p>
     </div>
 
     <div class="row g-4 mb-5" th:if="${!#lists.isEmpty(products)}">
@@ -112,16 +112,16 @@
                     <i class="bi bi-tools display-1 text-secondary opacity-25"
                        th:if="${product.imageUrl == null or #strings.isEmpty(product.imageUrl)}"></i>
                     <span class="badge bg-primary position-absolute top-0 start-0 m-3 shadow-sm"
-                          th:text="${product.category.categoryName}">Category</span>
+                          th:text="${product.category.categoryName}"> Danh mục </span>
                 </div>
                 <div class="card-body p-4 d-flex flex-column justify-content-between">
                     <div>
-                        <h3 class="gs-h4 fw-bold mb-2 text-dark" th:text="${product.productName}">Part Name</h3>
+                        <h3 class="gs-h4 fw-bold mb-2 text-dark" th:text="${product.productName}">Tên phụ tùng</h3>
                         <p class="text-secondary small mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"
-                           th:text="${product.description ?: 'No detailed description available.'}">Description</p>
+                           th:text="${product.description ?: 'Chưa có mô tả chi tiết.'}"> Mô tả </p>
                         <div class="small text-secondary mb-3">
                             <i class="bi bi-car-front me-1"></i>
-                            <span th:if="${#sets.isEmpty(product.compatibleCarModels)}">No catalog car models assigned</span>
+                            <span th:if="${#sets.isEmpty(product.compatibleCarModels)}"> Chưa gán mẫu xe trong danh mục </span>
                             <span th:if="${!#sets.isEmpty(product.compatibleCarModels)}"
                                   th:text="${#strings.listJoin(product.compatibleCarModels.![brand + ' ' + modelName], ', ')}">Toyota Camry</span>
                         </div>
@@ -130,13 +130,12 @@
                         <div class="d-flex justify-content-end align-items-center mb-3">
                             <span class="gs-badge"
                                   th:classappend="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0} ? 'gs-badge--success' : 'gs-badge--danger'"
-                                  th:text="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock'}">Status</span>
+                                  th:text="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0 ? 'Còn hàng' : 'Hết hàng'}"> Trạng thái </span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                             <span class="price gs-mono" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</span>
                             <a class="btn btn-outline-primary btn-sm rounded-pill px-3" th:href="@{/products/{id}(id=${product.id})}">
-                                <i class="bi bi-eye me-1"></i>Details
-                            </a>
+                                <i class="bi bi-eye me-1"></i> Chi tiết </a>
                         </div>
                     </div>
                 </div>
@@ -157,7 +156,7 @@
             </li>
             <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''">
                 <a class="page-link" th:href="@{/products(page=${currentPage + 1}, keyword=${keyword}, categoryId=${selectedCategoryId}, carModelId=${selectedCarModelId}, brand=${selectedBrand}, modelName=${selectedModelName}, year=${selectedYear})}">
-                    Next <i class="bi bi-chevron-right"></i>
+                    Tiếp <i class="bi bi-chevron-right"></i>
                 </a>
             </li>
         </ul>
@@ -177,7 +176,7 @@
         const syncModelSelect = (brand) => {
             if (!carModelSelect) return;
             const selectedValue = carModelSelect.value;
-            carModelSelect.innerHTML = '<option value="">All car models</option>';
+            carModelSelect.innerHTML = '<option value=""> Tất cả mẫu xe </option>';
 
             allCarModelOptions
                 .filter((option) => !brand || option.dataset.brand === brand)

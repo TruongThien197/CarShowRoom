@@ -108,19 +108,19 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF COL_LENGTH('orders', 'order_status') IS NULL ALTER TABLE orders ADD order_status VARCHAR(255) NULL",
                 "IF COL_LENGTH('orders', 'payment_status') IS NULL ALTER TABLE orders ADD payment_status VARCHAR(255) NULL",
                 "IF COL_LENGTH('orders', 'product_total') IS NULL ALTER TABLE orders ADD product_total NUMERIC(18, 2) NULL",
-                "UPDATE orders SET created_at = CAST(order_date AS DATETIME2) WHERE created_at IS NULL AND order_date IS NOT NULL",
+                "IF COL_LENGTH('orders', 'order_date') IS NOT NULL EXEC sp_executesql N'UPDATE orders SET created_at = CAST(order_date AS DATETIME2) WHERE created_at IS NULL AND order_date IS NOT NULL'",
                 "UPDATE orders SET updated_at = created_at WHERE updated_at IS NULL",
                 "UPDATE orders SET order_type = 'SHIPPING' WHERE order_type IS NULL",
-                "UPDATE orders SET order_status = CASE UPPER(status) " +
-                        "WHEN 'PENDING' THEN 'PENDING_PAYMENT' " +
-                        "WHEN 'SHIPPED' THEN 'SHIPPING' " +
-                        "WHEN 'DELIVERED' THEN 'COMPLETED' " +
-                        "WHEN 'CANCELLED' THEN 'CANCELED' " +
-                        "ELSE UPPER(status) END WHERE order_status IS NULL AND status IS NOT NULL",
+                "IF COL_LENGTH('orders', 'status') IS NOT NULL EXEC sp_executesql N'UPDATE orders SET order_status = CASE UPPER(status) " +
+                        "WHEN ''PENDING'' THEN ''PENDING_PAYMENT'' " +
+                        "WHEN ''SHIPPED'' THEN ''SHIPPING'' " +
+                        "WHEN ''DELIVERED'' THEN ''COMPLETED'' " +
+                        "WHEN ''CANCELLED'' THEN ''CANCELED'' " +
+                        "ELSE UPPER(status) END WHERE order_status IS NULL AND status IS NOT NULL'",
                 "UPDATE orders SET order_status = 'PENDING_PAYMENT' WHERE order_status = 'PENDING_DEPOSIT'",
                 "UPDATE orders SET order_status = 'PROCESSING' WHERE order_status = 'DEPOSITED'",
                 "UPDATE orders SET payment_status = CASE WHEN order_status IN ('COMPLETED', 'PROCESSING', 'SHIPPING') THEN 'PAID' ELSE 'PENDING' END WHERE payment_status IS NULL",
-                "UPDATE orders SET product_total = total_amount WHERE product_total IS NULL",
+                "IF COL_LENGTH('orders', 'total_amount') IS NOT NULL EXEC sp_executesql N'UPDATE orders SET product_total = total_amount WHERE product_total IS NULL'",
                 "IF COL_LENGTH('orders', 'deposit_amount') IS NOT NULL ALTER TABLE orders DROP COLUMN deposit_amount",
                 "IF COL_LENGTH('orders', 'remaining_amount') IS NOT NULL ALTER TABLE orders DROP COLUMN remaining_amount"
         );
@@ -147,8 +147,8 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF COL_LENGTH('service', 'duration_minutes') IS NULL ALTER TABLE service ADD duration_minutes INT NULL",
                 "IF COL_LENGTH('service', 'status') IS NULL ALTER TABLE service ADD status VARCHAR(255) NULL",
                 "IF COL_LENGTH('service', 'price') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'service' AND COLUMN_NAME = 'price' AND IS_NULLABLE = 'NO') ALTER TABLE service ALTER COLUMN price NUMERIC(18, 2) NULL",
-                "UPDATE service SET min_price = price WHERE min_price IS NULL AND price IS NOT NULL",
-                "UPDATE service SET max_price = price WHERE max_price IS NULL AND price IS NOT NULL",
+                "IF COL_LENGTH('service', 'price') IS NOT NULL EXEC sp_executesql N'UPDATE service SET min_price = price WHERE min_price IS NULL AND price IS NOT NULL'",
+                "IF COL_LENGTH('service', 'price') IS NOT NULL EXEC sp_executesql N'UPDATE service SET max_price = price WHERE max_price IS NULL AND price IS NOT NULL'",
                 "UPDATE service SET duration_minutes = 60 WHERE duration_minutes IS NULL",
                 "UPDATE service SET status = 'ACTIVE' WHERE status IS NULL",
                 "UPDATE service SET min_price = 0 WHERE min_price IS NULL",

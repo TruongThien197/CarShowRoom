@@ -148,8 +148,18 @@ public class AdminController {
     }
 
     @GetMapping("/car-models")
-    public String listCarModels(Model model) {
-        model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
+    public String listCarModels(@RequestParam(required = false) String keyword, Model model) {
+        List<CarModel> carModels = carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc();
+        if (keyword != null && !keyword.isBlank()) {
+            String normalizedKeyword = keyword.trim().toLowerCase();
+            carModels = carModels.stream()
+                    .filter(carModel -> carModel.getBrand().toLowerCase().contains(normalizedKeyword)
+                            || carModel.getModelName().toLowerCase().contains(normalizedKeyword)
+                            || String.valueOf(carModel.getYear()).contains(normalizedKeyword))
+                    .toList();
+        }
+        model.addAttribute("carModels", carModels);
+        model.addAttribute("keyword", keyword == null ? "" : keyword.trim());
         return "admin/car-model/list";
     }
 
@@ -222,7 +232,7 @@ public class AdminController {
     @GetMapping("/categories/edit/{id}")
     public String editCategoryForm(@PathVariable Integer id, Model model) {
         model.addAttribute("category", categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found")));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục")));
         return "admin/category/edit";
     }
 
@@ -233,7 +243,7 @@ public class AdminController {
                                      RedirectAttributes redirectAttributes) {
         try {
             Category category = categoryRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             category.setCategoryName(categoryName);
             category.setDescription(description);
             categoryRepository.save(category);
@@ -299,7 +309,7 @@ public class AdminController {
                                       RedirectAttributes redirectAttributes) {
         try {
             Category category = categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             Product product = new Product();
             product.setCategory(category);
             product.setName(name);
@@ -322,7 +332,7 @@ public class AdminController {
     @GetMapping("/products/edit/{id}")
     public String editProductForm(@PathVariable Integer id, Model model) {
         model.addAttribute("product", productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found")));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm")));
         model.addAttribute("categories", categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "categoryName")));
         model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
         return "admin/product/edit";
@@ -343,9 +353,9 @@ public class AdminController {
                                     RedirectAttributes redirectAttributes) {
         try {
             Product product = productRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
             Category category = categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             product.setCategory(category);
             product.setName(name);
             product.setSku((sku == null || sku.isBlank()) ? product.getSku() : sku.trim());
@@ -388,7 +398,7 @@ public class AdminController {
                                 RedirectAttributes redirectAttributes) {
         try {
             Category category = categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             Product product = new Product();
             product.setCategory(category);
             product.setName(name);
@@ -462,7 +472,7 @@ public class AdminController {
     @GetMapping("/services/edit/{id}")
     public String editServiceForm(@PathVariable Integer id, Model model) {
         com.hsf302.carshowroom.entity.Service service = serviceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Service not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ"));
         ServiceForm form = new ServiceForm();
         form.setServiceName(service.getServiceName());
         form.setDescription(service.getDescription());
@@ -481,7 +491,7 @@ public class AdminController {
                                     Model model,
                                     RedirectAttributes redirectAttributes) {
         com.hsf302.carshowroom.entity.Service service = serviceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Service not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ"));
         if (bindingResult.hasErrors()) {
             model.addAttribute("service", service);
             return "admin/service/edit";
@@ -518,7 +528,7 @@ public class AdminController {
     @GetMapping("/bookings/{id}")
     public String bookingDetail(@PathVariable Integer id, Model model) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch hẹn"));
         model.addAttribute("booking", booking);
         model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(id));
         return "admin/booking/detail";
@@ -529,7 +539,7 @@ public class AdminController {
                                       RedirectAttributes redirectAttributes) {
         try {
             Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
             product.setStatus(Enums.ProductStatus.valueOf(status));
             productRepository.save(product);
             redirectAttributes.addFlashAttribute("successMessage", "Product status updated successfully!");

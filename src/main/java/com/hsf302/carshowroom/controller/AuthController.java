@@ -77,7 +77,7 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/auth/register";
         }
-        redirectAttributes.addFlashAttribute("successMessage", "Registration successful! Please sign in.");
+        redirectAttributes.addFlashAttribute("successMessage", "Đăng ký thành công! Vui lòng đăng nhập.");
         return "redirect:/auth/login";
     }
 

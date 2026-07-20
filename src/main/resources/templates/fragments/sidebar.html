@@ -1,10 +1,10 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
 <aside th:fragment="shopSidebar" class="col-lg-3 col-xl-2 apex-sidebar p-3 p-md-4 border-end bg-light min-vh-100">
     <div class="gs-sidebar-header p-3 mb-4 rounded shadow-sm">
-        <div class="small opacity-75 text-uppercase gs-mono" style="letter-spacing:.04em;">PARTS CATALOG</div>
-        <div class="fw-bold fs-6 gs-h4 mb-0">Auto Parts</div>
+        <div class="small opacity-75 text-uppercase gs-mono" style="letter-spacing:.04em;">DANH MỤC PHỤ TÙNG</div>
+        <div class="fw-bold fs-6 gs-h4 mb-0"> Phụ tùng ô tô </div>
     </div>
     <div class="list-group list-group-flush rounded shadow-sm">
         <a class="list-group-item list-group-item-action d-flex align-items-center"
@@ -17,7 +17,7 @@
            th:href="@{/shop(categoryId=${category.id})}">
             <span>
                 <i class="bi bi-gear-wide-connected me-2"></i>
-                <span th:text="${category.categoryName}">Category</span>
+                <span th:text="${category.categoryName}"> Danh mục </span>
             </span>
         </a>
     </div>
@@ -29,29 +29,23 @@
     </div>
     <nav class="d-grid gap-2">
         <a th:classappend="${activeMenu == 'dashboard'} ? 'active'" th:href="@{/admin}">
-            <i class="bi bi-speedometer2"></i>Dashboard
-        </a>
+            <i class="bi bi-speedometer2"></i> Bảng điều khiển </a>
         <a th:classappend="${activeMenu == 'users'} ? 'active'" th:href="@{/admin/users}">
-            <i class="bi bi-people"></i>Users
-        </a>
+            <i class="bi bi-people"></i> Người dùng </a>
         <a th:classappend="${activeMenu == 'categories'} ? 'active'" th:href="@{/admin/categories}">
             <i class="bi bi-tags"></i>Categories
         </a>
         <a th:classappend="${activeMenu == 'products'} ? 'active'" th:href="@{/admin/products}">
-            <i class="bi bi-box-seam"></i>Products
-        </a>
+            <i class="bi bi-box-seam"></i> Sản phẩm </a>
         <a th:classappend="${activeMenu == 'services'} ? 'active'" th:href="@{/admin/services}">
-            <i class="bi bi-tools"></i>Services
-        </a>
+            <i class="bi bi-tools"></i> Dịch vụ </a>
         <a th:classappend="${activeMenu == 'car-models'} ? 'active'" th:href="@{/admin/car-models}">
-            <i class="bi bi-car-front"></i>Car Models
+            <i class="bi bi-car-front"></i>Dòng xes
         </a>
         <a th:classappend="${activeMenu == 'orders'} ? 'active'" th:href="@{/admin/orders}">
-            <i class="bi bi-cart-check"></i>Orders
-        </a>
+            <i class="bi bi-cart-check"></i> Đơn hàng </a>
         <a th:classappend="${activeMenu == 'bookings'} ? 'active'" th:href="@{/admin/bookings}">
-            <i class="bi bi-calendar-check"></i>Bookings
-        </a>
+            <i class="bi bi-calendar-check"></i> Lịch hẹn </a>
     </nav>
 </aside>
 
@@ -59,13 +53,11 @@
     <a class="nav-link px-3 py-2"
        th:classappend="${activeMenu == 'dashboard'} ? 'active fw-semibold'"
        th:href="@{/admin}">
-        <i class="bi bi-speedometer2 me-2"></i>Dashboard
-    </a>
+        <i class="bi bi-speedometer2 me-2"></i> Bảng điều khiển </a>
     <a class="nav-link px-3 py-2"
        th:classappend="${activeMenu == 'products'} ? 'active fw-semibold'"
        th:href="@{/admin/products}">
-        <i class="bi bi-box-seam me-2"></i>Products
-    </a>
+        <i class="bi bi-box-seam me-2"></i> Sản phẩm </a>
     <a class="nav-link px-3 py-2"
        th:classappend="${activeMenu == 'categories'} ? 'active fw-semibold'"
        th:href="@{/admin/categories}">
@@ -79,20 +71,19 @@
     <a class="nav-link px-3 py-2"
        th:classappend="${activeMenu == 'bookings'} ? 'active fw-semibold'"
        th:href="@{/admin/bookings}">
-        <i class="bi bi-calendar-check me-2"></i>Bookings
-    </a>
+        <i class="bi bi-calendar-check me-2"></i> Lịch hẹn </a>
 </nav>
 
 <aside th:fragment="accountSidebar(activeTab)" class="col-lg-3 mb-4 account-sidebar">
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
         <div class="account-sidebar-header p-4 text-center">
             <i class="bi bi-person-circle display-4 mb-2 d-block" style="color:var(--gs-accent);"></i>
-            <h5 class="fw-bold mb-0 gs-h4" th:text="${currentUser != null ? currentUser.fullName : 'Account'}">Account</h5>
+            <h5 class="fw-bold mb-0 gs-h4" th:text="${currentUser != null ? currentUser.fullName : 'Tài khoản'}">Tài khoản</h5>
             <small class="opacity-75" th:text="${currentUser != null ? currentUser.email : ''}">email@domain.com</small>
         </div>
         <div class="list-group list-group-flush">
             <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'profile'} ? 'active fw-semibold'" th:href="@{/account}">
-                <i class="bi bi-person me-2"></i>My Profile
+                <i class="bi bi-person me-2"></i>Hồ sơ của tôi
             </a>
             <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'orders'} ? 'active fw-semibold'" th:href="@{/orders}">
                 <i class="bi bi-bag me-2"></i>My Parts Orders
@@ -103,8 +94,7 @@
                 <i class="bi bi-calendar-check me-2"></i>Service Bookings
             </a>
             <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'vehicles'} ? 'active fw-semibold'" th:href="@{/vehicles}">
-                <i class="bi bi-car-front me-2"></i>My Vehicles
-            </a>
+                <i class="bi bi-car-front me-2"></i> Xe của tôi </a>
         </div>
     </div>
 </aside>
@@ -113,7 +103,7 @@
     <a class="nav-link px-3 py-2"
        th:classappend="${activeTab == 'create'} ? 'active fw-semibold'"
        th:href="@{/booking/create}">
-        <i class="bi bi-calendar-plus me-2"></i>Create Booking
+        <i class="bi bi-calendar-plus me-2"></i>Tạo mới Booking
     </a>
     <a class="nav-link px-3 py-2"
        th:classappend="${activeTab == 'history'} ? 'active fw-semibold'"

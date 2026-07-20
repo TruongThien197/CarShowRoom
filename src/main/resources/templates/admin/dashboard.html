@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Admin Dashboard | GearShift Pro')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments :: navbar('admin')}"></div>
@@ -11,12 +11,11 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
                 <div>
-                    <h1 class="admin-page-title mb-1">Admin Overview</h1>
-                    <p class="text-secondary mb-0">Track the main metrics. Products, services, and bookings are managed in their own pages.</p>
+                    <h1 class="admin-page-title mb-1">Tổng quan quản trị</h1>
+                    <p class="text-secondary mb-0">Theo dõi các chỉ số chính. Sản phẩm, dịch vụ và lịch hẹn được quản lý ở các trang riêng.</p>
                 </div>
                 <a class="btn btn-outline-danger align-self-start" th:href="@{/auth/logout}">
-                    <i class="bi bi-box-arrow-right me-2"></i>Logout
-                </a>
+                    <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất </a>
             </div>
 
             <div th:replace="~{fragments/sidebar :: adminTabs('dashboard')}"></div>
@@ -25,9 +24,9 @@
                 <div class="col-sm-6 col-xl-3">
                     <div class="metric-card gs-stripe-top--neutral d-flex justify-content-between gap-3">
                         <div>
-                            <div class="text-secondary small">Users</div>
+                            <div class="text-secondary small"> Người dùng </div>
                             <div class="metric-value" th:text="${totalUsers}">0</div>
-                            <div class="small text-success fw-semibold">All roles</div>
+                            <div class="small text-success fw-semibold">Tất cả vai trò</div>
                         </div>
                         <div class="metric-icon"><i class="bi bi-people"></i></div>
                     </div>
@@ -35,9 +34,9 @@
                 <div class="col-sm-6 col-xl-3">
                     <div class="metric-card gs-stripe-top d-flex justify-content-between gap-3">
                         <div>
-                            <div class="text-secondary small">Products</div>
+                            <div class="text-secondary small"> Sản phẩm </div>
                             <div class="metric-value" th:text="${totalProducts}">0</div>
-                            <div class="small text-success fw-semibold"><span th:text="${activeProducts}">0</span> active</div>
+                            <div class="small text-success fw-semibold"><span th:text="${activeProducts}">0</span> đang hoạt động</div>
                         </div>
                         <div class="metric-icon"><i class="bi bi-box-seam"></i></div>
                     </div>
@@ -45,9 +44,9 @@
                 <div class="col-sm-6 col-xl-3">
                     <div class="metric-card gs-stripe-top--info d-flex justify-content-between gap-3">
                         <div>
-                            <div class="text-secondary small">Orders</div>
+                            <div class="text-secondary small"> Đơn hàng </div>
                             <div class="metric-value" th:text="${totalOrders}">0</div>
-                            <div class="small text-primary fw-semibold"><span th:text="${pendingOrders}">0</span> pending</div>
+                            <div class="small text-primary fw-semibold"><span th:text="${pendingOrders}">0</span> đang chờ xử lý</div>
                         </div>
                         <div class="metric-icon"><i class="bi bi-cart-check"></i></div>
                     </div>
@@ -55,7 +54,7 @@
                 <div class="col-sm-6 col-xl-3">
                     <div class="metric-card gs-stripe-top--amber d-flex justify-content-between gap-3">
                         <div>
-                            <div class="text-secondary small">Bookings</div>
+                            <div class="text-secondary small"> Lịch hẹn </div>
                             <div class="metric-value" th:text="${totalBookings}">0</div>
                             <div class="small text-warning fw-semibold"><span th:text="${pendingBookings}">0</span> awaiting approval</div>
                         </div>
@@ -67,9 +66,8 @@
             <div class="surface-card p-4 mb-4">
                 <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
                     <div>
-                        <h4 class="fw-bold mb-1">Workshop Load Today</h4>
-                        <p class="text-secondary mb-0">
-                            Date <span th:text="${today}">2026-07-07</span>,
+                        <h4 class="fw-bold mb-1">Lượng công việc xưởng hôm nay</h4>
+                        <p class="text-secondary mb-0"> Ngày <span th:text="${today}">2026-07-07</span>,
                             there are <strong th:text="${todayVehicleCount}">0</strong> vehicles scheduled across today's time slots.
                         </p>
                     </div>
@@ -83,14 +81,14 @@
                 <div class="row g-3" th:if="${!#lists.isEmpty(todaySlotLoads)}">
                     <div class="col-sm-6 col-xl-3" th:each="slot : ${todaySlotLoads}">
                         <div class="border rounded p-3 h-100 bg-light">
-                            <div class="small text-secondary">Time Slot</div>
+                            <div class="small text-secondary">Khung giờ</div>
                             <div class="fs-4 fw-bold text-dark gs-mono" th:text="${slot.timeSlot}">08:00</div>
                             <div class="d-flex justify-content-between mt-2">
-                                <span class="text-secondary">Vehicle Count</span>
+                                <span class="text-secondary">Số lượng xe</span>
                                 <strong class="text-primary" th:text="${slot.vehicleCount}">0</strong>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span class="text-secondary">Booking</span>
+                                <span class="text-secondary"> Lịch hẹn </span>
                                 <strong th:text="${slot.bookingCount}">0</strong>
                             </div>
                         </div>
@@ -102,25 +100,25 @@
                 <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
                     <div>
                         <h4 class="fw-bold mb-1">Platform Revenue</h4>
-                        <p class="text-secondary mb-0">Revenue is calculated from completed orders and finished service bookings.</p>
+                        <p class="text-secondary mb-0">Doanh thu được tính từ đơn hàng hoàn tất và lịch hẹn dịch vụ đã xong.</p>
                     </div>
                     <div class="row g-3 flex-grow-1">
                         <div class="col-md-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="small text-secondary">Product orders</div>
-                                <div class="fs-4 fw-bold text-primary gs-mono" th:text="${#numbers.formatDecimal(orderRevenue, 0, 'COMMA', 2, 'POINT')}">0</div>
+                                <div class="small text-secondary">Đơn hàng sản phẩm</div>
+                                <div class="fs-4 fw-bold text-primary gs-mono" th:text="${#numbers.formatDecimal(orderRevenue, 0, 'COMMA', 2, 'POINT')} + ' VND'">0 VND</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="small text-secondary">Completed services</div>
-                                <div class="fs-4 fw-bold text-primary gs-mono" th:text="${#numbers.formatDecimal(bookingRevenue, 0, 'COMMA', 2, 'POINT')}">0</div>
+                                <div class="small text-secondary">Dịch vụ hoàn tất</div>
+                                <div class="fs-4 fw-bold text-primary gs-mono" th:text="${#numbers.formatDecimal(bookingRevenue, 0, 'COMMA', 2, 'POINT')} + ' VND'">0 VND</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="border rounded p-3 h-100">
-                                <div class="small text-secondary">Total</div>
-                                <div class="fs-4 fw-bold text-success gs-mono" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 2, 'POINT')}">0</div>
+                                <div class="small text-secondary"> Tổng cộng </div>
+                                <div class="fs-4 fw-bold text-success gs-mono" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 2, 'POINT')} + ' VND'">0 VND</div>
                             </div>
                         </div>
                     </div>
@@ -130,21 +128,21 @@
             <div class="surface-card admin-chart-card p-4 mb-4">
                 <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 mb-3">
                     <div>
-                        <h4 class="fw-bold mb-1">Orders by Month</h4>
-                        <p class="text-secondary mb-0">Chart for the last 6 months.</p>
+                        <h4 class="fw-bold mb-1">Đơn hàng theo tháng</h4>
+                        <p class="text-secondary mb-0">Biểu đồ trong 6 tháng gần nhất.</p>
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <div class="chart-stat">
-                            <div class="small text-secondary">Total Orders</div>
+                            <div class="small text-secondary">Tổng đơn hàng</div>
                             <div class="fs-5 fw-bold gs-mono" th:text="${totalOrders}">0</div>
                         </div>
                         <div class="chart-stat">
-                            <div class="small text-secondary">Pending</div>
+                            <div class="small text-secondary">Chờ xử lý</div>
                             <div class="fs-5 fw-bold text-primary gs-mono" th:text="${pendingOrders}">0</div>
                         </div>
                         <div class="chart-stat">
-                            <div class="small text-secondary">Completed Order Revenue</div>
-                            <div class="fs-5 fw-bold text-success gs-mono" th:text="${#numbers.formatDecimal(orderRevenue, 0, 'COMMA', 2, 'POINT')}">0</div>
+                            <div class="small text-secondary">Doanh thu đơn hàng hoàn tất</div>
+                            <div class="fs-5 fw-bold text-success gs-mono" th:text="${#numbers.formatDecimal(orderRevenue, 0, 'COMMA', 2, 'POINT')} + ' VND'">0 VND</div>
                         </div>
                     </div>
                 </div>
@@ -157,29 +155,29 @@
                 <div class="col-md-6 col-xl-3">
                     <a class="surface-card admin-link-card p-4 d-block text-decoration-none h-100" th:href="@{/admin/products}">
                         <i class="bi bi-box-seam fs-3 text-primary"></i>
-                        <h5 class="fw-bold text-dark mt-3 mb-1">Products</h5>
-                        <p class="text-secondary mb-0">Manage parts, categories, and catalog car models.</p>
+                        <h5 class="fw-bold text-dark mt-3 mb-1"> Sản phẩm </h5>
+                        <p class="text-secondary mb-0">Quản lý phụ tùng, danh mục và dòng xe trong danh mục.</p>
                     </a>
                 </div>
                 <div class="col-md-6 col-xl-3">
                     <a class="surface-card admin-link-card p-4 d-block text-decoration-none h-100" th:href="@{/admin/services}">
                         <i class="bi bi-tools fs-3 text-primary"></i>
-                        <h5 class="fw-bold text-dark mt-3 mb-1">Service booking</h5>
-                        <p class="text-secondary mb-0">Manage service names, duration, and price ranges.</p>
+                        <h5 class="fw-bold text-dark mt-3 mb-1">Đặt lịch dịch vụ</h5>
+                        <p class="text-secondary mb-0">Quản lý tên dịch vụ, thời lượng và khoảng giá.</p>
                     </a>
                 </div>
                 <div class="col-md-6 col-xl-3">
                     <a class="surface-card admin-link-card p-4 d-block text-decoration-none h-100" th:href="@{/admin/bookings}">
                         <i class="bi bi-calendar-check fs-3 text-primary"></i>
-                        <h5 class="fw-bold text-dark mt-3 mb-1">Bookings</h5>
-                        <p class="text-secondary mb-0">Approve, cancel, and monitor customer appointments.</p>
+                        <h5 class="fw-bold text-dark mt-3 mb-1"> Lịch hẹn </h5>
+                        <p class="text-secondary mb-0">Duyệt, hủy và theo dõi lịch hẹn của khách hàng.</p>
                     </a>
                 </div>
                 <div class="col-md-6 col-xl-3">
                     <a class="surface-card admin-link-card p-4 d-block text-decoration-none h-100" th:href="@{/admin/orders}">
                         <i class="bi bi-cart-check fs-3 text-primary"></i>
-                        <h5 class="fw-bold text-dark mt-3 mb-1">Orders</h5>
-                        <p class="text-secondary mb-0">Track parts orders and fulfillment status.</p>
+                        <h5 class="fw-bold text-dark mt-3 mb-1"> Đơn hàng </h5>
+                        <p class="text-secondary mb-0">Theo dõi đơn phụ tùng và trạng thái xử lý.</p>
                     </a>
                 </div>
             </div>

@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
 <footer th:fragment="footer" class="footer-dark gs-grid-texture mt-auto py-5 text-white"
         th:with="role=${currentUser != null ? currentUser.role : 'GUEST'}">
@@ -19,21 +19,21 @@
                 </div>
             </div>
             <div class="col-md-4 col-lg-2">
-                <h6 class="text-uppercase fw-semibold mb-3">Services</h6>
+                <h6 class="text-uppercase fw-semibold mb-3"> Dịch vụ </h6>
                 <ul class="list-unstyled small mb-0">
-                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/shop}">Browse Parts</a></li>
+                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/shop}">Xem phụ tùng</a></li>
                     <li class="mb-2" th:if="${role == 'CUSTOMER'}">
-                        <a class="text-secondary text-decoration-none" th:href="@{/booking}">Book a Service</a>
+                        <a class="text-secondary text-decoration-none" th:href="@{/booking}">Đặt lịch dịch vụ</a>
                     </li>
                     <li class="mb-2"><a class="text-secondary text-decoration-none" href="#">Maintenance Consulting</a></li>
                 </ul>
             </div>
             <div class="col-md-4 col-lg-2" th:if="${role == 'CUSTOMER'}">
-                <h6 class="text-uppercase fw-semibold mb-3">Account</h6>
+                <h6 class="text-uppercase fw-semibold mb-3">Tài khoản</h6>
                 <ul class="list-unstyled small mb-0">
-                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/account}">My Profile</a></li>
-                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/orders}">Order History</a></li>
-                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/cart}">Cart</a></li>
+                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/account}">Hồ sơ của tôi</a></li>
+                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/orders}"> Lịch sử đơn hàng </a></li>
+                    <li class="mb-2"><a class="text-secondary text-decoration-none" th:href="@{/cart}"> Giỏ hàng </a></li>
                 </ul>
             </div>
             <div class="col-md-4 col-lg-4">
@@ -45,7 +45,7 @@
         </div>
         <hr>
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center small text-secondary">
-            <span>&copy; 2026 GearShift Pro Automotive. All rights reserved.</span>
+            <span>&copy; 2026 GearShift Pro Automotive. Bảo lưu mọi quyền.</span>
             <span>HSF302 Course Project - Java Spring Boot</span>
         </div>
     </div>

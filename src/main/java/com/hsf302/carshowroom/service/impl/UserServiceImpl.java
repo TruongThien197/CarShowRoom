@@ -31,12 +31,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserByid(Integer id) {
-        return userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found."));
+        return userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
     }
 
     @Override
     public User createUser(String email, String password, String fullName, String phone, String address, String role) {
-        if ( userRepository.findByEmail(email) != null ) throw new RuntimeException("This email is already registered.");
+        if ( userRepository.findByEmail(email) != null ) throw new RuntimeException("Email này đã được đăng ký.");
         User user = User.builder()
                 .email(email)
                 .passwordHash(passwordEncoder.encode(password))

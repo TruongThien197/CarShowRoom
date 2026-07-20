@@ -1,6 +1,6 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('My Vehicles | GearShift Pro')}"></head>
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('My Xe | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('account')}"></div>
 
@@ -11,18 +11,17 @@
         <section class="col-lg-9">
             <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
-                    <h1 class="gs-h1 section-title mb-1">My Vehicles</h1>
-                    <p class="text-secondary mb-0">Manage the vehicles used for your service bookings.</p>
+                    <h1 class="gs-h1 section-title mb-1"> Xe của tôi </h1>
+                    <p class="text-secondary mb-0">Quản lý xe dùng cho các lịch hẹn dịch vụ.</p>
                 </div>
                 <a class="btn btn-primary" th:href="@{/vehicles/add}">
-                    <i class="bi bi-plus-lg me-2"></i>Add Vehicle
-                </a>
+                    <i class="bi bi-plus-lg me-2"></i> Thêm xe </a>
             </div>
 
             <div class="gs-empty-state surface-card" th:if="${#lists.isEmpty(vehicles)}">
                 <i class="bi bi-car-front gs-empty-state-icon"></i>
-                <div class="gs-empty-state-title">You have not added any vehicles yet</div>
-                <p class="gs-empty-state-text mb-0">Add your vehicles for faster service booking.</p>
+                <div class="gs-empty-state-title">Bạn chưa thêm xe nào</div>
+                <p class="gs-empty-state-text mb-0">Thêm xe để đặt lịch dịch vụ nhanh hơn.</p>
             </div>
 
             <div class="row g-3" th:if="${!#lists.isEmpty(vehicles)}">
@@ -36,9 +35,8 @@
                             <span class="gs-mono badge text-bg-light align-self-start" th:text="${vehicle.licensePlate}">Plate</span>
                         </div>
                         <form class="mt-4" th:action="@{/vehicles/{id}/delete(id=${vehicle.id})}" method="post">
-                            <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Delete this vehicle?')">
-                                <i class="bi bi-trash me-1"></i>Delete
-                            </button>
+                            <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Xóa this vehicle?')">
+                                <i class="bi bi-trash me-1"></i> Xóa </button>
                         </form>
                     </div>
                 </div>

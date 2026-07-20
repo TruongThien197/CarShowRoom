@@ -36,13 +36,13 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     @Transactional
     public Booking createBooking(User user, BookingForm form) {
         if (form.getBookingDate().isBefore(LocalDate.now())) {
-            throw new RuntimeException("You cannot book an appointment in the past.");
+            throw new RuntimeException("Bạn không thể đặt lịch trong quá khứ.");
         }
 
         com.hsf302.carshowroom.entity.Service selectedService = serviceRepository.findById(form.getServiceId())
-                .orElseThrow(() -> new RuntimeException("Service not found."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ."));
         if (selectedService.getStatus() != ServiceStatus.ACTIVE) {
-            throw new RuntimeException("This service is currently unavailable.");
+            throw new RuntimeException("Dịch vụ này hiện không khả dụng.");
         }
 
         LocalTime startTime = parseStartTime(form.getTimeSlot());
@@ -92,7 +92,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     public Booking getBookingDetail(User user, Integer bookingId) {
         Booking booking = getBookingDetail(bookingId);
         if (!booking.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("This booking does not belong to your account.");
+            throw new RuntimeException("Lịch hẹn này không thuộc tài khoản của bạn.");
         }
         return booking;
     }
@@ -100,7 +100,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     @Override
     public Booking getBookingDetail(Integer bookingId) {
         return bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch hẹn."));
     }
 
     @Override
@@ -108,7 +108,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     public void cancelBooking(User user, Integer bookingId) {
         Booking booking = getBookingDetail(user, bookingId);
         if (booking.getBookingStatus() == BookingStatus.COMPLETED) {
-            throw new RuntimeException("You cannot cancel a booking that has already been completed.");
+            throw new RuntimeException("Bạn không thể hủy lịch hẹn đã hoàn tất.");
         }
         booking.setBookingStatus(BookingStatus.CANCELED);
         bookingRepository.save(booking);
@@ -131,16 +131,16 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
             return null;
         }
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new RuntimeException("Vehicle not found."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy xe."));
         if (!vehicle.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("This vehicle does not belong to your account.");
+            throw new RuntimeException("Xe này không thuộc tài khoản của bạn.");
         }
         return vehicle;
     }
 
     private LocalTime parseStartTime(String timeSlot) {
         if (timeSlot == null || timeSlot.isBlank()) {
-            throw new RuntimeException("Please select an appointment time.");
+            throw new RuntimeException("Vui lòng chọn thời gian hẹn.");
         }
         String rawStart = timeSlot.split("-")[0].trim();
         return LocalTime.parse(rawStart);

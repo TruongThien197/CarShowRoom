@@ -1,16 +1,16 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Shopping Cart | GearShift Pro')}"></head>
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Giỏ hàng | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('shop')}"></div>
 
 <main class="container py-5">
-    <h1 class="section-title mb-4">Cart</h1>
+    <h1 class="section-title mb-4"> Giỏ hàng </h1>
 
     <div class="gs-empty-state surface-card" th:if="${#lists.isEmpty(cartItems)}">
         <i class="bi bi-cart-x gs-empty-state-icon"></i>
-        <div class="gs-empty-state-title">Your cart is empty</div>
-        <p class="gs-empty-state-text mb-0">Browse the store to find the right parts. <a th:href="@{/shop}">Continue shopping</a>.</p>
+        <div class="gs-empty-state-title"> Giỏ hàng đang trống </div>
+        <p class="gs-empty-state-text mb-0">Duyệt cửa hàng để tìm phụ tùng phù hợp. <a th:href="@{/shop}"> Tiếp tục mua sắm </a>.</p>
     </div>
 
     <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
@@ -25,21 +25,21 @@
                            th:if="${item.product.imageUrl == null or #strings.isEmpty(item.product.imageUrl)}"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <h5 class="fw-bold" th:text="${item.product.productName}">Product</h5>
-                        <p class="text-secondary mb-2" th:text="${item.product.category.categoryName}">Category</p>
+                        <h5 class="fw-bold" th:text="${item.product.productName}"> Sản phẩm </h5>
+                        <p class="text-secondary mb-2" th:text="${item.product.category.categoryName}"> Danh mục </p>
                         <span class="badge text-bg-info mb-2"
                               th:text="${item.fulfillmentType.name() == 'AT_WORKSHOP' ? 'Install at Workshop' : 'Shipping'}">Fulfillment</span>
                         <form class="d-flex align-items-center gap-2" th:action="@{/cart/update}" method="post">
                             <input type="hidden" name="cartItemId" th:value="${item.id}">
                             <input class="form-control form-control-sm" style="width: 88px" type="number"
                                    name="quantity" th:value="${item.quantity}" min="0" th:max="${item.product.stockQuantity}">
-                            <button class="btn btn-outline-secondary btn-sm" type="submit">Update</button>
+                            <button class="btn btn-outline-secondary btn-sm" type="submit"> Cập nhật </button>
                         </form>
                     </div>
 
                     <div class="text-end text-sm-end w-100 w-sm-auto">
                         <div class="price gs-mono mb-3"
-                             th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')}">$0</div>
+                             th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </div>
                         <form th:action="@{/cart/remove}" method="post" data-confirm="Remove this product from the cart?">
                             <input type="hidden" name="cartItemId" th:value="${item.id}">
                             <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Remove</button>
@@ -50,18 +50,18 @@
         </div>
         <div class="col-lg-4">
             <div class="surface-card p-4 position-sticky" style="top: 92px">
-                <h4 class="fw-bold mb-3">Order Summary</h4>
+                <h4 class="fw-bold mb-3"> Tóm tắt đơn hàng </h4>
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Subtotal</span>
-                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
+                    <span> Tạm tính </span>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </strong>
                 </div>
-                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><strong>Calculated later</strong></div>
+                <div class="d-flex justify-content-between mb-2"><span> Giao hàng </span><strong>Calculated later</strong></div>
                 <hr>
                 <div class="d-flex justify-content-between fs-5 mb-4">
-                    <span>Total</span>
-                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')}">$0</strong>
+                    <span> Tổng cộng </span>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </strong>
                 </div>
-                <a class="btn btn-amber w-100 btn-lg" th:href="@{/orders/checkout}">Proceed to Checkout</a>
+                <a class="btn btn-amber w-100 btn-lg" th:href="@{/orders/checkout}"> Tiến hành thanh toán </a>
             </div>
         </div>
     </div>

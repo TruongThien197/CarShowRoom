@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Register | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('login')}"></div>
@@ -9,37 +9,37 @@
         <div class="row justify-content-end">
             <div class="col-lg-6">
                 <form class="surface-card gs-stripe-top p-4 p-md-5 needs-validation" th:action="@{/auth/register}" method="post" novalidate>
-                    <h1 class="gs-h1 section-title mb-2">Create your account</h1>
-                    <p class="text-secondary mb-4">Save vehicles, track orders, and book repairs faster.</p>
+                    <h1 class="gs-h1 section-title mb-2">Tạo tài khoản</h1>
+                    <p class="text-secondary mb-4">Lưu xe, theo dõi đơn hàng và đặt lịch sửa chữa nhanh hơn.</p>
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Full name</label>
+                            <label class="form-label"> Họ và tên </label>
                             <input class="form-control" type="text" name="txtfullName" required>
-                            <div class="invalid-feedback">Full name is required.</div>
+                            <div class="invalid-feedback">Họ và tên là bắt buộc.</div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Email</label>
+                            <label class="form-label"> Email </label>
                             <input class="form-control" type="email" name="txtEmail" required>
-                            <div class="invalid-feedback">Please enter a valid email address.</div>
+                            <div class="invalid-feedback">Vui lòng nhập địa chỉ email hợp lệ.</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Password</label>
+                            <label class="form-label"> Mật khẩu </label>
                             <input class="form-control" type="password" name="txtPassword" required>
-                            <div class="invalid-feedback">Password is required.</div>
+                            <div class="invalid-feedback">Mật khẩu là bắt buộc.</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Phone</label>
+                            <label class="form-label"> Số điện thoại </label>
                             <input class="form-control" type="text" name="txtPhone">
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Address</label>
+                            <label class="form-label"> Địa chỉ </label>
                             <input class="form-control" type="text" name="txtAddress">
                         </div>
                         <div class="col-12">
-                            <button class="btn btn-primary btn-lg w-100" type="submit">Register</button>
+                            <button class="btn btn-primary btn-lg w-100" type="submit"> Đăng ký </button>
                         </div>
                     </div>
-                    <p class="text-center mt-4 mb-0">Already have an account? <a th:href="@{/auth/login}">Login</a></p>
+                    <p class="text-center mt-4 mb-0">Đã có tài khoản? <a th:href="@{/auth/login}"> Đăng nhập </a></p>
                 </form>
             </div>
         </div>

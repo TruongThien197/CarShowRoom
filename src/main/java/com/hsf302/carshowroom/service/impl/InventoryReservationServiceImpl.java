@@ -26,7 +26,7 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
     @Override
     public void checkStockAvailability(Product product, int quantity) {
         if (product.getAvailableStock() < quantity) {
-            throw new RuntimeException("Not enough available stock for " + product.getProductName() + ".");
+            throw new RuntimeException("Không đủ tồn kho cho " + product.getProductName() + ".");
         }
     }
 
@@ -41,7 +41,7 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
     private void reserveStock(Order order) {
         for (OrderItem item : order.getOrderItems()) {
             Product product = productRepository.findByIdForUpdate(item.getProduct().getId())
-                    .orElseThrow(() -> new RuntimeException("Product not found."));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
             checkStockAvailability(product, item.getQuantity());
             product.setReservedStock(product.getReservedStock() + item.getQuantity());
             productRepository.save(product);
@@ -71,7 +71,7 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
     public void releaseReservation(Order order) {
         for (InventoryReservation reservation : activeReservations(order)) {
             Product product = productRepository.findByIdForUpdate(reservation.getProduct().getId())
-                    .orElseThrow(() -> new RuntimeException("Product not found."));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
             product.setReservedStock(Math.max(0, product.getReservedStock() - reservation.getQuantity()));
             productRepository.save(product);
             reservation.setReservationStatus(ReservationStatus.RELEASED);
@@ -84,7 +84,7 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
     public void consumeStock(Order order) {
         for (InventoryReservation reservation : activeReservations(order)) {
             Product product = productRepository.findByIdForUpdate(reservation.getProduct().getId())
-                    .orElseThrow(() -> new RuntimeException("Product not found."));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
             product.setPhysicalStock(Math.max(0, product.getPhysicalStock() - reservation.getQuantity()));
             product.setReservedStock(Math.max(0, product.getReservedStock() - reservation.getQuantity()));
             productRepository.save(product);

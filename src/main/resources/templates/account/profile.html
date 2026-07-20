@@ -1,6 +1,6 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('My Account | GearShift Pro')}"></head>
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Tài khoản của tôi | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('account')}"></div>
 
@@ -11,8 +11,8 @@
         <section class="col-lg-9">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div>
-                    <h1 class="gs-h1 section-title">My Account</h1>
-                    <p class="text-secondary mb-0">Dashboard for profile, vehicles, bookings, and orders.</p>
+                    <h1 class="gs-h1 section-title">Tài khoản của tôi</h1>
+                    <p class="text-secondary mb-0">Trang tổng quan về hồ sơ, xe, lịch hẹn và đơn hàng.</p>
                 </div>
                 <a class="btn btn-primary align-self-start" th:href="@{/booking}">
                     <i class="bi bi-calendar-plus me-2"></i>New Booking
@@ -24,13 +24,13 @@
                         <div class="d-flex align-items-center gap-3 mb-4">
                             <div class="icon-box fs-4"><i class="bi bi-person"></i></div>
                             <div>
-                                <h5 class="fw-bold mb-0" th:text="${user.fullName}">Customer</h5>
-                                <span class="text-secondary" th:text="${user.role}">Role</span>
+                                <h5 class="fw-bold mb-0" th:text="${user.fullName}"> Khách hàng </h5>
+                                <span class="text-secondary" th:text="${user.role}"> Vai trò </span>
                             </div>
                         </div>
                         <p><i class="bi bi-envelope me-2 text-primary"></i><span th:text="${user.email}">email@example.com</span></p>
-                        <p><i class="bi bi-telephone me-2 text-primary"></i><span class="gs-mono" th:text="${user.phone ?: 'No phone'}">Phone</span></p>
-                        <p class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i><span th:text="${user.address ?: 'No address'}">Address</span></p>
+                        <p><i class="bi bi-telephone me-2 text-primary"></i><span class="gs-mono" th:text="${user.phone ?: 'Chưa có số điện thoại'}"> Số điện thoại </span></p>
+                        <p class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i><span th:text="${user.address ?: 'No address'}"> Địa chỉ </span></p>
                     </div>
                 </div>
                 <div class="col-lg-8">
@@ -38,7 +38,7 @@
                         <div class="col-md-4">
                             <div class="metric-card d-flex justify-content-between gap-3">
                                 <div>
-                                    <div class="text-secondary small">Orders</div>
+                                    <div class="text-secondary small"> Đơn hàng </div>
                                     <div class="metric-value" th:text="${ordersCount}">0</div>
                                 </div>
                                 <div class="metric-icon"><i class="bi bi-receipt"></i></div>
@@ -47,7 +47,7 @@
                         <div class="col-md-4">
                             <div class="metric-card d-flex justify-content-between gap-3">
                                 <div>
-                                    <div class="text-secondary small">Bookings</div>
+                                    <div class="text-secondary small"> Lịch hẹn </div>
                                     <div class="metric-value" th:text="${bookingsCount}">0</div>
                                 </div>
                                 <div class="metric-icon"><i class="bi bi-calendar-check"></i></div>
@@ -56,7 +56,7 @@
                         <div class="col-md-4">
                             <div class="metric-card d-flex justify-content-between gap-3">
                                 <div>
-                                    <div class="text-secondary small">Vehicles</div>
+                                    <div class="text-secondary small">Xe</div>
                                     <div class="metric-value" th:text="${vehiclesCount}">0</div>
                                 </div>
                                 <div class="metric-icon"><i class="bi bi-car-front"></i></div>
@@ -64,10 +64,10 @@
                         </div>
                         <div class="col-12">
                             <div class="surface-card p-4 d-flex flex-wrap gap-2">
-                                <a class="btn btn-outline-primary" th:href="@{/orders}"><i class="bi bi-receipt me-2"></i>Order History</a>
-                                <a class="btn btn-outline-primary" th:href="@{/booking/my-bookings}"><i class="bi bi-calendar-check me-2"></i>Booking History</a>
-                                <a class="btn btn-outline-primary" th:href="@{/vehicles}"><i class="bi bi-car-front me-2"></i>My Vehicles</a>
-                                <a class="btn btn-outline-primary" th:href="@{/cart}"><i class="bi bi-cart3 me-2"></i>Shopping Cart</a>
+                                <a class="btn btn-outline-primary" th:href="@{/orders}"><i class="bi bi-receipt me-2"></i> Lịch sử đơn hàng </a>
+                                <a class="btn btn-outline-primary" th:href="@{/booking/my-bookings}"><i class="bi bi-calendar-check me-2"></i>Lịch sử lịch hẹn</a>
+                                <a class="btn btn-outline-primary" th:href="@{/vehicles}"><i class="bi bi-car-front me-2"></i> Xe của tôi </a>
+                                <a class="btn btn-outline-primary" th:href="@{/cart}"><i class="bi bi-cart3 me-2"></i>Giỏ hàng</a>
                             </div>
                         </div>
                     </div>

@@ -61,7 +61,7 @@ public class OrderServiceImpl implements OrderService {
     public PaymentTransaction checkout(User user, CheckoutForm form) {
         List<CartItem> cartItems = cartItemRepository.findByUser(user);
         if (cartItems.isEmpty()) {
-            throw new RuntimeException("Your cart is empty.");
+            throw new RuntimeException("Giỏ hàng đang trống.");
         }
 
         Map<FulfillmentType, List<CartItem>> groupedItems = cartItems.stream()
@@ -161,7 +161,7 @@ public class OrderServiceImpl implements OrderService {
 
         for (CartItem cartItem : cartItems) {
             Product product = productRepository.findById(cartItem.getProduct().getId())
-                    .orElseThrow(() -> new RuntimeException("Product not found."));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
             inventoryReservationService.checkStockAvailability(product, cartItem.getQuantity());
             OrderItem item = new OrderItem();
             item.setOrder(savedOrder);
@@ -179,14 +179,14 @@ public class OrderServiceImpl implements OrderService {
 
     private Booking createWorkshopBooking(User user, CheckoutForm form, Order relatedOrder) {
         com.hsf302.carshowroom.entity.Service service = serviceRepository.findById(form.getServiceId())
-                .orElseThrow(() -> new RuntimeException("Service not found."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ."));
         if (service.getStatus() != ServiceStatus.ACTIVE) {
-            throw new RuntimeException("This service is currently unavailable.");
+            throw new RuntimeException("Dịch vụ này hiện không khả dụng.");
         }
         Vehicle vehicle = vehicleRepository.findById(form.getVehicleId())
-                .orElseThrow(() -> new RuntimeException("Vehicle not found."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy xe."));
         if (!vehicle.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("This vehicle does not belong to your account.");
+            throw new RuntimeException("Xe này không thuộc tài khoản của bạn.");
         }
 
         Booking booking = new Booking();

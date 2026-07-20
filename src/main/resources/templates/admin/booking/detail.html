@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/header :: head('Booking Detail | GearShift Admin')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
@@ -14,39 +14,39 @@
                     <a class="btn btn-link p-0 text-secondary text-decoration-none mb-2" th:href="@{/admin/bookings}">
                         <i class="bi bi-arrow-left"></i> Back to bookings
                     </a>
-                    <h1 class="admin-page-title mb-1 gs-mono" th:text="'Booking BK-' + ${booking.id}">Booking</h1>
-                    <p class="text-secondary mb-0">Customer, vehicle, and service details.</p>
+                    <h1 class="admin-page-title mb-1 gs-mono" th:text="'Booking BK-' + ${booking.id}"> Lịch hẹn </h1>
+                    <p class="text-secondary mb-0">Thông tin khách hàng, xe và dịch vụ.</p>
                 </div>
             </div>
 
             <div class="row g-4">
                 <div class="col-lg-5">
                     <div class="surface-card gs-stripe-top p-4 h-100">
-                        <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>Booking Information</h5>
-                        <p><span class="text-secondary">Customer:</span> <strong th:text="${booking.user.fullName}">Customer</strong></p>
+                        <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>Thông tin lịch hẹn</h5>
+                        <p><span class="text-secondary">Khách hàng:</span> <strong th:text="${booking.user.fullName}"> Khách hàng </strong></p>
                         <p><span class="text-secondary">Email:</span> <span th:text="${booking.user.email}">email</span></p>
-                        <p><span class="text-secondary">Vehicle:</span> <span th:text="${booking.vehicle != null ? booking.vehicle.brand + ' ' + booking.vehicle.modelName + ' ' + booking.vehicle.year + ' - ' + booking.vehicle.licensePlate : 'No vehicle selected'}">Vehicle</span></p>
-                        <p><span class="text-secondary">Date &amp; Time:</span> <strong class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Date</strong></p>
+                        <p><span class="text-secondary">Xe:</span> <span th:text="${booking.vehicle != null ? booking.vehicle.brand + ' ' + booking.vehicle.modelName + ' ' + booking.vehicle.year + ' - ' + booking.vehicle.licensePlate : 'Chưa chọn xe'}"> Xe </span></p>
+                        <p><span class="text-secondary">Ngày và giờ:</span> <strong class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}"> Ngày </strong></p>
                         <p>
-                            <span class="text-secondary">Status:</span>
+                            <span class="text-secondary">Trạng thái:</span>
                             <span class="gs-badge"
                                   th:classappend="${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${booking.bookingStatus.name() == 'CANCELED' or booking.bookingStatus.name() == 'EXPIRED_PAYMENT' or booking.bookingStatus.name() == 'EXPIRED_NO_SHOW'} ? 'gs-badge--danger' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS' or booking.bookingStatus.name() == 'PENDING_APPROVAL'} ? 'gs-badge--warning' : 'gs-badge--neutral')))"
-                                  th:text="${booking.bookingStatus}">PENDING</span>
+                                  th:text="${booking.bookingStatus}">Chờ xử lý</span>
                         </p>
-                        <p class="mb-0"><span class="text-secondary">Notes:</span> <span th:text="${booking.notes ?: 'None'}">Notes</span></p>
+                        <p class="mb-0"><span class="text-secondary">Notes:</span> <span th:text="${booking.notes ?: 'None'}"> Ghi chú </span></p>
                     </div>
                 </div>
                 <div class="col-lg-7">
                     <div class="admin-table-card p-0 overflow-hidden mb-4">
                         <div class="p-4 border-bottom">
-                            <h5 class="fw-bold mb-0"><i class="bi bi-tools me-2 text-primary"></i>Services</h5>
+                            <h5 class="fw-bold mb-0"><i class="bi bi-tools me-2 text-primary"></i> Dịch vụ </h5>
                         </div>
                         <div class="table-responsive">
                             <table class="table align-middle mb-0">
-                                <thead class="table-light"><tr><th>Service Name</th><th class="text-end">Price</th></tr></thead>
+                                <thead class="table-light"><tr><th> Tên dịch vụ </th><th class="text-end"> Giá </th></tr></thead>
                                 <tbody>
                                 <tr th:each="detail : ${bookingServices}">
-                                    <td th:text="${detail.serviceNameSnapshot}">Service</td>
+                                    <td th:text="${detail.serviceNameSnapshot}"> Dịch vụ </td>
                                     <td class="text-end fw-bold gs-mono" th:text="${#numbers.formatDecimal(detail.minPriceSnapshot, 0, 'COMMA', 0, 'POINT')} + ' VND'">0</td>
                                 </tr>
                                 </tbody>
@@ -55,19 +55,18 @@
                     </div>
 
                     <div class="surface-card gs-stripe-top p-4">
-                        <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2 text-primary"></i>Update Status</h5>
+                        <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2 text-primary"></i>Cập nhật trạng thái</h5>
                         <form class="d-flex gap-2 justify-content-end" th:action="@{/admin/bookings/status}" method="post">
                             <input type="hidden" name="bookingId" th:value="${booking.id}">
                             <select class="form-select" name="status" style="max-width: 180px">
-                                <option value="PENDING_PAYMENT" th:selected="${booking.bookingStatus.name() == 'PENDING_PAYMENT'}">PENDING_PAYMENT</option>
-                                <option value="CONFIRMED" th:selected="${booking.bookingStatus.name() == 'CONFIRMED'}">CONFIRMED</option>
+                                <option value="PENDING_PAYMENT" th:selected="${booking.bookingStatus.name() == 'PENDING_PAYMENT'}">Chờ thanh toán</option>
+                                <option value="CONFIRMED" th:selected="${booking.bookingStatus.name() == 'CONFIRMED'}">Đã xác nhận</option>
                                 <option value="IN_PROGRESS" th:selected="${booking.bookingStatus.name() == 'IN_PROGRESS'}">IN_PROGRESS</option>
-                                <option value="COMPLETED" th:selected="${booking.bookingStatus.name() == 'COMPLETED'}">COMPLETED</option>
-                                <option value="CANCELED" th:selected="${booking.bookingStatus.name() == 'CANCELED'}">CANCELED</option>
+                                <option value="COMPLETED" th:selected="${booking.bookingStatus.name() == 'COMPLETED'}">Hoàn tất</option>
+                                <option value="CANCELED" th:selected="${booking.bookingStatus.name() == 'CANCELED'}">Đã hủy</option>
                             </select>
                             <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-check2-circle me-2"></i>Update
-                            </button>
+                                <i class="bi bi-check2-circle me-2"></i> Cập nhật </button>
                         </form>
                     </div>
                 </div>

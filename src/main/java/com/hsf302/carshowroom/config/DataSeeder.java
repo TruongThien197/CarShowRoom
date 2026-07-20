@@ -158,6 +158,7 @@ public class DataSeeder implements CommandLineRunner {
             OrderItem detail = new OrderItem();
             detail.setOrder(savedOrder);
             detail.setProduct(product);
+            detail.setProductNameSnapshot(product.getName());
             detail.setQuantity(quantity);
             detail.setUnitPrice(product.getPrice());
             detail.setLineTotal(total);

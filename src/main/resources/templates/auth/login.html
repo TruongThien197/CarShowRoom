@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Login | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('login')}"></div>
@@ -9,21 +9,21 @@
         <div class="row justify-content-end">
             <div class="col-md-7 col-lg-5">
                 <form class="surface-card gs-stripe-top p-4 p-md-5 needs-validation" th:action="@{/auth/login}" method="post" novalidate>
-                    <h1 class="gs-h1 section-title mb-2">Welcome back</h1>
-                    <p class="text-secondary mb-4">Sign in to manage bookings, orders, and your garage.</p>
-                    <div class="alert alert-warning" th:if="${param.authRequired != null}">Please sign in to continue.</div>
+                    <h1 class="gs-h1 section-title mb-2">Chào mừng bạn trở lại</h1>
+                    <p class="text-secondary mb-4">Đăng nhập để quản lý lịch hẹn, đơn hàng và xe của bạn.</p>
+                    <div class="alert alert-warning" th:if="${param.authRequired != null}">Vui lòng đăng nhập để tiếp tục.</div>
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
+                        <label class="form-label"> Email </label>
                         <input class="form-control form-control-lg" type="email" name="txtEmail" required>
-                        <div class="invalid-feedback">Please enter a valid email address.</div>
+                        <div class="invalid-feedback">Vui lòng nhập địa chỉ email hợp lệ.</div>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label">Password</label>
+                        <label class="form-label"> Mật khẩu </label>
                         <input class="form-control form-control-lg" type="password" name="txtPassword" required>
-                        <div class="invalid-feedback">Password is required.</div>
+                        <div class="invalid-feedback">Mật khẩu là bắt buộc.</div>
                     </div>
-                    <button class="btn btn-primary btn-lg w-100" type="submit">Login</button>
-                    <p class="text-center mt-4 mb-0">New customer? <a th:href="@{/auth/register}">Create account</a></p>
+                    <button class="btn btn-primary btn-lg w-100" type="submit"> Đăng nhập </button>
+                    <p class="text-center mt-4 mb-0">Khách hàng mới? <a th:href="@{/auth/register}">Tạo tài khoản</a></p>
                 </form>
             </div>
         </div>

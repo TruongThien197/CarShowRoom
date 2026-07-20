@@ -1,6 +1,6 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Manage Bookable Services | GearShift Admin')}"></head>
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Quản lý dịch vụ có thể đặt lịch | GearShift Admin')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
@@ -11,11 +11,11 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
                 <div>
-                    <h1 class="admin-page-title mb-1"><i class="bi bi-tools me-2 text-primary"></i>Manage Bookable Services</h1>
-                    <p class="text-secondary small mb-0">Services customers select when booking a repair, with duration and price range.</p>
+                    <h1 class="admin-page-title mb-1"><i class="bi bi-tools me-2 text-primary"></i>Quản lý dịch vụ có thể đặt lịch</h1>
+                    <p class="text-secondary small mb-0">Các dịch vụ khách hàng chọn khi đặt sửa chữa, kèm thời lượng và khoảng giá.</p>
                 </div>
                 <a class="btn btn-primary shadow-sm d-flex align-items-center gap-2" th:href="@{/admin/services/create}">
-                    <i class="bi bi-plus-lg"></i><span>Add Service</span>
+                    <i class="bi bi-plus-lg"></i><span>Thêm dịch vụ</span>
                 </a>
             </div>
 
@@ -26,26 +26,26 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                         <tr>
-                            <th class="ps-4">ID</th>
-                            <th>Service</th>
-                            <th>Description</th>
-                            <th>Duration</th>
-                            <th class="text-end">Price Range</th>
-                            <th class="text-end pe-4">Actions</th>
+                            <th class="ps-4">STT</th>
+                            <th> Dịch vụ </th>
+                            <th> Mô tả </th>
+                            <th> Thời lượng </th>
+                            <th class="text-end">Khoảng giá</th>
+                            <th class="text-end pe-4"> Thao tác </th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(services)}">
                             <td colspan="6" class="gs-empty-state">
                                 <div class="gs-empty-state-icon"><i class="bi bi-tools"></i></div>
-                                <div class="gs-empty-state-title">No services yet</div>
-                                <div class="gs-empty-state-text">No services exist in the system yet.</div>
+                                <div class="gs-empty-state-title">Chưa có dịch vụ</div>
+                                <div class="gs-empty-state-text">Chưa có dịch vụ nào trong hệ thống.</div>
                             </td>
                         </tr>
-                        <tr th:each="service : ${services}">
-                            <td class="ps-4 fw-bold gs-mono text-secondary" th:text="${service.id}">1</td>
-                            <td class="fw-semibold text-dark" th:text="${service.serviceName}">Service</td>
-                            <td class="text-secondary small" th:text="${service.description ?: 'No description'}">Description</td>
+                        <tr th:each="service, stat : ${services}">
+                            <td class="ps-4 fw-bold gs-mono text-secondary" th:text="${stat.count}">1</td>
+                            <td class="fw-semibold text-dark" th:text="${service.serviceName}"> Dịch vụ </td>
+                            <td class="text-secondary small" th:text="${service.description ?: 'Chưa có mô tả'}"> Mô tả </td>
                             <td class="gs-mono" th:text="${service.durationMinutes + ' min'}">60 min</td>
                             <td class="text-end fw-bold text-primary gs-mono"
                                 th:text="${#numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(service.maxPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 - 0 VND</td>
@@ -53,8 +53,8 @@
                                 <a class="btn btn-outline-primary btn-sm me-1" title="Edit" th:href="@{/admin/services/edit/{id}(id=${service.id})}">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <a class="btn btn-outline-danger btn-sm" title="Delete" th:href="@{/admin/services/delete/{id}(id=${service.id})}"
-                                   onclick="return confirm('Delete this service?')">
+                                <a class="btn btn-outline-danger btn-sm" title="Xóa" th:href="@{/admin/services/delete/{id}(id=${service.id})}"
+                                   onclick="return confirm('Xóa this service?')">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </td>
