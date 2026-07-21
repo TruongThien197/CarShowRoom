@@ -31,6 +31,7 @@
                             <th class="ps-4">STT</th>
                             <th> Khách hàng </th>
                             <th> Xe </th>
+                            <th>Ngày tạo lịch</th>
                             <th>Ngày và giờ</th>
                             <th> Dịch vụ </th>
                             <th> Trạng thái </th>
@@ -39,7 +40,7 @@
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(bookings)}">
-                            <td colspan="7" class="gs-empty-state">
+                            <td colspan="8" class="gs-empty-state">
                                 <div class="gs-empty-state-icon"><i class="bi bi-calendar-check"></i></div>
                                 <div class="gs-empty-state-title">Chưa có lịch hẹn</div>
                                 <div class="gs-empty-state-text">Chưa có lịch hẹn nào được tạo.</div>
@@ -52,6 +53,8 @@
                                 <small class="text-secondary" th:text="${booking.user.email}">email</small>
                             </td>
                             <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Chưa chọn xe'}"> Xe </td>
+                            <td class="gs-mono text-nowrap"
+                                th:text="${booking.createdAt != null ? #temporals.format(booking.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">21/07/2026 14:30</td>
                             <td class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}"> Ngày </td>
                             <td th:text="${bookingServices[booking.id]}"> Dịch vụ </td>
                             <td>

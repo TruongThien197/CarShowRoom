@@ -33,6 +33,9 @@ public class PaymentController {
             if (transaction.getStatus().name().equals("CANCELED")) {
                 attributes.addFlashAttribute("errorMessage", "Bạn đã hủy thanh toán PayOS. Vui lòng thực hiện lại thanh toán.");
                 if (isBookingOnly(transaction)) {
+                    if ("REMAINING".equalsIgnoreCase(transaction.getPaymentPurpose())) {
+                        return "redirect:/booking/" + transaction.getBooking().getId();
+                    }
                     return "redirect:/booking/" + transaction.getBooking().getId() + "/payment";
                 }
                 return "redirect:/orders/" + paymentService.getOrderIdByPayOSCode(orderCode) + "/payment";
@@ -78,6 +81,14 @@ public class PaymentController {
             return "redirect:/orders/" + orderId + "/payment";
         }
         if (bookingId != null) {
+            try {
+                PaymentTransaction transaction = paymentService.syncPaymentStatus(orderCode);
+                if ("REMAINING".equalsIgnoreCase(transaction.getPaymentPurpose())) {
+                    return "redirect:/booking/" + bookingId;
+                }
+            } catch (Exception ignored) {
+                // Fall back to the deposit retry page if PayOS cannot be queried.
+            }
             return "redirect:/booking/" + bookingId + "/payment";
         }
         return "redirect:/orders";

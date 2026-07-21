@@ -104,6 +104,16 @@ public class Booking {
     @Column(name = "payment_deadline")
     private LocalDateTime paymentDeadline;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "remaining_payment_status")
+    private PaymentStatus remainingPaymentStatus = PaymentStatus.PENDING;
+
+    @Column(name = "checked_in_at")
+    private LocalDateTime checkedInAt;
+
+    @Column(name = "no_show_at")
+    private LocalDateTime noShowAt;
+
     @Lob
     private String notes;
 
