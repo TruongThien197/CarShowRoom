@@ -23,7 +23,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -42,7 +41,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
 
     @Override
     @Transactional
-    public Booking createBooking(User user, BookingForm form) {
+    public synchronized Booking createBooking(User user, BookingForm form) {
         if (form.getVehicleId() == null) {
             throw new RuntimeException("Vui lòng chọn xe trước khi đặt lịch.");
         }
@@ -69,7 +68,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         booking.setTotalDurationMinutes(selectedService.getDurationMinutes());
         booking.setEstimatedMinAmount(selectedService.getMinPrice());
         booking.setEstimatedMaxAmount(selectedService.getMaxPrice());
-        booking.setFinalAmount(selectedService.getMinPrice());
+        booking.setFinalAmount(null);
         booking.setDepositAmount(calculateDeposit(selectedService.getMinPrice()));
         booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
         booking.setPaymentStatus(PaymentStatus.PENDING);
@@ -137,6 +136,9 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
             throw new RuntimeException("Không thể hủy lịch hẹn ở trạng thái hiện tại.");
         }
         booking.setBookingStatus(BookingStatus.CANCELED);
+        if (booking.getRemainingPaymentStatus() != PaymentStatus.PAID) {
+            booking.setRemainingPaymentStatus(PaymentStatus.CANCELED);
+        }
         if (booking.getPaymentStatus() == PaymentStatus.PAID
                 && booking.getRefundStatus() == RefundStatus.NONE) {
             booking.setRefundStatus(RefundStatus.REQUESTED);
@@ -209,6 +211,75 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
 
     @Override
     @Transactional
+    public void checkIn(Integer bookingId) {
+        Booking booking = getBookingDetail(bookingId);
+        if (booking.getBookingStatus() != BookingStatus.CONFIRMED
+                && booking.getBookingStatus() != BookingStatus.WAITING_FOR_VEHICLE) {
+            throw new IllegalStateException("Chỉ có thể tiếp nhận xe của lịch đã xác nhận.");
+        }
+        booking.setBookingStatus(BookingStatus.RECEIVING_VEHICLE);
+        booking.setCheckedInAt(LocalDateTime.now());
+        bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
+    public void setFinalAmount(Integer bookingId, BigDecimal finalAmount) {
+        Booking booking = getBookingDetail(bookingId);
+        if (booking.getBookingStatus() != BookingStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Chỉ có thể nhập giá cuối sau khi đã tiếp nhận xe.");
+        }
+        if (finalAmount == null || finalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Giá cuối phải lớn hơn hoặc bằng 0.");
+        }
+        BigDecimal deposit = booking.getDepositAmount() == null ? BigDecimal.ZERO : booking.getDepositAmount();
+        if (finalAmount.compareTo(deposit) < 0) {
+            throw new IllegalArgumentException("Giá cuối không được thấp hơn tiền cọc đã thanh toán.");
+        }
+        booking.setFinalAmount(finalAmount);
+        booking.setRemainingPaymentStatus(PaymentStatus.PENDING);
+        bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
+    public void markNoShow(Integer bookingId) {
+        Booking booking = getBookingDetail(bookingId);
+        if (booking.getBookingStatus() != BookingStatus.CONFIRMED
+                && booking.getBookingStatus() != BookingStatus.WAITING_FOR_VEHICLE) {
+            throw new IllegalStateException("Chỉ có thể đánh dấu không đến với lịch đã xác nhận.");
+        }
+        LocalDateTime scheduledStart = LocalDateTime.of(booking.getBookingDate(), parseStartTime(booking.getTimeSlot()));
+        if (LocalDateTime.now().isBefore(scheduledStart)) {
+            throw new IllegalStateException("Chỉ có thể đánh dấu không đến sau thời điểm bắt đầu lịch hẹn.");
+        }
+        booking.setBookingStatus(BookingStatus.EXPIRED_NO_SHOW);
+        if (booking.getRemainingPaymentStatus() != PaymentStatus.PAID) {
+            booking.setRemainingPaymentStatus(PaymentStatus.CANCELED);
+        }
+        booking.setNoShowAt(LocalDateTime.now());
+        bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
+    public void reopenDepositPayment(Integer bookingId) {
+        Booking booking = getBookingDetail(bookingId);
+        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new IllegalStateException("Lịch hẹn này đã được thanh toán tiền cọc.");
+        }
+        if (booking.getBookingStatus() != BookingStatus.EXPIRED_PAYMENT
+                && booking.getBookingStatus() != BookingStatus.PENDING_PAYMENT) {
+            throw new IllegalStateException("Lịch hẹn không còn cho phép thanh toán lại tiền cọc.");
+        }
+        booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
+        booking.setPaymentStatus(PaymentStatus.PENDING);
+        booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
+        bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
     public void updateStatus(Integer bookingId, String status) {
         Booking booking = getBookingDetail(bookingId);
         BookingStatus nextStatus = BookingStatus.valueOf(status.toUpperCase());
@@ -243,11 +314,15 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
             }
             return;
         }
-        if (nextStatus == BookingStatus.IN_PROGRESS && currentStatus != BookingStatus.CONFIRMED) {
-            throw new IllegalStateException("Lịch hẹn phải được xác nhận trước khi bắt đầu.");
+        if (nextStatus == BookingStatus.IN_PROGRESS && currentStatus != BookingStatus.RECEIVING_VEHICLE) {
+            throw new IllegalStateException("Xe phải được tiếp nhận trước khi chuyển sang đang sửa chữa.");
         }
         if (nextStatus == BookingStatus.COMPLETED && currentStatus != BookingStatus.IN_PROGRESS) {
             throw new IllegalStateException("Lịch hẹn phải ở trạng thái đang thực hiện trước khi hoàn tất.");
+        }
+        if (nextStatus == BookingStatus.COMPLETED
+                && booking.getFinalAmount() == null) {
+            throw new IllegalStateException("Cần nhập giá cuối trước khi chuyển lịch sang hoàn thành.");
         }
         if (nextStatus != BookingStatus.IN_PROGRESS && nextStatus != BookingStatus.COMPLETED) {
             throw new IllegalStateException("Trạng thái lịch hẹn không được phép cập nhật thủ công.");

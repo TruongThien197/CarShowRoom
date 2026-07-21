@@ -142,6 +142,9 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         List<String> statements = List.of(
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NULL ALTER TABLE bookings ADD deposit_amount NUMERIC(18, 2) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_status') IS NULL ALTER TABLE bookings ADD refund_status VARCHAR(30) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_payment_status') IS NULL ALTER TABLE bookings ADD remaining_payment_status VARCHAR(30) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'checked_in_at') IS NULL ALTER TABLE bookings ADD checked_in_at DATETIME2 NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'no_show_at') IS NULL ALTER TABLE bookings ADD no_show_at DATETIME2 NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_note') IS NULL ALTER TABLE bookings ADD refund_note NVARCHAR(500) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_bank_name') IS NULL ALTER TABLE bookings ADD refund_bank_name NVARCHAR(100) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_account_holder') IS NULL ALTER TABLE bookings ADD refund_account_holder NVARCHAR(150) NULL",
@@ -149,6 +152,7 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refunded_at') IS NULL ALTER TABLE bookings ADD refunded_at DATETIME2 NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refunded_by_id') IS NULL ALTER TABLE bookings ADD refunded_by_id INT NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_status') IS NOT NULL UPDATE bookings SET refund_status = 'NONE' WHERE refund_status IS NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_payment_status') IS NOT NULL UPDATE bookings SET remaining_payment_status = 'PENDING' WHERE remaining_payment_status IS NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'booking_status') IS NOT NULL UPDATE bookings SET booking_status = 'PENDING_PAYMENT' WHERE booking_status = 'PENDING_DEPOSIT'",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NOT NULL " +
                         "EXEC sp_executesql N'UPDATE bookings SET final_amount = COALESCE(final_amount, estimated_min_amount, deposit_amount)'",
@@ -202,6 +206,8 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF OBJECT_ID('order_items', 'U') IS NOT NULL UPDATE oi SET product_name_snapshot = p.product_name FROM order_items oi JOIN product p ON oi.product_id = p.product_id WHERE oi.product_name_snapshot IS NULL",
                 "IF COL_LENGTH('orders', 'parent_order_id') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'orders' AND COLUMN_NAME = 'parent_order_id' AND DATA_TYPE = 'bigint') ALTER TABLE orders ALTER COLUMN parent_order_id INT NULL",
                 "IF OBJECT_ID('order_items', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'order_items' AND COLUMN_NAME = 'order_id' AND DATA_TYPE = 'bigint') ALTER TABLE order_items ALTER COLUMN order_id INT NOT NULL",
+                "IF OBJECT_ID('payment_transactions', 'U') IS NOT NULL AND COL_LENGTH('payment_transactions', 'payment_purpose') IS NULL ALTER TABLE payment_transactions ADD payment_purpose VARCHAR(30) NULL",
+                "IF OBJECT_ID('payment_transactions', 'U') IS NOT NULL AND COL_LENGTH('payment_transactions', 'payment_purpose') IS NOT NULL UPDATE payment_transactions SET payment_purpose = 'DEPOSIT' WHERE payment_purpose IS NULL",
                 "IF OBJECT_ID('payment_transactions', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'payment_transactions' AND COLUMN_NAME = 'order_id' AND DATA_TYPE = 'bigint') ALTER TABLE payment_transactions ALTER COLUMN order_id INT NULL",
                 "IF OBJECT_ID('payment_transactions', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'payment_transactions' AND COLUMN_NAME = 'parent_order_id' AND DATA_TYPE = 'bigint') ALTER TABLE payment_transactions ALTER COLUMN parent_order_id INT NULL",
                 "IF OBJECT_ID('inventory_reservations', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'inventory_reservations' AND COLUMN_NAME = 'order_id' AND DATA_TYPE = 'bigint') ALTER TABLE inventory_reservations ALTER COLUMN order_id INT NULL",

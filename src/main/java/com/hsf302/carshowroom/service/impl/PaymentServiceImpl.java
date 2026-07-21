@@ -90,6 +90,7 @@ public class PaymentServiceImpl implements PaymentService {
         transaction.setParentOrder(request.getParentOrder());
         transaction.setOrder(resolveMainOrder(request));
         transaction.setBooking(request.getBooking());
+        transaction.setPaymentPurpose(request.getPaymentPurpose() == null ? "DEPOSIT" : request.getPaymentPurpose());
         transaction.setAmount(paymentAmount);
         transaction.setStatus(PaymentStatus.PENDING);
         transaction.setPayosOrderCode(String.valueOf(orderCode));
@@ -194,8 +195,12 @@ public class PaymentServiceImpl implements PaymentService {
 
         Booking booking = transaction.getBooking();
         if (booking != null) {
-            booking.setPaymentStatus(PaymentStatus.PAID);
-            booking.setBookingStatus(BookingStatus.CONFIRMED);
+            if ("REMAINING".equalsIgnoreCase(transaction.getPaymentPurpose())) {
+                booking.setRemainingPaymentStatus(PaymentStatus.PAID);
+            } else {
+                booking.setPaymentStatus(PaymentStatus.PAID);
+                    booking.setBookingStatus(BookingStatus.WAITING_FOR_VEHICLE);
+            }
             bookingRepository.save(booking);
         }
     }
@@ -223,8 +228,12 @@ public class PaymentServiceImpl implements PaymentService {
         }
         Booking booking = transaction.getBooking();
         if (booking != null) {
-            booking.setPaymentStatus(paymentStatus);
-            booking.setBookingStatus(bookingStatus);
+            if ("REMAINING".equalsIgnoreCase(transaction.getPaymentPurpose())) {
+                booking.setRemainingPaymentStatus(paymentStatus);
+            } else {
+                booking.setPaymentStatus(paymentStatus);
+                booking.setBookingStatus(bookingStatus);
+            }
             bookingRepository.save(booking);
         }
     }
@@ -253,8 +262,12 @@ public class PaymentServiceImpl implements PaymentService {
         }
         if (transaction.getBooking() != null) {
             Booking booking = transaction.getBooking();
-            booking.setPaymentStatus(PaymentStatus.PENDING);
-            booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
+            if ("REMAINING".equalsIgnoreCase(transaction.getPaymentPurpose())) {
+                booking.setRemainingPaymentStatus(PaymentStatus.PENDING);
+            } else {
+                booking.setPaymentStatus(PaymentStatus.PENDING);
+                booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
+            }
             bookingRepository.save(booking);
         }
         if (transaction.getOrder() != null) {
@@ -309,6 +322,12 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private BigDecimal resolvePaymentAmount(PayOSCreatePaymentLinkRequest request) {
+        if (request.getBooking() != null && "REMAINING".equalsIgnoreCase(request.getPaymentPurpose())) {
+            Booking booking = request.getBooking();
+            BigDecimal finalAmount = booking.getFinalAmount() == null ? BigDecimal.ZERO : booking.getFinalAmount();
+            BigDecimal deposit = resolveBookingDeposit(booking);
+            return finalAmount.subtract(deposit).max(BigDecimal.ZERO);
+        }
         if (request.getParentOrder() != null) {
             BigDecimal amount = request.getParentOrder().getProductTotal();
             if (request.getBooking() != null) {
