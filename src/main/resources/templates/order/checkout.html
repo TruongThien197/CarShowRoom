@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Secure Checkout | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar('shop')}"></div>
+
+<main class="container py-5">
+    <h1 class="gs-h1 section-title mb-4"> Xác nhận đơn hàng </h1>
+
+    <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <div class="alert alert-light border" th:if="${#lists.isEmpty(cartItems)}">
+        Your cart is empty. <a th:href="@{/shop}"> Tiếp tục mua sắm </a>.
+    </div>
+
+    <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
+        <div class="col-lg-8">
+            <form class="surface-card p-4 needs-validation" th:action="@{/orders/checkout}" th:object="${checkoutForm}" method="post">
+                <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">1</span>Contact &amp; Thông tin giao hàng<span class="gs-chevron-divider" th:if="${needsWorkshop}"></span></h4>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label"> Họ và tên </label>
+                        <input class="form-control" type="text" th:value="${user.fullName}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"> Email </label>
+                        <input class="form-control" type="email" th:value="${user.email}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"> Số điện thoại </label>
+                        <input class="form-control" type="tel" th:field="*{phone}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Địa chỉ giao hàng</label>
+                        <input class="form-control" type="text" th:field="*{shippingAddress}" required>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('shippingAddress')}" th:errors="*{shippingAddress}"></div>
+                    </div>
+                </div>
+
+                <div th:if="${needsWorkshop}" class="mb-4">
+                    <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">2</span>Workshop Installation Schedule<span class="gs-chevron-divider"></span></h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label"> Xe </label>
+                            <select class="form-select" th:field="*{vehicleId}" required>
+                                <option value=""> Chọn xe </option>
+                                <option th:each="vehicle : ${vehicles}"
+                                        th:value="${vehicle.id}"
+                                        th:text="${vehicle.brand + ' ' + vehicle.modelName + ' ' + vehicle.year + ' - ' + vehicle.licensePlate}"> Xe </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"> Dịch vụ </label>
+                            <select class="form-select" th:field="*{serviceId}" required>
+                                <option value=""> Chọn dịch vụ </option>
+                                <option th:each="service : ${services}"
+                                        th:value="${service.id}"
+                                        th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}"> Dịch vụ </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"> Ngày hẹn </label>
+                            <input class="form-control" type="date" th:field="*{bookingDate}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"> Giờ bắt đầu </label>
+                            <input class="form-control" type="time" th:field="*{startTime}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label"> Ghi chú </label>
+                            <textarea class="form-control" rows="3" th:field="*{notes}"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${needsWorkshop ? 3 : 2}">2</span> Thanh toán </h4>
+                <div class="alert alert-info mb-4">
+                    The system will create a PayOS payment transaction and hold stock or booking slots for 15 minutes.
+                </div>
+                <button class="btn btn-primary btn-lg" type="submit"> Đặt hàng </button>
+            </form>
+        </div>
+        <div class="col-lg-4">
+            <div class="surface-card p-4">
+                <h4 class="fw-bold">Đơn hàng của bạn</h4>
+                <div class="d-flex justify-content-between my-3" th:each="item : ${cartItems}">
+                    <span th:text="${item.product.productName + ' x' + item.quantity}"> Sản phẩm </span>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between fs-5 mb-4">
+                    <span> Tổng cộng </span>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: footer}"></div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Staff Workspace | GearShift Pro')}"></head>
+<body class="ops-shell">
+<div th:replace="~{fragments :: navbar('staff')}"></div>
+
+<main class="container-fluid">
+    <div class="row">
+        <aside class="col-lg-3 col-xl-2 ops-sidebar p-4">
+            <h5 class="text-white fw-bold mb-4"> Khu vực nhân viên </h5>
+            <nav class="d-grid gap-2">
+                <a class="active" href="#bookings"><i class="bi bi-calendar-check"></i> Lịch hẹn </a>
+                <a href="#orders"><i class="bi bi-receipt-cutoff"></i> Đơn hàng </a>
+            </nav>
+        </aside>
+
+        <section class="col-lg-9 col-xl-10 p-4 p-lg-5">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+                <div>
+                    <h1 class="gs-h1 mb-1"> Khu vực nhân viên </h1>
+                    <p class="text-secondary mb-0">Xem và xử lý lịch hẹn của khách hàng cùng đơn hàng sản phẩm.</p>
+                </div>
+                <a class="btn btn-primary align-self-start" th:href="@{/staff}">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh Queue
+                </a>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="metric-card gs-stripe-top--amber">
+                        <div class="text-secondary">Lịch hẹn chờ xử lý</div>
+                        <div class="metric-value gs-mono" th:text="${pendingBookings}">0</div>
+                        <span class="gs-badge gs-badge--warning">Xác nhận lịch hẹn</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card gs-stripe-top--info">
+                        <div class="text-secondary">Đơn hàng chờ xử lý</div>
+                        <div class="metric-value gs-mono" th:text="${pendingOrders}">0</div>
+                        <span class="gs-badge gs-badge--info">Hàng đợi kho</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card gs-stripe-top">
+                        <div class="text-secondary">Lịch hẹn hoàn tất</div>
+                        <div class="metric-value gs-mono" th:text="${completedBookings}">0</div>
+                        <span class="gs-badge gs-badge--success">Đã hoàn tất dịch vụ</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="surface-card p-4 mb-4">
+                <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 align-items-xl-end">
+                    <div>
+                        <h4 class="fw-bold mb-1"><i class="bi bi-funnel me-2 text-primary"></i>Lọc dòng xe trong danh mục</h4>
+                        <p class="text-secondary mb-0">Dùng dòng xe trong danh mục do nhân viên/quản trị viên tạo để lọc phụ tùng, không phải xe riêng của khách hàng.</p>
+                    </div>
+                    <form class="row g-2 flex-grow-1 justify-content-xl-end" th:action="@{/products}" method="get">
+                        <div class="col-md-3">
+                            <select class="form-select" name="brand">
+                                <option value=""> Chọn hãng xe </option>
+                                <option th:each="brand : ${carBrands}" th:value="${brand}" th:text="${brand}"> Hãng xe </option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" name="carModelId">
+                                <option value=""> Chọn mẫu xe </option>
+                                <option th:each="model : ${carModels}" th:value="${model.id}"
+                                        th:text="${model.brand + ' ' + model.modelName + ' ' + model.year}"> Mẫu xe </option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input class="form-control" name="keyword" placeholder="Parts keyword">
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button class="btn btn-primary" type="submit"> Tìm kiếm </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="surface-card p-4 mb-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-car-front me-2 text-primary"></i>Thêm dòng xe trong danh mục</h5>
+                <form class="row g-2 align-items-end" th:action="@{/staff/car-models}" method="post">
+                    <div class="col-md-4">
+                        <label class="form-label"> Hãng xe </label>
+                        <input class="form-control" name="brand" placeholder="Toyota" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label"> Mẫu xe </label>
+                        <input class="form-control" name="modelName" placeholder="Camry" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"> Năm </label>
+                        <input class="form-control" name="year" type="number" min="1900" placeholder="2024" required>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button class="btn btn-outline-primary" type="submit"> Thêm </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="bookings" class="admin-table-card p-0 overflow-hidden mb-4">
+                <div class="p-3 border-bottom">
+                    <h4 class="fw-bold mb-0"><i class="bi bi-calendar-check me-2 text-primary"></i>Hàng đợi lịch hẹn</h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th> Lịch hẹn </th>
+                            <th> Khách hàng </th>
+                            <th> Xe </th>
+                            <th>Ngày và giờ</th>
+                            <th> Dịch vụ </th>
+                            <th> Trạng thái </th>
+                            <th class="text-end"> Cập nhật </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(bookings)}">
+                            <td colspan="7" class="gs-empty-state">
+                                <div class="gs-empty-state-icon"><i class="bi bi-calendar-check"></i></div>
+                                <div class="gs-empty-state-title">Chưa có lịch hẹn</div>
+                                <div class="gs-empty-state-text">Hiện chưa có lịch hẹn nào trong hàng đợi.</div>
+                            </td>
+                        </tr>
+                        <tr th:each="booking : ${bookings}">
+                            <td><strong class="gs-mono" th:text="'BK-' + ${booking.id}">BK-1</strong></td>
+                            <td th:text="${booking.user.fullName}"> Khách hàng </td>
+                            <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}"> Xe </td>
+                            <td class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}"> Ngày </td>
+                            <td th:text="${bookingServices[booking.id]}"> Dịch vụ </td>
+                            <td>
+                                <span class="gs-badge"
+                                      th:classappend="${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${booking.bookingStatus.name() == 'CANCELED' or booking.bookingStatus.name() == 'EXPIRED_PAYMENT' or booking.bookingStatus.name() == 'EXPIRED_NO_SHOW'} ? 'gs-badge--danger' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS' or booking.bookingStatus.name() == 'PENDING_APPROVAL'} ? 'gs-badge--warning' : 'gs-badge--neutral')))"
+                                      th:text="${booking.bookingStatus}">Chờ xử lý</span>
+                            </td>
+                            <td class="text-end">
+                                <form class="d-flex gap-2 justify-content-end" th:action="@{/staff/bookings/status}" method="post">
+                                    <input type="hidden" name="bookingId" th:value="${booking.id}">
+                                    <select class="form-select form-select-sm" name="status" style="max-width: 150px">
+                                        <option value="PENDING_PAYMENT" th:selected="${booking.bookingStatus.name() == 'PENDING_PAYMENT'}">Chờ thanh toán</option>
+                                        <option value="CONFIRMED" th:selected="${booking.bookingStatus.name() == 'CONFIRMED'}">Đã xác nhận</option>
+                                        <option value="IN_PROGRESS" th:selected="${booking.bookingStatus.name() == 'IN_PROGRESS'}">IN_PROGRESS</option>
+                                        <option value="COMPLETED" th:selected="${booking.bookingStatus.name() == 'COMPLETED'}">Hoàn tất</option>
+                                        <option value="CANCELED" th:selected="${booking.bookingStatus.name() == 'CANCELED'}">Đã hủy</option>
+                                    </select>
+                                    <button class="btn btn-outline-primary btn-sm" type="submit"> Lưu </button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="orders" class="admin-table-card p-0 overflow-hidden">
+                <div class="p-3 border-bottom">
+                    <h4 class="fw-bold mb-0"><i class="bi bi-receipt-cutoff me-2 text-primary"></i>Xử lý đơn hàng</h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th> Đơn hàng </th>
+                            <th> Khách hàng </th>
+                            <th>Items</th>
+                            <th> Trạng thái </th>
+                            <th class="text-end"> Tổng cộng </th>
+                            <th class="text-end"> Cập nhật </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(orders)}">
+                            <td colspan="6" class="gs-empty-state">
+                                <div class="gs-empty-state-icon"><i class="bi bi-receipt-cutoff"></i></div>
+                                <div class="gs-empty-state-title">Chưa có đơn hàng nào</div>
+                                <div class="gs-empty-state-text">Hiện chưa có đơn hàng nào trong hàng đợi.</div>
+                            </td>
+                        </tr>
+                        <tr th:each="order : ${orders}">
+                            <td><strong class="gs-mono" th:text="'ORD-' + ${order.id}">ORD-1</strong></td>
+                            <td th:text="${order.user.fullName}"> Khách hàng </td>
+                            <td th:text="${orderItems[order.id]}">Items</td>
+                            <td>
+                                <span class="gs-badge"
+                                      th:classappend="${order.orderStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${order.orderStatus.name() == 'CANCELED' or order.orderStatus.name() == 'EXPIRED_PAYMENT'} ? 'gs-badge--danger' : (${order.orderStatus.name() == 'PROCESSING' or order.orderStatus.name() == 'SHIPPING'} ? 'gs-badge--info' : 'gs-badge--neutral'))"
+                                      th:text="${order.orderStatus}">Chờ xử lý</span>
+                            </td>
+                            <td class="text-end fw-bold gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </td>
+                            <td class="text-end">
+                                <form class="d-flex gap-2 justify-content-end" th:action="@{/staff/orders/status}" method="post">
+                                    <input type="hidden" name="orderId" th:value="${order.id}">
+                                    <select class="form-select form-select-sm" name="status" style="max-width: 150px">
+                                        <option value="PENDING_PAYMENT" th:selected="${order.orderStatus.name() == 'PENDING_PAYMENT'}">Chờ thanh toán</option>
+                                        <option value="PROCESSING" th:selected="${order.orderStatus.name() == 'PROCESSING'}">Đang xử lý</option>
+                                        <option value="SHIPPING" th:selected="${order.orderStatus.name() == 'SHIPPING'}">SHIPPING</option>
+                                        <option value="COMPLETED" th:selected="${order.orderStatus.name() == 'COMPLETED'}">Hoàn tất</option>
+                                        <option value="CANCELED" th:selected="${order.orderStatus.name() == 'CANCELED'}">Đã hủy</option>
+                                    </select>
+                                    <button class="btn btn-outline-primary btn-sm" type="submit"> Lưu </button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

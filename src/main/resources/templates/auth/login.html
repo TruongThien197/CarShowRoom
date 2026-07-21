@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Login | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar('login')}"></div>
+
+<main class="auth-shell gs-grid-texture d-flex align-items-center py-5">
+    <div class="container">
+        <div class="row justify-content-end">
+            <div class="col-md-7 col-lg-5">
+                <form class="surface-card gs-stripe-top p-4 p-md-5 needs-validation" th:action="@{/auth/login}" method="post" novalidate>
+                    <h1 class="gs-h1 section-title mb-2">Chào mừng bạn trở lại</h1>
+                    <p class="text-secondary mb-4">Đăng nhập để quản lý lịch hẹn, đơn hàng và xe của bạn.</p>
+                    <div class="alert alert-warning" th:if="${param.authRequired != null}">Vui lòng đăng nhập để tiếp tục.</div>
+                    <div class="mb-3">
+                        <label class="form-label"> Email </label>
+                        <input class="form-control form-control-lg" type="email" name="txtEmail" required>
+                        <div class="invalid-feedback">Vui lòng nhập địa chỉ email hợp lệ.</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label"> Mật khẩu </label>
+                        <input class="form-control form-control-lg" type="password" name="txtPassword" required>
+                        <div class="invalid-feedback">Mật khẩu là bắt buộc.</div>
+                    </div>
+                    <button class="btn btn-primary btn-lg w-100" type="submit"> Đăng nhập </button>
+                    <p class="text-center mt-4 mb-0">Khách hàng mới? <a th:href="@{/auth/register}">Tạo tài khoản</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

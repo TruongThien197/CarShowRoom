@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Lịch hẹn của tôi | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments/header :: navbar('booking')}"></div>
+
+<main class="container py-5">
+    <div class="row g-4">
+        <aside th:replace="~{fragments/sidebar :: accountSidebar('bookings')}"></aside>
+
+        <section class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h1 class="gs-h1 section-title mb-1">Lịch hẹn của tôi</h1>
+                    <p class="text-secondary mb-0">Theo dõi trạng thái các lịch hẹn dịch vụ.</p>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments/sidebar :: historyTabs('bookings')}"></div>
+
+            <div class="gs-empty-state surface-card" th:if="${#lists.isEmpty(bookings)}">
+                <i class="bi bi-calendar-x gs-empty-state-icon d-block"></i>
+                <div class="gs-empty-state-title">Bạn chưa có lịch hẹn nào.</div>
+            </div>
+
+            <div class="surface-card p-0 overflow-hidden" th:if="${!#lists.isEmpty(bookings)}">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th> Ngày </th>
+                            <th> Giờ </th>
+                            <th> Dịch vụ </th>
+                            <th> Xe </th>
+                            <th> Trạng thái </th>
+                            <th class="text-end"> Thao tác </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="booking, stat : ${bookings}">
+                            <td class="fw-bold gs-mono" th:text="${stat.count}">1</td>
+                            <td class="gs-mono" th:text="${booking.bookingDate}">2026-07-01</td>
+                            <td class="gs-mono" th:text="${booking.timeSlot}">09:30</td>
+                            <td th:text="${bookingServices[booking.id]}"> Dịch vụ </td>
+                            <td class="gs-mono" th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}"> Xe </td>
+                            <td>
+                                <span class="gs-badge"
+                                      th:classappend="${booking.bookingStatus.name() == 'PENDING_PAYMENT'} ? 'gs-badge--neutral' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS'} ? 'gs-badge--warning' : (${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : 'gs-badge--danger')))"
+                                      th:text="${booking.bookingStatus}">Chờ xử lý</span>
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-outline-primary btn-sm" th:href="@{/booking/{id}(id=${booking.id})}">
+                                    <i class="bi bi-eye me-1"></i> Chi tiết </a>
+                                <button class="btn btn-outline-danger btn-sm"
+                                        type="button"
+                                        th:if="${booking.bookingStatus.name() != 'CANCELED' and booking.bookingStatus.name() != 'COMPLETED'}"
+                                        data-bs-toggle="modal"
+                                        th:attr="data-bs-target=${'#cancelBookingModal' + booking.id}"> Hủy </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div th:each="booking : ${bookings}"
+                 class="modal fade"
+                 th:id="${'cancelBookingModal' + booking.id}"
+                 tabindex="-1"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Xác nhận hủy lịch hẹn</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-2">Bạn có chắc muốn hủy lịch hẹn này không?</p>
+                            <div class="small text-secondary">
+                                <div><strong>Mã lịch hẹn:</strong> <span th:text="'BK-' + ${booking.id}">BK-1</span></div>
+                                <div><strong>Giờ:</strong> <span th:text="${booking.bookingDate + ' - ' + booking.timeSlot}"> Ngày </span></div>
+                                <div><strong>Dịch vụ:</strong> <span th:text="${bookingServices[booking.id]}"> Dịch vụ </span></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">No</button>
+                            <form th:action="@{/booking/{id}/cancel(id=${booking.id})}" method="post">
+                                <button class="btn btn-danger" type="submit">Xác nhận hủy</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body>
+</html>
