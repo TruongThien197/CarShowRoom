@@ -108,7 +108,9 @@
                 <div class="position-relative bg-light d-flex align-items-center justify-content-center" style="height: 240px; overflow: hidden;">
                     <img class="w-100 h-100 object-fit-cover product-image"
                          th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
-                         th:src="${product.imageUrl}" alt="Product image">
+                         th:src="${product.imageUrl}"
+                         onerror="this.onerror=null; this.src='/images/default-product.jpg';"
+                         alt="Product image">
                     <i class="bi bi-tools display-1 text-secondary opacity-25"
                        th:if="${product.imageUrl == null or #strings.isEmpty(product.imageUrl)}"></i>
                     <span class="badge bg-primary position-absolute top-0 start-0 m-3 shadow-sm"

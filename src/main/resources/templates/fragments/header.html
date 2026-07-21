@@ -55,6 +55,7 @@
                     <i class="bi bi-person-circle"></i>
                     <span class="ms-1 d-none d-md-inline" th:text="${currentUser.fullName}">User</span>
                 </a>
+                <a th:if="${currentUser == null}" class="btn btn-outline-light btn-sm px-3 me-2" th:href="@{/auth/register}">Đăng ký</a>
                 <a th:if="${currentUser == null}" class="btn btn-primary btn-sm px-3" th:href="@{/auth/login}">Đăng nhập</a>
                 <form th:if="${currentUser != null}" th:action="@{/auth/logout}" method="post" class="d-inline">
                     <button class="btn btn-outline-danger btn-sm" type="submit" title="Đăng xuất"><i class="bi bi-box-arrow-right"></i></button>
