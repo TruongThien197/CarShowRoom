@@ -4,6 +4,7 @@ import com.hsf302.carshowroom.dto.VehicleForm;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.service.AuthService;
 import com.hsf302.carshowroom.service.VehicleService;
+import com.hsf302.carshowroom.repository.CarModelRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class VehicleController {
     private final AuthService authService;
     private final VehicleService vehicleService;
+    private final CarModelRepository carModelRepository;
 
     @GetMapping
     public String list(Model model) {
@@ -39,6 +41,7 @@ public class VehicleController {
             return "redirect:/auth/login";
         }
         model.addAttribute("vehicleForm", new VehicleForm());
+        model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
         return "vehicles/add";
     }
 
@@ -52,6 +55,7 @@ public class VehicleController {
         }
         if (bindingResult.hasErrors()) {
             model.addAttribute("vehicleForm", form);
+            model.addAttribute("carModels", carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc());
             return "vehicles/add";
         }
         vehicleService.addVehicle(user, form);

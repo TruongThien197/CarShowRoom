@@ -107,7 +107,17 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF COL_LENGTH('orders', 'order_type') IS NULL ALTER TABLE orders ADD order_type VARCHAR(255) NULL",
                 "IF COL_LENGTH('orders', 'order_status') IS NULL ALTER TABLE orders ADD order_status VARCHAR(255) NULL",
                 "IF COL_LENGTH('orders', 'payment_status') IS NULL ALTER TABLE orders ADD payment_status VARCHAR(255) NULL",
+                "IF COL_LENGTH('orders', 'payment_method') IS NULL ALTER TABLE orders ADD payment_method VARCHAR(20) NULL",
                 "IF COL_LENGTH('orders', 'product_total') IS NULL ALTER TABLE orders ADD product_total NUMERIC(18, 2) NULL",
+                "IF COL_LENGTH('orders', 'receiver_phone') IS NULL ALTER TABLE orders ADD receiver_phone NVARCHAR(30) NULL",
+                "IF COL_LENGTH('orders', 'cancellation_reason') IS NULL ALTER TABLE orders ADD cancellation_reason NVARCHAR(500) NULL",
+                "IF COL_LENGTH('orders', 'shipping_carrier') IS NULL ALTER TABLE orders ADD shipping_carrier NVARCHAR(100) NULL",
+                "IF COL_LENGTH('orders', 'tracking_code') IS NULL ALTER TABLE orders ADD tracking_code NVARCHAR(100) NULL",
+                "IF COL_LENGTH('orders', 'refund_status') IS NULL ALTER TABLE orders ADD refund_status VARCHAR(30) NULL",
+                "IF COL_LENGTH('orders', 'refund_note') IS NULL ALTER TABLE orders ADD refund_note NVARCHAR(500) NULL",
+                "IF COL_LENGTH('orders', 'refunded_at') IS NULL ALTER TABLE orders ADD refunded_at DATETIME2 NULL",
+                "IF COL_LENGTH('orders', 'refunded_by_id') IS NULL ALTER TABLE orders ADD refunded_by_id INT NULL",
+                "UPDATE orders SET refund_status = 'NONE' WHERE refund_status IS NULL",
                 "IF COL_LENGTH('orders', 'order_date') IS NOT NULL EXEC sp_executesql N'UPDATE orders SET created_at = CAST(order_date AS DATETIME2) WHERE created_at IS NULL AND order_date IS NOT NULL'",
                 "UPDATE orders SET updated_at = created_at WHERE updated_at IS NULL",
                 "UPDATE orders SET order_type = 'SHIPPING' WHERE order_type IS NULL",
@@ -120,6 +130,7 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "UPDATE orders SET order_status = 'PENDING_PAYMENT' WHERE order_status = 'PENDING_DEPOSIT'",
                 "UPDATE orders SET order_status = 'PROCESSING' WHERE order_status = 'DEPOSITED'",
                 "UPDATE orders SET payment_status = CASE WHEN order_status IN ('COMPLETED', 'PROCESSING', 'SHIPPING') THEN 'PAID' ELSE 'PENDING' END WHERE payment_status IS NULL",
+                "UPDATE orders SET payment_method = 'PAYOS' WHERE payment_method IS NULL",
                 "IF COL_LENGTH('orders', 'total_amount') IS NOT NULL EXEC sp_executesql N'UPDATE orders SET product_total = total_amount WHERE product_total IS NULL'",
                 "IF COL_LENGTH('orders', 'deposit_amount') IS NOT NULL ALTER TABLE orders DROP COLUMN deposit_amount",
                 "IF COL_LENGTH('orders', 'remaining_amount') IS NOT NULL ALTER TABLE orders DROP COLUMN remaining_amount"
@@ -129,12 +140,26 @@ public class SchemaMigrationRunner implements CommandLineRunner {
 
     private void migrateBookings() {
         List<String> statements = List.of(
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NULL ALTER TABLE bookings ADD deposit_amount NUMERIC(18, 2) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_status') IS NULL ALTER TABLE bookings ADD refund_status VARCHAR(30) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_note') IS NULL ALTER TABLE bookings ADD refund_note NVARCHAR(500) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_bank_name') IS NULL ALTER TABLE bookings ADD refund_bank_name NVARCHAR(100) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_account_holder') IS NULL ALTER TABLE bookings ADD refund_account_holder NVARCHAR(150) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_account_number') IS NULL ALTER TABLE bookings ADD refund_account_number NVARCHAR(50) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refunded_at') IS NULL ALTER TABLE bookings ADD refunded_at DATETIME2 NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refunded_by_id') IS NULL ALTER TABLE bookings ADD refunded_by_id INT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_status') IS NOT NULL UPDATE bookings SET refund_status = 'NONE' WHERE refund_status IS NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'booking_status') IS NOT NULL UPDATE bookings SET booking_status = 'PENDING_PAYMENT' WHERE booking_status = 'PENDING_DEPOSIT'",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NOT NULL " +
                         "EXEC sp_executesql N'UPDATE bookings SET final_amount = COALESCE(final_amount, estimated_min_amount, deposit_amount)'",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NOT NULL " +
+                        "UPDATE bookings SET deposit_amount = CASE " +
+                        "WHEN estimated_min_amount IS NULL OR estimated_min_amount * 0.20 < 2000 THEN 2000 " +
+                        "WHEN estimated_min_amount * 0.20 > 10000 THEN 10000 " +
+                        "ELSE CEILING(estimated_min_amount * 0.20) END " +
+                        "WHERE deposit_amount IS NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_amount') IS NOT NULL AND COL_LENGTH('bookings', 'final_amount') IS NOT NULL " +
                         "EXEC sp_executesql N'UPDATE bookings SET final_amount = COALESCE(final_amount, estimated_min_amount) WHERE final_amount IS NULL'",
-                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NOT NULL ALTER TABLE bookings DROP COLUMN deposit_amount",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_amount') IS NOT NULL ALTER TABLE bookings DROP COLUMN remaining_amount"
         );
         statements.forEach(jdbcTemplate::execute);
@@ -153,6 +178,14 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "UPDATE service SET status = 'ACTIVE' WHERE status IS NULL",
                 "UPDATE service SET min_price = 0 WHERE min_price IS NULL",
                 "UPDATE service SET max_price = min_price WHERE max_price IS NULL",
+                "UPDATE service SET service_name = CASE " +
+                        "WHEN duration_minutes = 30 AND min_price = 20000 THEN N'Chẩn đoán kỹ thuật số' " +
+                        "WHEN duration_minutes = 60 AND min_price = 35000 THEN N'Kiểm tra phanh và gầm xe' " +
+                        "WHEN duration_minutes = 90 AND min_price = 40000 THEN N'Tinh chỉnh hiệu suất động cơ' " +
+                        "WHEN duration_minutes = 45 AND min_price = 30000 THEN N'Bảo dưỡng định kỳ' " +
+                        "ELSE service_name END",
+                "IF OBJECT_ID('booking_services', 'U') IS NOT NULL AND OBJECT_ID('service', 'U') IS NOT NULL " +
+                        "UPDATE bs SET service_name_snapshot = s.service_name FROM booking_services bs JOIN service s ON bs.service_id = s.service_id",
                 "IF NOT EXISTS (SELECT 1 FROM service WHERE min_price IS NULL) AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'service' AND COLUMN_NAME = 'min_price' AND IS_NULLABLE = 'YES') ALTER TABLE service ALTER COLUMN min_price NUMERIC(18, 2) NOT NULL",
                 "IF NOT EXISTS (SELECT 1 FROM service WHERE max_price IS NULL) AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'service' AND COLUMN_NAME = 'max_price' AND IS_NULLABLE = 'YES') ALTER TABLE service ALTER COLUMN max_price NUMERIC(18, 2) NOT NULL",
                 "IF NOT EXISTS (SELECT 1 FROM service WHERE duration_minutes IS NULL) AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'service' AND COLUMN_NAME = 'duration_minutes' AND IS_NULLABLE = 'YES') ALTER TABLE service ALTER COLUMN duration_minutes INT NOT NULL",
@@ -207,11 +240,11 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF COL_LENGTH('vehicle', 'brand') IS NOT NULL UPDATE v SET brand = COALESCE(v.brand, cm.brand) FROM vehicle v LEFT JOIN car_model cm ON v.car_model_id = cm.car_model_id",
                 "IF COL_LENGTH('vehicle', 'model_name') IS NOT NULL UPDATE v SET model_name = COALESCE(v.model_name, cm.model_name) FROM vehicle v LEFT JOIN car_model cm ON v.car_model_id = cm.car_model_id",
                 "IF COL_LENGTH('vehicle', 'year') IS NOT NULL UPDATE v SET [year] = COALESCE(v.[year], cm.[year]) FROM vehicle v LEFT JOIN car_model cm ON v.car_model_id = cm.car_model_id",
+                "IF COL_LENGTH('vehicle', 'car_model_id') IS NOT NULL UPDATE v SET car_model_id = cm.car_model_id FROM vehicle v JOIN car_model cm ON LOWER(v.brand) = LOWER(cm.brand) AND LOWER(v.model_name) = LOWER(cm.model_name) AND v.[year] = cm.[year] WHERE v.car_model_id IS NULL",
                 "IF COL_LENGTH('vehicle', 'brand') IS NOT NULL UPDATE vehicle SET brand = 'Unknown' WHERE brand IS NULL",
                 "IF COL_LENGTH('vehicle', 'model_name') IS NOT NULL UPDATE vehicle SET model_name = 'Unknown' WHERE model_name IS NULL",
                 "IF COL_LENGTH('vehicle', 'year') IS NOT NULL UPDATE vehicle SET [year] = YEAR(GETDATE()) WHERE [year] IS NULL",
-                "IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'vehicle' AND COLUMN_NAME = 'car_model_id' AND IS_NULLABLE = 'NO') ALTER TABLE vehicle ALTER COLUMN car_model_id INT NULL",
-                "IF COL_LENGTH('vehicle', 'car_model_id') IS NOT NULL UPDATE vehicle SET car_model_id = NULL"
+                "IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'vehicle' AND COLUMN_NAME = 'car_model_id' AND IS_NULLABLE = 'NO') ALTER TABLE vehicle ALTER COLUMN car_model_id INT NULL"
         );
         statements.forEach(statement -> {
             try {

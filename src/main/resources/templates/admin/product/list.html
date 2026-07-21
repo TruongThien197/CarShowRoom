@@ -113,9 +113,9 @@
                                 <a th:href="@{/admin/products/edit/{id}(id=${prod.id})}" class="btn btn-outline-primary btn-sm me-1" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <a th:href="@{/admin/products/delete/{id}(id=${prod.id})}" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?');" class="btn btn-outline-danger btn-sm" title="Xóa">
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                                <form class="d-inline" th:action="@{/admin/products/delete/{id}(id=${prod.id})}" method="post">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit" title="Xóa"><i class="bi bi-trash"></i></button>
+                                </form>
                             </td>
                         </tr>
                         </tbody>

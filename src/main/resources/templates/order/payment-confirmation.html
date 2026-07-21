@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Chọn lại thanh toán | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar('orders')}"></div>
+
+<main class="container py-5">
+    <div class="row justify-content-center">
+        <section class="col-lg-7">
+            <div class="surface-card gs-stripe-top p-4 p-md-5">
+                <h1 class="gs-h2 section-title mb-2">Chọn lại phương thức thanh toán</h1>
+                <p class="text-secondary mb-4">Bạn đã hủy thanh toán PayOS. Đơn hàng vẫn được lưu, hãy chọn phương thức khác để tiếp tục.</p>
+                <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+                <div class="d-flex justify-content-between border rounded p-3 mb-4">
+                    <span>Tổng đơn hàng</span>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</strong>
+                </div>
+                <form th:action="@{/orders/{id}/payment(id=${order.id})}" method="post">
+                    <div class="border rounded p-3 mb-3">
+                        <div class="form-check">
+                            <input id="retryPayos" class="form-check-input" type="radio" name="paymentMethod" value="PAYOS" checked>
+                            <label class="form-check-label" for="retryPayos"><strong>Thanh toán trực tuyến qua PayOS</strong><span class="d-block small text-secondary">Tạo lại liên kết thanh toán PayOS.</span></label>
+                        </div>
+                    </div>
+                    <div class="border rounded p-3 mb-4" th:if="${order.orderType.name() == 'SHIPPING'}">
+                        <div class="form-check">
+                            <input id="retryCod" class="form-check-input" type="radio" name="paymentMethod" value="COD">
+                            <label class="form-check-label" for="retryCod"><strong>Thanh toán khi nhận hàng (COD)</strong><span class="d-block small text-secondary">Thanh toán khi nhận phụ tùng.</span></label>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-100" type="submit">Xác nhận phương thức thanh toán</button>
+                </form>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments :: footer}"></div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class BookingForm {
+    @NotNull(message = "Vui lòng chọn xe trước khi đặt lịch.")
     private Integer vehicleId;
 
     @NotNull

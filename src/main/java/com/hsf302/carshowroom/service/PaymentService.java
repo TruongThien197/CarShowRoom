@@ -9,4 +9,6 @@ public interface PaymentService {
     PaymentTransaction syncPaymentStatus(String orderCode);
     void handlePayOSWebhook(PayOSWebhookRequest webhookRequest);
     void expirePendingPayments();
+    Integer getOrderIdByPayOSCode(String orderCode);
+    Integer getBookingIdByPayOSCode(String orderCode);
 }

@@ -50,11 +50,9 @@
                                 <a th:href="@{/admin/categories/edit/{id}(id=${cat.id})}" class="btn btn-outline-primary btn-sm me-1" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <a th:href="@{/admin/categories/delete/{id}(id=${cat.id})}"
-                                   onclick="return confirm('Xóa this category?');"
-                                   class="btn btn-outline-danger btn-sm" title="Xóa">
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                                <form class="d-inline" th:action="@{/admin/categories/delete/{id}(id=${cat.id})}" method="post">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit" title="Xóa"><i class="bi bi-trash"></i></button>
+                                </form>
                             </td>
                         </tr>
                         </tbody>

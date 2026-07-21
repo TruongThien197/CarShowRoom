@@ -2,6 +2,7 @@ package com.hsf302.carshowroom.entity;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
+import com.hsf302.carshowroom.common.Enums.RefundStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -64,6 +65,33 @@ public class Booking {
 
     @Column(name = "final_amount")
     private BigDecimal finalAmount;
+
+    // Nullable keeps schema updates safe for bookings created before deposits were introduced.
+    @Column(name = "deposit_amount")
+    private BigDecimal depositAmount = BigDecimal.ZERO;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "refund_status")
+    private RefundStatus refundStatus = RefundStatus.NONE;
+
+    @Column(name = "refund_note", length = 500)
+    private String refundNote;
+
+    @Column(name = "refund_bank_name", length = 100)
+    private String refundBankName;
+
+    @Column(name = "refund_account_holder", length = 150)
+    private String refundAccountHolder;
+
+    @Column(name = "refund_account_number", length = 50)
+    private String refundAccountNumber;
+
+    @Column(name = "refunded_at")
+    private LocalDateTime refundedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "refunded_by_id")
+    private User refundedBy;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "booking_status", nullable = false)

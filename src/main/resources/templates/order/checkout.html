@@ -73,9 +73,30 @@
                     </div>
                 </div>
 
-                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${needsWorkshop ? 3 : 2}">2</span> Thanh toán </h4>
-                <div class="alert alert-info mb-4">
-                    The system will create a PayOS payment transaction and hold stock or booking slots for 15 minutes.
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${needsWorkshop ? 3 : 2}">2</span> Phương thức thanh toán </h4>
+                <div class="border rounded p-3 mb-3">
+                    <div class="form-check">
+                        <input id="payos" class="form-check-input" type="radio" th:field="*{paymentMethod}" value="PAYOS">
+                        <label class="form-check-label" for="payos">
+                            <strong>Thanh toán trực tuyến qua PayOS</strong>
+                            <span class="d-block small text-secondary">Thanh toán ngay bằng mã QR hoặc tài khoản ngân hàng.</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="border rounded p-3 mb-3" th:classappend="${needsWorkshop} ? 'opacity-50 bg-light' : ''">
+                    <div class="form-check">
+                        <input id="cod" class="form-check-input" type="radio" th:field="*{paymentMethod}" value="COD" th:disabled="${needsWorkshop}">
+                        <label class="form-check-label" for="cod">
+                            <strong>Thanh toán khi nhận hàng (COD)</strong>
+                            <span class="d-block small text-secondary">Thanh toán cho nhân viên giao hàng khi nhận phụ tùng.</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="alert alert-info mb-4" th:if="${!needsWorkshop}">
+                    Bạn có thể chọn PayOS hoặc thanh toán khi nhận hàng. Hàng sẽ được giữ sau khi đặt đơn.
+                </div>
+                <div class="alert alert-warning mb-4" th:if="${needsWorkshop}">
+                    Đơn có dịch vụ lắp đặt tại xưởng cần thanh toán trực tuyến qua PayOS.
                 </div>
                 <button class="btn btn-primary btn-lg" type="submit"> Đặt hàng </button>
             </form>

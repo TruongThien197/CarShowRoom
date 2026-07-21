@@ -2,6 +2,7 @@ package com.hsf302.carshowroom.controller;
 
 import com.hsf302.carshowroom.entity.Product;
 import com.hsf302.carshowroom.entity.Category;
+import com.hsf302.carshowroom.common.Enums.ProductStatus;
 import com.hsf302.carshowroom.repository.CarModelRepository;
 import com.hsf302.carshowroom.service.CategoryService;
 import com.hsf302.carshowroom.service.ProductService;
@@ -70,7 +71,11 @@ public class ProductController {
 
     @GetMapping("/products/{id}")
     public String detail(@PathVariable Integer id, Model model) {
-        model.addAttribute("product", productService.getProduct(id));
+        Product product = productService.getProduct(id);
+        if (product.getStatus() != ProductStatus.ACTIVE) {
+            throw new RuntimeException("Sản phẩm này hiện không còn được bán.");
+        }
+        model.addAttribute("product", product);
         return "products/detail";
     }
 
@@ -99,6 +104,12 @@ public class ProductController {
         model.addAttribute("selectedModelName", modelName);
         model.addAttribute("selectedYear", year);
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", productPage.getTotalPages());
+        int totalPages = productPage.getTotalPages();
+        int paginationStart = Math.max(0, page - 2);
+        int paginationEnd = Math.min(totalPages - 1, paginationStart + 4);
+        paginationStart = Math.max(0, paginationEnd - 4);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("paginationStart", paginationStart);
+        model.addAttribute("paginationEnd", paginationEnd);
     }
 }
