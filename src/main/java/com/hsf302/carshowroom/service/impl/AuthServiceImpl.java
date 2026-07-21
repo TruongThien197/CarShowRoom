@@ -37,8 +37,8 @@ public class AuthServiceImpl implements AuthService {
         if (fullname.isBlank() || fullname.length() > 150) {
             throw new IllegalArgumentException("Họ và tên không được để trống và tối đa 150 ký tự.");
         }
-        if (phone != null && !phone.isBlank() && !phone.matches("^[0-9]{9,15}$")) {
-            throw new IllegalArgumentException("Số điện thoại phải gồm 9 đến 15 chữ số.");
+        if (phone != null && !phone.isBlank() && !phone.matches("^0[0-9]{9}$")) {
+            throw new IllegalArgumentException("Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số.");
         }
         if (address != null && address.length() > 500) {
             throw new IllegalArgumentException("Địa chỉ tối đa 500 ký tự.");
@@ -75,8 +75,8 @@ public class AuthServiceImpl implements AuthService {
         if (fullName == null || fullName.isBlank()) {
             throw new IllegalArgumentException("Họ và tên không được để trống.");
         }
-        if (phone != null && !phone.isBlank() && !phone.matches("^[0-9]{9,15}$")) {
-            throw new IllegalArgumentException("Số điện thoại phải gồm 9 đến 15 chữ số.");
+        if (phone != null && !phone.isBlank() && !phone.matches("^0[0-9]{9}$")) {
+            throw new IllegalArgumentException("Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số.");
         }
         user.setFullName(fullName.trim());
         user.setPhone(phone == null ? null : phone.trim());
