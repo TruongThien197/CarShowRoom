@@ -5,18 +5,25 @@
 <div th:replace="~{fragments/header :: navbar('booking')}"></div>
 
 <main class="container py-5">
-    <div class="row g-4">
-        <aside th:replace="~{fragments/sidebar :: accountSidebar('bookings')}"></aside>
-
-        <section class="col-lg-9">
-            <div class="d-flex justify-content-between align-items-start mb-3">
+    <section>
+            <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
                 <div>
                     <h1 class="gs-h1 section-title mb-1">Lịch hẹn của tôi</h1>
-                    <p class="text-secondary mb-0">Theo dõi trạng thái các lịch hẹn dịch vụ.</p>
+                    <p class="text-secondary mb-0">Theo dõi lịch hẹn, tiền cọc và tình trạng hoàn tiền.</p>
                 </div>
+                <a class="btn btn-primary" th:href="@{/booking/create}">
+                    <i class="bi bi-calendar-plus me-2"></i>Tạo lịch hẹn mới
+                </a>
             </div>
 
-            <div th:replace="~{fragments/sidebar :: historyTabs('bookings')}"></div>
+            <div class="surface-card p-2 mb-4">
+                <nav class="nav nav-pills flex-wrap gap-2" aria-label="Điều hướng tài khoản">
+                    <a class="nav-link" th:href="@{/account}"><i class="bi bi-person me-2"></i>Hồ sơ của tôi</a>
+                    <a class="nav-link" th:href="@{/orders}"><i class="bi bi-bag me-2"></i>Lịch sử đơn hàng</a>
+                    <a class="nav-link active fw-semibold" th:href="@{/booking/my-bookings}"><i class="bi bi-clock-history me-2"></i>Lịch sử đặt lịch</a>
+                    <a class="nav-link" th:href="@{/vehicles}"><i class="bi bi-car-front me-2"></i>Xe của tôi</a>
+                </nav>
+            </div>
 
             <div class="gs-empty-state surface-card" th:if="${#lists.isEmpty(bookings)}">
                 <i class="bi bi-calendar-x gs-empty-state-icon d-block"></i>
@@ -25,7 +32,7 @@
 
             <div class="surface-card p-0 overflow-hidden" th:if="${!#lists.isEmpty(bookings)}">
                 <div class="table-responsive">
-                    <table class="table align-middle mb-0">
+                    <table class="table align-middle mb-0 booking-history-table booking-history-table--wide">
                         <thead class="table-light">
                         <tr>
                             <th>STT</th>
@@ -33,6 +40,7 @@
                             <th> Giờ </th>
                             <th> Dịch vụ </th>
                             <th> Xe </th>
+                            <th> Tiền cọc </th>
                             <th> Trạng thái </th>
                             <th class="text-end"> Thao tác </th>
                         </tr>
@@ -40,18 +48,30 @@
                         <tbody>
                         <tr th:each="booking, stat : ${bookings}">
                             <td class="fw-bold gs-mono" th:text="${stat.count}">1</td>
-                            <td class="gs-mono" th:text="${booking.bookingDate}">2026-07-01</td>
-                            <td class="gs-mono" th:text="${booking.timeSlot}">09:30</td>
-                            <td th:text="${bookingServices[booking.id]}"> Dịch vụ </td>
-                            <td class="gs-mono" th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}"> Xe </td>
+                            <td class="gs-mono text-nowrap" th:text="${booking.bookingDate}">2026-07-01</td>
+                            <td class="gs-mono text-nowrap" th:text="${booking.timeSlot}">09:30</td>
+                            <td class="booking-service-cell" th:text="${bookingServices[booking.id]}"> Dịch vụ </td>
+                            <td class="gs-mono text-nowrap" th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Chưa chọn xe'}"> Xe </td>
+                            <td class="gs-mono text-nowrap" th:text="${#numbers.formatDecimal(booking.depositAmount ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">2.000 VNĐ</td>
                             <td>
                                 <span class="gs-badge"
                                       th:classappend="${booking.bookingStatus.name() == 'PENDING_PAYMENT'} ? 'gs-badge--neutral' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS'} ? 'gs-badge--warning' : (${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : 'gs-badge--danger')))"
                                       th:text="${booking.bookingStatus}">Chờ xử lý</span>
+                                <div class="small text-warning fw-semibold" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED' and booking.refundAccountNumber == null}">Cần nhập thông tin hoàn cọc</div>
+                                <div class="small text-warning" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED' and booking.refundAccountNumber != null}">Đang chờ hoàn cọc</div>
+                                <div class="small text-success" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'COMPLETED'}">Đã hoàn cọc</div>
                             </td>
-                            <td class="text-end">
+                            <td class="text-end text-nowrap">
                                 <a class="btn btn-outline-primary btn-sm" th:href="@{/booking/{id}(id=${booking.id})}">
                                     <i class="bi bi-eye me-1"></i> Chi tiết </a>
+                                <a class="btn btn-primary btn-sm"
+                                   th:if="${booking.bookingStatus.name() == 'PENDING_PAYMENT' and booking.paymentStatus.name() != 'PAID'}"
+                                   th:href="@{/booking/{id}/payment(id=${booking.id})}">
+                                    <i class="bi bi-credit-card me-1"></i> Thanh toán </a>
+                                <a class="btn btn-warning btn-sm"
+                                   th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED' and booking.refundAccountNumber == null}"
+                                   th:href="@{/booking/{id}(id=${booking.id})}">
+                                    <i class="bi bi-bank me-1"></i> Nhập thông tin hoàn tiền </a>
                                 <button class="btn btn-outline-danger btn-sm"
                                         type="button"
                                         th:if="${booking.bookingStatus.name() != 'CANCELED' and booking.bookingStatus.name() != 'COMPLETED'}"
@@ -84,7 +104,7 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">No</button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
                             <form th:action="@{/booking/{id}/cancel(id=${booking.id})}" method="post">
                                 <button class="btn btn-danger" type="submit">Xác nhận hủy</button>
                             </form>
@@ -92,8 +112,7 @@
                     </div>
                 </div>
             </div>
-        </section>
-    </div>
+    </section>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

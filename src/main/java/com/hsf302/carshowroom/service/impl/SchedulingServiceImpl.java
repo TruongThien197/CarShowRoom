@@ -1,6 +1,7 @@
 package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.ServiceStatus;
 import com.hsf302.carshowroom.dto.AvailableSlotDTO;
 import com.hsf302.carshowroom.entity.Booking;
 import com.hsf302.carshowroom.repository.BookingRepository;
@@ -27,6 +28,9 @@ public class SchedulingServiceImpl implements SchedulingService {
 
     @Override
     public List<AvailableSlotDTO> findAvailableSlots(LocalDate date, List<Integer> serviceIds) {
+        if (date == null || date.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày đặt lịch không được nằm trong quá khứ.");
+        }
         int duration = resolveDuration(serviceIds);
         List<AvailableSlotDTO> slots = new ArrayList<>();
         for (LocalTime start = WORK_START; !start.plusMinutes(duration).isAfter(WORK_END); start = start.plusMinutes(SLOT_STEP_MINUTES)) {
@@ -69,12 +73,17 @@ public class SchedulingServiceImpl implements SchedulingService {
 
     private int resolveDuration(List<Integer> serviceIds) {
         if (serviceIds == null || serviceIds.isEmpty()) {
-            return 60;
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một dịch vụ.");
         }
-        return serviceIds.stream()
-                .map(serviceRepository::findById)
-                .filter(java.util.Optional::isPresent)
-                .map(java.util.Optional::get)
+        List<Integer> distinctIds = serviceIds.stream().distinct().toList();
+        List<com.hsf302.carshowroom.entity.Service> services = serviceRepository.findAllById(distinctIds);
+        if (services.size() != distinctIds.size()) {
+            throw new IllegalArgumentException("Dịch vụ đã chọn không tồn tại.");
+        }
+        if (services.stream().anyMatch(service -> service.getStatus() != ServiceStatus.ACTIVE)) {
+            throw new IllegalArgumentException("Dịch vụ đã chọn hiện đã ngừng hoạt động.");
+        }
+        return services.stream()
                 .mapToInt(service -> service.getDurationMinutes() == null ? 60 : service.getDurationMinutes())
                 .sum();
     }

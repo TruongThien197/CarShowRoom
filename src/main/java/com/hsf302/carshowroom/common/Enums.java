@@ -121,6 +121,31 @@ public class Enums {
         }
     }
 
+    public enum PaymentMethod {
+        PAYOS,
+        COD;
+
+        @Override public String toString() {
+            return this == COD ? "Thanh toán khi nhận hàng" : "Thanh toán trực tuyến qua PayOS";
+        }
+    }
+
+    public enum RefundStatus {
+        NONE,
+        REQUESTED,
+        COMPLETED,
+        REJECTED;
+
+        @Override public String toString() {
+            return switch (this) {
+                case NONE -> "Không có";
+                case REQUESTED -> "Chờ hoàn tiền";
+                case COMPLETED -> "Đã hoàn tiền";
+                case REJECTED -> "Từ chối hoàn tiền";
+            };
+        }
+    }
+
     public enum ReservationStatus {
         HELD,
         CONFIRMED,

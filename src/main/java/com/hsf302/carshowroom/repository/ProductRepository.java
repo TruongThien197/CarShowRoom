@@ -38,6 +38,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             select distinct p from Product p
             left join p.compatibleCarModels cm
             where (:categoryId is null or p.category.id = :categoryId)
+              and p.status = com.hsf302.carshowroom.common.Enums.ProductStatus.ACTIVE
               and (:keyword is null or lower(p.name) like lower(concat('%', :keyword, '%')))
               and (:carModelId is null or cm.id = :carModelId)
               and (:brand is null or lower(cm.brand) = lower(:brand))

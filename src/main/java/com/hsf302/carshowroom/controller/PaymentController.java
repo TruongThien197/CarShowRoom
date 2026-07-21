@@ -25,19 +25,27 @@ public class PaymentController {
     @GetMapping("/return")
     public String paymentReturn(@RequestParam(required = false) String orderCode, RedirectAttributes attributes) {
         if (orderCode == null || orderCode.isBlank()) {
-            attributes.addFlashAttribute("errorMessage",
-                    "PayOS did not return an order code. Please check the order payment status again.");
+            attributes.addFlashAttribute("errorMessage", "PayOS không trả về mã giao dịch.");
             return "redirect:/orders";
         }
         try {
             PaymentTransaction transaction = paymentService.syncPaymentStatus(orderCode);
+            if (transaction.getStatus().name().equals("CANCELED")) {
+                attributes.addFlashAttribute("errorMessage", "Bạn đã hủy thanh toán PayOS. Vui lòng thực hiện lại thanh toán.");
+                if (isBookingOnly(transaction)) {
+                    return "redirect:/booking/" + transaction.getBooking().getId() + "/payment";
+                }
+                return "redirect:/orders/" + paymentService.getOrderIdByPayOSCode(orderCode) + "/payment";
+            }
             attributes.addFlashAttribute("successMessage",
                     transaction.getStatus().name().equals("PAID")
-                            ? "PayOS payment successful."
-                            : "Transaction is being processed by PayOS.");
+                            ? "Thanh toán PayOS thành công."
+                            : "Giao dịch đang được PayOS xử lý.");
+            if (isBookingOnly(transaction)) {
+                return "redirect:/booking/" + transaction.getBooking().getId();
+            }
         } catch (Exception exception) {
-            attributes.addFlashAttribute("errorMessage",
-                    "Unable to confirm payment: " + exception.getMessage());
+            attributes.addFlashAttribute("errorMessage", "Không thể xác nhận thanh toán: " + exception.getMessage());
         }
         return "redirect:/orders";
     }
@@ -45,15 +53,40 @@ public class PaymentController {
     @GetMapping("/cancel")
     public String paymentCancel(@RequestParam(required = false) String orderCode,
                                 RedirectAttributes attributes) {
+        Integer orderId = null;
+        Integer bookingId = null;
         if (orderCode != null && !orderCode.isBlank()) {
             try {
-                paymentService.syncPaymentStatus(orderCode);
+                PaymentTransaction transaction = paymentService.syncPaymentStatus(orderCode);
+                bookingId = transaction.getBooking() == null ? null : transaction.getBooking().getId();
+                if (!isBookingOnly(transaction)) {
+                    orderId = paymentService.getOrderIdByPayOSCode(orderCode);
+                }
             } catch (Exception ignored) {
-                // The user still needs a safe redirect even if PayOS is temporarily unavailable.
+                try {
+                    bookingId = paymentService.getBookingIdByPayOSCode(orderCode);
+                    if (bookingId == null) {
+                        orderId = paymentService.getOrderIdByPayOSCode(orderCode);
+                    }
+                } catch (Exception ignoredAgain) {
+                    // Keep a safe redirect if PayOS is temporarily unavailable.
+                }
             }
         }
-        attributes.addFlashAttribute("errorMessage", "You have canceled the PayOS payment.");
+        attributes.addFlashAttribute("errorMessage", "Bạn đã hủy thanh toán PayOS. Vui lòng thực hiện lại thanh toán.");
+        if (orderId != null) {
+            return "redirect:/orders/" + orderId + "/payment";
+        }
+        if (bookingId != null) {
+            return "redirect:/booking/" + bookingId + "/payment";
+        }
         return "redirect:/orders";
+    }
+
+    private boolean isBookingOnly(PaymentTransaction transaction) {
+        return transaction.getBooking() != null
+                && transaction.getOrder() == null
+                && transaction.getParentOrder() == null;
     }
 
     @PostMapping("/sync")

@@ -138,12 +138,33 @@ public class PaymentServiceImpl implements PaymentService {
         paymentTransactionRepository.saveAll(expiredTransactions);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Integer getOrderIdByPayOSCode(String orderCode) {
+        PaymentTransaction transaction = paymentTransactionRepository.findByPayosOrderCode(orderCode)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch PayOS."));
+        if (transaction.getParentOrder() != null) {
+            return transaction.getParentOrder().getId();
+        }
+        if (transaction.getOrder() != null) {
+            return transaction.getOrder().getId();
+        }
+        throw new IllegalArgumentException("Giao dịch PayOS không có đơn hàng liên kết.");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Integer getBookingIdByPayOSCode(String orderCode) {
+        PaymentTransaction transaction = paymentTransactionRepository.findByPayosOrderCode(orderCode)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch PayOS."));
+        return transaction.getBooking() == null ? null : transaction.getBooking().getId();
+    }
+
     private void applyStatus(PaymentTransaction transaction, PaymentLinkStatus status) {
         if (status == PaymentLinkStatus.PAID) {
             markPaid(transaction);
         } else if (status == PaymentLinkStatus.CANCELLED) {
-            markUnpaidTerminal(transaction, PaymentStatus.CANCELED,
-                    OrderStatus.CANCELED, BookingStatus.CANCELED);
+            markCancelledForRetry(transaction);
         } else if (status == PaymentLinkStatus.EXPIRED) {
             markUnpaidTerminal(transaction, PaymentStatus.EXPIRED,
                     OrderStatus.EXPIRED_PAYMENT, BookingStatus.EXPIRED_PAYMENT);
@@ -216,6 +237,38 @@ public class PaymentServiceImpl implements PaymentService {
         orderRepository.save(order);
     }
 
+    private void markCancelledForRetry(PaymentTransaction transaction) {
+        if (transaction.getStatus() == PaymentStatus.PAID) {
+            return;
+        }
+        transaction.setStatus(PaymentStatus.CANCELED);
+        Order parent = transaction.getParentOrder();
+        if (parent != null) {
+            parent.setPaymentStatus(PaymentStatus.PENDING);
+            parent.setOrderStatus(OrderStatus.PENDING_PAYMENT);
+            orderRepository.save(parent);
+            parent.getSubOrders().forEach(this::resetOrderForPaymentRetry);
+        } else if (transaction.getOrder() != null) {
+            resetOrderForPaymentRetry(transaction.getOrder());
+        }
+        if (transaction.getBooking() != null) {
+            Booking booking = transaction.getBooking();
+            booking.setPaymentStatus(PaymentStatus.PENDING);
+            booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
+            bookingRepository.save(booking);
+        }
+        if (transaction.getOrder() != null) {
+        } else if (parent != null) {
+        }
+    }
+
+    private void resetOrderForPaymentRetry(Order order) {
+        inventoryReservationService.releaseReservation(order);
+        order.setPaymentStatus(PaymentStatus.PENDING);
+        order.setOrderStatus(OrderStatus.PENDING_PAYMENT);
+        orderRepository.save(order);
+    }
+
     private void validateAmount(PaymentTransaction transaction, Long remoteAmount) {
         if (remoteAmount == null || transaction.getAmount().compareTo(BigDecimal.valueOf(remoteAmount)) != 0) {
             throw new IllegalStateException("Số tiền PayOS không khớp với giao dịch trong hệ thống.");
@@ -259,7 +312,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (request.getParentOrder() != null) {
             BigDecimal amount = request.getParentOrder().getProductTotal();
             if (request.getBooking() != null) {
-                amount = amount.add(request.getBooking().getEstimatedMinAmount());
+                amount = amount.add(resolveBookingDeposit(request.getBooking()));
             }
             return amount;
         }
@@ -268,9 +321,21 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(Order::getProductTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         if (request.getBooking() != null) {
-            amount = amount.add(request.getBooking().getEstimatedMinAmount());
+            amount = amount.add(resolveBookingDeposit(request.getBooking()));
         }
         return amount;
+    }
+
+    private BigDecimal resolveBookingDeposit(Booking booking) {
+        if (booking.getDepositAmount() != null && booking.getDepositAmount().compareTo(BigDecimal.ZERO) > 0) {
+            return booking.getDepositAmount();
+        }
+        BigDecimal estimatedMin = booking.getEstimatedMinAmount() == null
+                ? BigDecimal.ZERO : booking.getEstimatedMinAmount();
+        return estimatedMin.multiply(BigDecimal.valueOf(0.20))
+                .max(BigDecimal.valueOf(2_000))
+                .min(BigDecimal.valueOf(10_000))
+                .setScale(0, RoundingMode.UP);
     }
 
     private String safePayOSText(String value, int maxLength) {

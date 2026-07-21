@@ -47,7 +47,7 @@ public class SecurityConfig {
                             response.sendRedirect("/auth/login");
                         }
                     }))
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/payments/payos/webhook"))
             .formLogin(form -> form.disable())
             .logout(logout -> logout.disable());
         return http.build();

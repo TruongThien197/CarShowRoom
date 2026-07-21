@@ -99,8 +99,10 @@
                                 <a class="btn btn-outline-primary btn-sm" th:href="@{/admin/users/edit/{id}(id=${user.id})}">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a class="btn btn-outline-danger btn-sm" th:if="${user.status == 'ACTIVE'}" th:href="@{/admin/users/{id}/change-status(id=${user.id})}">Khóa</a>
-                                <a class="btn btn-outline-success btn-sm" th:if="${user.status != 'ACTIVE'}" th:href="@{/admin/users/{id}/change-status(id=${user.id})}">Mở khóa</a>
+                                <form class="d-inline" th:action="@{/admin/users/{id}/change-status(id=${user.id})}" method="post">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit" th:if="${user.status == 'ACTIVE'}">Khóa</button>
+                                    <button class="btn btn-outline-success btn-sm" type="submit" th:if="${user.status != 'ACTIVE'}">Mở khóa</button>
+                                </form>
                             </td>
                         </tr>
                         </tbody>

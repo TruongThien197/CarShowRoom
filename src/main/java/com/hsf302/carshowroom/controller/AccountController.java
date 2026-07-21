@@ -10,6 +10,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/account")
@@ -31,6 +34,39 @@ public class AccountController {
         model.addAttribute("bookingsCount", bookingService.getBookings(user).size());
         model.addAttribute("vehiclesCount", vehicleRepository.findByUser(user).size());
         return "account/profile";
+    }
+
+    @PostMapping("/profile")
+    public String updateProfile(@RequestParam String fullName,
+                                @RequestParam(required = false) String phone,
+                                @RequestParam(required = false) String address,
+                                RedirectAttributes attributes) {
+        try {
+            User user = authService.getCurrentUser();
+            authService.updateProfile(user.getId(), fullName, phone, address);
+            attributes.addFlashAttribute("successMessage", "Đã cập nhật hồ sơ.");
+        } catch (Exception exception) {
+            attributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/account";
+    }
+
+    @PostMapping("/password")
+    public String changePassword(@RequestParam String currentPassword,
+                                 @RequestParam String newPassword,
+                                 @RequestParam String confirmPassword,
+                                 RedirectAttributes attributes) {
+        try {
+            if (!newPassword.equals(confirmPassword)) {
+                throw new IllegalArgumentException("Xác nhận mật khẩu mới không khớp.");
+            }
+            User user = authService.getCurrentUser();
+            authService.changePassword(user.getId(), currentPassword, newPassword);
+            attributes.addFlashAttribute("successMessage", "Đã đổi mật khẩu.");
+        } catch (Exception exception) {
+            attributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/account";
     }
 
     private User currentUserOrNull() {

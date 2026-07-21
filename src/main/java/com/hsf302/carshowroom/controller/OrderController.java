@@ -1,7 +1,10 @@
 package com.hsf302.carshowroom.controller;
 
 import com.hsf302.carshowroom.common.Enums.FulfillmentType;
+import com.hsf302.carshowroom.common.Enums.OrderStatus;
+import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.dto.CheckoutForm;
+import com.hsf302.carshowroom.dto.CheckoutResult;
 import com.hsf302.carshowroom.entity.CartItem;
 import com.hsf302.carshowroom.entity.Order;
 import com.hsf302.carshowroom.entity.PaymentTransaction;
@@ -21,6 +24,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Map;
@@ -65,8 +71,11 @@ public class OrderController {
             return "order/checkout";
         }
         try {
-            PaymentTransaction transaction = orderService.checkout(user, form);
-            return "redirect:" + transaction.getCheckoutUrl();
+            CheckoutResult result = orderService.checkout(user, form);
+            if (result.requiresOnlinePayment()) {
+                return "redirect:" + result.checkoutUrl();
+            }
+            return "redirect:/orders/" + result.orderId();
         } catch (RuntimeException exception) {
             model.addAttribute("errorMessage", "Unable to create PayOS payment: " + exception.getMessage());
             populateCheckoutModel(model, user, cartItems, form);
@@ -92,6 +101,92 @@ public class OrderController {
         return "order/history";
     }
 
+    @GetMapping("/{id}")
+    public String detail(@PathVariable Integer id, Model model) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            return "redirect:/auth/login";
+        }
+        Order order = orderService.getOrderForUser(id, user);
+        model.addAttribute("order", order);
+        model.addAttribute("orderItems", orderItemRepository.findByOrderId(id));
+        model.addAttribute("canCancel", order.getOrderStatus() != OrderStatus.SHIPPING
+                && order.getOrderStatus() != OrderStatus.COMPLETED
+                && order.getOrderStatus() != OrderStatus.CANCELED
+                && order.getOrderStatus() != OrderStatus.EXPIRED_PAYMENT);
+        model.addAttribute("canEditAddress", order.getOrderType() == com.hsf302.carshowroom.common.Enums.OrderType.SHIPPING
+                && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT || order.getOrderStatus() == OrderStatus.PROCESSING));
+        return "order/detail";
+    }
+
+    @GetMapping("/{id}/payment")
+    public String paymentConfirmation(@PathVariable Integer id, Model model) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            return "redirect:/auth/login";
+        }
+        Order order = orderService.getOrderForUser(id, user);
+        if (order.getOrderStatus() != OrderStatus.PENDING_PAYMENT || order.getPaymentStatus() == PaymentStatus.PAID) {
+            return "redirect:/orders/" + id;
+        }
+        model.addAttribute("order", order);
+        return "order/payment-confirmation";
+    }
+
+    @PostMapping("/{id}/payment")
+    public String choosePaymentMethod(@PathVariable Integer id,
+                                      @RequestParam String paymentMethod,
+                                      RedirectAttributes attributes) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            return "redirect:/auth/login";
+        }
+        try {
+            CheckoutResult result = orderService.choosePaymentMethod(id, user, paymentMethod);
+            if (result.requiresOnlinePayment()) {
+                return "redirect:" + result.checkoutUrl();
+            }
+            attributes.addFlashAttribute("successMessage", "Đơn hàng đã được xác nhận thanh toán khi nhận hàng.");
+            return "redirect:/orders/" + result.orderId();
+        } catch (Exception exception) {
+            attributes.addFlashAttribute("errorMessage", exception.getMessage());
+            return "redirect:/orders/" + id + "/payment";
+        }
+    }
+
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable Integer id, @RequestParam String reason, RedirectAttributes attributes) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            return "redirect:/auth/login";
+        }
+        try {
+            orderService.cancelOrderForUser(id, user, reason);
+            attributes.addFlashAttribute("successMessage", "Đã hủy đơn hàng và hoàn lại số lượng hàng đã giữ. Nếu đơn đã thanh toán, nhân viên sẽ liên hệ hỗ trợ hoàn tiền.");
+        } catch (Exception exception) {
+            attributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/orders/" + id;
+    }
+
+    @PostMapping("/{id}/shipping-address")
+    public String updateShippingAddress(@PathVariable Integer id,
+                                        @RequestParam String shippingAddress,
+                                        @RequestParam String receiverPhone,
+                                        RedirectAttributes attributes) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            return "redirect:/auth/login";
+        }
+        try {
+            orderService.updateShippingAddressForUser(id, user, shippingAddress, receiverPhone);
+            attributes.addFlashAttribute("successMessage", "Đã cập nhật thông tin nhận hàng.");
+        } catch (Exception exception) {
+            attributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/orders/" + id;
+    }
+
     private void populateCheckoutModel(Model model, User user, List<CartItem> cartItems, CheckoutForm form) {
         model.addAttribute("user", user);
         model.addAttribute("cartItems", cartItems);
@@ -101,7 +196,8 @@ public class OrderController {
                 .anyMatch(item -> FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
         model.addAttribute("needsWorkshop", needsWorkshop);
         model.addAttribute("vehicles", vehicleRepository.findByUser(user));
-        model.addAttribute("services", serviceRepository.findAllByOrderByServiceNameAsc());
+        model.addAttribute("services", serviceRepository.findByStatusOrderByServiceNameAsc(
+                com.hsf302.carshowroom.common.Enums.ServiceStatus.ACTIVE));
     }
 
     private User currentUserOrNull() {

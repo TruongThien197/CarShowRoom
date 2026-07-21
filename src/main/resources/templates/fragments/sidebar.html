@@ -85,13 +85,13 @@
             <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'profile'} ? 'active fw-semibold'" th:href="@{/account}">
                 <i class="bi bi-person me-2"></i>Hồ sơ của tôi
             </a>
-            <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'orders'} ? 'active fw-semibold'" th:href="@{/orders}">
-                <i class="bi bi-bag me-2"></i>My Parts Orders
+            <a class="list-group-item list-group-item-action p-3" th:if="${activeTab != 'booking-create'}" th:classappend="${activeTab == 'orders'} ? 'active fw-semibold'" th:href="@{/orders}">
+                <i class="bi bi-bag me-2"></i>Lịch sử đơn hàng
             </a>
-            <a class="list-group-item list-group-item-action p-3"
-               th:classappend="${activeTab == 'booking-create' or activeTab == 'bookings'} ? 'active fw-semibold'"
-               th:href="@{/booking/create}">
-                <i class="bi bi-calendar-check me-2"></i>Service Bookings
+            <a class="list-group-item list-group-item-action p-3" th:if="${activeTab != 'booking-create'}"
+               th:classappend="${activeTab == 'bookings'} ? 'active fw-semibold'"
+               th:href="@{/booking/my-bookings}">
+                <i class="bi bi-clock-history me-2"></i>Lịch sử đặt lịch
             </a>
             <a class="list-group-item list-group-item-action p-3" th:classappend="${activeTab == 'vehicles'} ? 'active fw-semibold'" th:href="@{/vehicles}">
                 <i class="bi bi-car-front me-2"></i> Xe của tôi </a>
@@ -116,13 +116,30 @@
     <a class="nav-link px-3 py-2"
        th:classappend="${activeTab == 'orders'} ? 'active fw-semibold'"
        th:href="@{/orders}">
-        <i class="bi bi-bag-check me-2"></i>Parts Orders
+        <i class="bi bi-bag-check me-2"></i>Đơn hàng phụ tùng
     </a>
     <a class="nav-link px-3 py-2"
        th:classappend="${activeTab == 'bookings'} ? 'active fw-semibold'"
        th:href="@{/booking/my-bookings}">
-        <i class="bi bi-calendar-check me-2"></i>Service Bookings
+        <i class="bi bi-calendar-check me-2"></i>Lịch hẹn dịch vụ
     </a>
+</nav>
+
+<nav th:fragment="accountTabs(activeTab)" class="surface-card p-2 mb-4">
+    <div class="nav nav-pills flex-wrap gap-2" aria-label="Điều hướng tài khoản">
+        <a class="nav-link" th:classappend="${activeTab == 'profile'} ? 'active fw-semibold'" th:href="@{/account}">
+            <i class="bi bi-person me-2"></i>Hồ sơ của tôi
+        </a>
+        <a class="nav-link" th:classappend="${activeTab == 'orders'} ? 'active fw-semibold'" th:href="@{/orders}">
+            <i class="bi bi-bag me-2"></i>Lịch sử đơn hàng
+        </a>
+        <a class="nav-link" th:classappend="${activeTab == 'bookings'} ? 'active fw-semibold'" th:href="@{/booking/my-bookings}">
+            <i class="bi bi-clock-history me-2"></i>Lịch sử đặt lịch
+        </a>
+        <a class="nav-link" th:classappend="${activeTab == 'vehicles'} ? 'active fw-semibold'" th:href="@{/vehicles}">
+            <i class="bi bi-car-front me-2"></i>Xe của tôi
+        </a>
+    </div>
 </nav>
 </body>
 </html>
