@@ -24,6 +24,7 @@ public interface OrderService {
     void updateShippingAddressForUser(Integer id, User user, String shippingAddress, String receiverPhone);
 
     void updateShipment(Integer id, String shippingCarrier, String trackingCode);
+    void completeRefund(Integer id, User processedBy, String note);
 
     CheckoutResult choosePaymentMethod(Integer id, User user, String paymentMethod);
 }

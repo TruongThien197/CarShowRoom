@@ -196,7 +196,8 @@ public class OrderController {
                 .anyMatch(item -> FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
         model.addAttribute("needsWorkshop", needsWorkshop);
         model.addAttribute("vehicles", vehicleRepository.findByUser(user));
-        model.addAttribute("services", serviceRepository.findAllByOrderByServiceNameAsc());
+        model.addAttribute("services", serviceRepository.findByStatusOrderByServiceNameAsc(
+                com.hsf302.carshowroom.common.Enums.ServiceStatus.ACTIVE));
     }
 
     private User currentUserOrNull() {

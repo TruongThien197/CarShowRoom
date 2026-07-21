@@ -339,6 +339,16 @@ body {
     white-space: nowrap;
 }
 
+.booking-history-table {
+    min-width: 980px;
+}
+
+.booking-history-table .booking-service-cell {
+    min-width: 190px;
+    max-width: 240px;
+    white-space: normal;
+}
+
 .step-pill {
     width: 34px;
     height: 34px;

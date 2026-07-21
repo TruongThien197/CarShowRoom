@@ -81,6 +81,7 @@
                 <div class="d-flex justify-content-between mb-2"><span class="text-secondary">Loại đơn</span><strong th:text="${order.orderType}">Giao hàng</strong></div>
                 <div class="d-flex justify-content-between mb-2"><span class="text-secondary">Phương thức</span><strong th:text="${order.paymentMethod}">Thanh toán</strong></div>
                 <div class="d-flex justify-content-between mb-2"><span class="text-secondary">Thanh toán</span><strong th:text="${order.paymentStatus}">Chờ thanh toán</strong></div>
+                <div class="d-flex justify-content-between mb-2" th:if="${order.refundStatus.name() != 'NONE'}"><span class="text-secondary">Hoàn tiền</span><strong th:text="${order.refundStatus}">Chờ hoàn tiền</strong></div>
                 <div class="d-flex justify-content-between mb-2"><span class="text-secondary">Ngày tạo</span><strong class="gs-mono" th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}">Ngày</strong></div>
                 <hr><div class="d-flex justify-content-between fs-5 fw-bold"><span>Tổng cộng</span><span class="gs-mono text-primary" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</span></div>
             </div>

@@ -1,29 +1,30 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Booking Chi tiết | GearShift Pro')}"></head>
+<head th:replace="~{fragments/header :: head('Chi tiết lịch hẹn | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('booking')}"></div>
 
 <main class="container py-5">
     <div class="row g-4">
-        <aside th:replace="~{fragments/sidebar :: accountSidebar('bookings')}"></aside>
-
-        <section class="col-lg-9">
+        <section class="col-12">
+            <div th:replace="~{fragments/sidebar :: accountTabs('bookings')}"></div>
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
-                    <h1 class="gs-h1 section-title mb-1" th:text="'Booking BK-' + ${booking.id}"> Lịch hẹn </h1>
+                    <h1 class="gs-h1 section-title mb-1" th:text="'Lịch hẹn BK-' + ${booking.id}"> Lịch hẹn </h1>
                     <p class="text-secondary mb-0">Xem lại chi tiết lịch hẹn và các dịch vụ đã chọn.</p>
                 </div>
                 <a class="btn btn-outline-secondary" th:href="@{/booking/my-bookings}"> Quay lại </a>
             </div>
-
-            <div th:replace="~{fragments/sidebar :: historyTabs('bookings')}"></div>
 
             <div class="surface-card gs-stripe-top p-4 mb-4">
                 <div class="row g-4">
                     <div class="col-md-4">
                         <div class="small text-secondary">Ngày và giờ</div>
                         <div class="fw-bold gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}"> Ngày </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small text-secondary">Tiền cọc giữ lịch</div>
+                        <div class="fw-bold gs-mono text-primary" th:text="${#numbers.formatDecimal(booking.depositAmount ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">2.000 VNĐ</div>
                     </div>
                     <div class="col-md-4">
                         <div class="small text-secondary"> Trạng thái </div>
@@ -42,6 +43,32 @@
                     </div>
                 </div>
             </div>
+            <div id="refund-account" class="surface-card p-4 border border-warning-subtle mb-4"
+                 th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}">
+                <h4 class="fw-bold mb-2"><i class="bi bi-bank me-2 text-warning"></i>Thông tin nhận hoàn tiền cọc</h4>
+                <p class="text-secondary mb-3">Lịch hẹn đã hủy. Vui lòng nhập tài khoản nhận hoàn cọc. Tên người nhận phải trùng với người đã thanh toán tiền cọc.</p>
+                <form th:action="@{/booking/{id}/refund-account(id=${booking.id})}" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Ngân hàng</label>
+                            <input class="form-control" name="bankName" required placeholder="Ví dụ: Vietcombank" th:value="${booking.refundBankName}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tên người nhận</label>
+                            <input class="form-control" name="accountHolder" required readonly th:value="${booking.user.fullName}">
+                            <div class="form-text">Tự động lấy theo người thanh toán cọc.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Số tài khoản</label>
+                            <input class="form-control" name="accountNumber" required inputmode="numeric" th:value="${booking.refundAccountNumber}">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-3" type="submit">Lưu thông tin nhận hoàn tiền</button>
+                </form>
+            </div>
+            <div class="alert alert-success" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'COMPLETED'}">
+                Tiền cọc đã được hoàn lại. <span th:text="${booking.refundNote}">Ghi chú</span>
+            </div>
 
             <div class="surface-card p-4">
                 <h4 class="gs-h4 fw-bold mb-3"> Dịch vụ </h4>
@@ -56,7 +83,7 @@
                         </thead>
                         <tbody>
                         <tr th:each="detail : ${bookingServices}">
-                            <td class="fw-bold" th:text="${detail.serviceNameSnapshot}"> Dịch vụ </td>
+                            <td class="fw-bold" th:text="${detail.service != null ? detail.service.serviceName : detail.serviceNameSnapshot}"> Dịch vụ </td>
                             <td th:text="${detail.service.description ?: 'Chưa có mô tả'}"> Mô tả </td>
                             <td class="text-end fw-bold gs-mono"
                                 th:text="${#numbers.formatDecimal(detail.minPriceSnapshot, 0, 'COMMA', 0, 'POINT')} + ' VND'">0</td>

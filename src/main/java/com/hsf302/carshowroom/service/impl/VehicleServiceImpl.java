@@ -2,9 +2,11 @@ package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.dto.VehicleForm;
 import com.hsf302.carshowroom.entity.Booking;
+import com.hsf302.carshowroom.entity.CarModel;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.repository.BookingRepository;
+import com.hsf302.carshowroom.repository.CarModelRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.VehicleService;
 import lombok.RequiredArgsConstructor;
@@ -18,16 +20,26 @@ import java.util.List;
 public class VehicleServiceImpl implements VehicleService {
     private final VehicleRepository vehicleRepository;
     private final BookingRepository bookingRepository;
+    private final CarModelRepository carModelRepository;
 
     @Override
     @Transactional
     public Vehicle addVehicle(User user, VehicleForm form) {
         Vehicle vehicle = new Vehicle();
         vehicle.setUser(user);
-        vehicle.setBrand(form.getBrand().trim());
-        vehicle.setModelName(form.getModelName().trim());
-        vehicle.setYear(form.getYear());
-        vehicle.setLicensePlate(form.getLicensePlate());
+        if (form.getCarModelId() != null) {
+            CarModel carModel = carModelRepository.findById(form.getCarModelId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy dòng xe đã chọn."));
+            vehicle.setCarModel(carModel);
+            vehicle.setBrand(carModel.getBrand());
+            vehicle.setModelName(carModel.getModelName());
+            vehicle.setYear(carModel.getYear());
+        } else {
+            vehicle.setBrand(form.getBrand().trim());
+            vehicle.setModelName(form.getModelName().trim());
+            vehicle.setYear(form.getYear());
+        }
+        vehicle.setLicensePlate(form.getLicensePlate().trim().toUpperCase());
         return vehicleRepository.save(vehicle);
     }
 

@@ -130,6 +130,22 @@ public class Enums {
         }
     }
 
+    public enum RefundStatus {
+        NONE,
+        REQUESTED,
+        COMPLETED,
+        REJECTED;
+
+        @Override public String toString() {
+            return switch (this) {
+                case NONE -> "Không có";
+                case REQUESTED -> "Chờ hoàn tiền";
+                case COMPLETED -> "Đã hoàn tiền";
+                case REJECTED -> "Từ chối hoàn tiền";
+            };
+        }
+    }
+
     public enum ReservationStatus {
         HELD,
         CONFIRMED,

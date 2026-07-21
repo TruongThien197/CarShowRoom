@@ -170,10 +170,10 @@ public class DataSeeder implements CommandLineRunner {
         if (serviceRepository.count() > 0) {
             return;
         }
-        serviceRepository.save(createService("Digital Diagnostics", "A full vehicle error scan with a system health report.", "20000", "30000", 30));
-        serviceRepository.save(createService("Brake & Chassis Inspection", "Inspection of brakes, suspension, and undercarriage components.", "35000", "45000", 60));
-        serviceRepository.save(createService("Engine Performance Tuning", "ECU inspection, configuration review, and performance tuning.", "40000", "60000", 90));
-        serviceRepository.save(createService("Regular Maintenance", "Oil change, fluid check, filter replacement, and basic maintenance items.", "30000", "45000", 45));
+        serviceRepository.save(createService("Chẩn đoán kỹ thuật số", "Quét lỗi toàn bộ xe và lập báo cáo tình trạng hệ thống.", "20000", "30000", 30));
+        serviceRepository.save(createService("Kiểm tra phanh và gầm xe", "Kiểm tra hệ thống phanh, giảm xóc và các chi tiết dưới gầm.", "35000", "45000", 60));
+        serviceRepository.save(createService("Tinh chỉnh hiệu suất động cơ", "Kiểm tra ECU, rà soát cấu hình và tinh chỉnh hiệu suất.", "40000", "60000", 90));
+        serviceRepository.save(createService("Bảo dưỡng định kỳ", "Thay dầu, kiểm tra dung dịch, thay lọc và bảo dưỡng cơ bản.", "30000", "45000", 45));
     }
 
     private com.hsf302.carshowroom.entity.Service createService(String name, String description, String minPrice, String maxPrice, int duration) {

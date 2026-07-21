@@ -113,6 +113,20 @@
                         </form>
                     </div>
 
+                    <div class="surface-card p-4 mb-4 border border-warning-subtle" th:if="${order.refundStatus.name() != 'NONE'}">
+                        <h4 class="fw-bold mb-2"><i class="bi bi-arrow-counterclockwise me-2 text-warning"></i>Hoàn tiền</h4>
+                        <p class="mb-2"><strong th:text="${order.refundStatus}">Trạng thái hoàn tiền</strong></p>
+                        <p class="small text-secondary" th:if="${order.cancellationReason != null}" th:text="'Lý do hủy: ' + ${order.cancellationReason}"></p>
+                        <form th:if="${order.refundStatus.name() == 'REQUESTED'}" th:action="@{/admin/orders/{id}/refund(id=${order.id})}" method="post">
+                            <textarea class="form-control mb-2" name="note" rows="2" required placeholder="Ghi chú/mã giao dịch hoàn tiền"></textarea>
+                            <button class="btn btn-success w-100" type="submit">Xác nhận đã hoàn tiền</button>
+                        </form>
+                        <div class="small" th:if="${order.refundStatus.name() == 'COMPLETED'}">
+                            <div th:text="${order.refundNote}">Ghi chú</div>
+                            <div class="text-secondary" th:if="${order.refundedAt != null}" th:text="${#temporals.format(order.refundedAt, 'dd-MM-yyyy HH:mm')}">Thời gian</div>
+                        </div>
+                    </div>
+
                     <div class="surface-card p-4">
                         <h4 class="fw-bold mb-3"><i class="bi bi-receipt me-2 text-primary"></i>Summary</h4>
                         <div class="d-flex justify-content-between mb-2">

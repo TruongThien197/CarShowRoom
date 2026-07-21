@@ -6,6 +6,7 @@ import com.hsf302.carshowroom.common.Enums.OrderType;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.common.Enums.PaymentMethod;
 import com.hsf302.carshowroom.common.Enums.ServiceStatus;
+import com.hsf302.carshowroom.common.Enums.RefundStatus;
 import com.hsf302.carshowroom.dto.CheckoutForm;
 import com.hsf302.carshowroom.dto.CheckoutResult;
 import com.hsf302.carshowroom.dto.PayOS.PayOSCreatePaymentLinkRequest;
@@ -23,6 +24,7 @@ import com.hsf302.carshowroom.repository.CartItemRepository;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.OrderRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
+import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
 import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.InventoryReservationService;
@@ -35,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -57,6 +60,7 @@ public class OrderServiceImpl implements OrderService {
     private final SchedulingService schedulingService;
     private final PaymentService paymentService;
     private final OrderWorkflowService orderWorkflowService;
+    private final PaymentTransactionRepository paymentTransactionRepository;
 
     @Override
     @Transactional
@@ -153,6 +157,9 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Không thể hủy đơn khi đơn đã được giao, hoàn tất hoặc đã hủy.");
         }
         order.setCancellationReason(requireText(reason, "Vui lòng nhập lý do hủy đơn."));
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            order.setRefundStatus(RefundStatus.REQUESTED);
+        }
         cancelOrderAndChildren(order);
     }
 
@@ -178,11 +185,38 @@ public class OrderServiceImpl implements OrderService {
         if (order.getOrderType() != OrderType.SHIPPING) {
             throw new IllegalStateException("Chỉ đơn giao hàng mới có mã vận đơn.");
         }
-        if (order.getOrderStatus() != OrderStatus.SHIPPING) {
-            throw new IllegalStateException("Hãy chuyển đơn sang trạng thái đang giao trước khi cập nhật vận đơn.");
+        if (order.getOrderStatus() != OrderStatus.PROCESSING
+                && order.getOrderStatus() != OrderStatus.SHIPPING) {
+            throw new IllegalStateException("Chỉ có thể cập nhật vận chuyển cho đơn đang xử lý hoặc đang giao.");
         }
-        order.setShippingCarrier(requireText(shippingCarrier, "Vui lòng nhập đơn vị vận chuyển."));
-        order.setTrackingCode(requireText(trackingCode, "Vui lòng nhập mã vận đơn."));
+        String validatedCarrier = requireText(shippingCarrier, "Vui lòng nhập đơn vị vận chuyển.");
+        String validatedTrackingCode = requireText(trackingCode, "Vui lòng nhập mã vận đơn.");
+        order.setShippingCarrier(validatedCarrier);
+        order.setTrackingCode(validatedTrackingCode);
+        if (order.getOrderStatus() == OrderStatus.PROCESSING) {
+            orderWorkflowService.shipOrder(order);
+        }
+        orderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
+    public void completeRefund(Integer id, User processedBy, String note) {
+        Order order = getOrderById(id);
+        if (order.getOrderStatus() != OrderStatus.CANCELED
+                || order.getRefundStatus() != RefundStatus.REQUESTED
+                || order.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new IllegalStateException("Đơn hàng không có yêu cầu hoàn tiền đang chờ xử lý.");
+        }
+        order.setRefundStatus(RefundStatus.COMPLETED);
+        order.setPaymentStatus(PaymentStatus.REFUNDED);
+        order.setRefundNote(requireText(note, "Vui lòng nhập ghi chú hoàn tiền."));
+        order.setRefundedAt(LocalDateTime.now());
+        order.setRefundedBy(processedBy);
+        paymentTransactionRepository.findByOrderOrParentOrder(order, order).forEach(transaction -> {
+            transaction.setStatus(PaymentStatus.REFUNDED);
+            paymentTransactionRepository.save(transaction);
+        });
         orderRepository.save(order);
     }
 
@@ -235,12 +269,15 @@ public class OrderServiceImpl implements OrderService {
     public void updateOrderStatus(Integer id, String status) {
         Order order = getOrderById(id);
         OrderStatus nextStatus = OrderStatus.valueOf(status.toUpperCase());
+        if (order.getOrderStatus() == nextStatus) {
+            return;
+        }
+        validateOrderTransition(order, nextStatus);
         if (nextStatus == OrderStatus.PROCESSING) {
-            if (order.getPaymentMethod() != PaymentMethod.COD) {
-                order.setPaymentStatus(PaymentStatus.PAID);
-            }
             orderWorkflowService.processOrder(order);
         } else if (nextStatus == OrderStatus.SHIPPING) {
+            requireText(order.getShippingCarrier(), "Vui lòng cập nhật đơn vị vận chuyển trước khi chuyển sang đang giao.");
+            requireText(order.getTrackingCode(), "Vui lòng cập nhật mã vận đơn trước khi chuyển sang đang giao.");
             orderWorkflowService.shipOrder(order);
         } else if (nextStatus == OrderStatus.COMPLETED) {
             orderWorkflowService.completeOrder(order);
@@ -266,6 +303,7 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderType(orderType);
         order.setOrderStatus(OrderStatus.PENDING_PAYMENT);
         order.setPaymentStatus(PaymentStatus.PENDING);
+        order.setRefundStatus(RefundStatus.NONE);
         order.setShippingAddress(shippingAddress);
         order.setReceiverPhone(receiverPhone);
         order.setProductTotal(productTotal);
@@ -313,6 +351,10 @@ public class OrderServiceImpl implements OrderService {
         booking.setEstimatedMinAmount(service.getMinPrice());
         booking.setEstimatedMaxAmount(service.getMaxPrice());
         booking.setFinalAmount(service.getMinPrice());
+        booking.setDepositAmount(service.getMinPrice().multiply(BigDecimal.valueOf(0.20))
+                .max(BigDecimal.valueOf(2_000))
+                .min(BigDecimal.valueOf(10_000))
+                .setScale(0, RoundingMode.UP));
         booking.setBookingStatus(com.hsf302.carshowroom.common.Enums.BookingStatus.PENDING_PAYMENT);
         booking.setPaymentStatus(PaymentStatus.PENDING);
         booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
@@ -363,6 +405,51 @@ public class OrderServiceImpl implements OrderService {
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ.");
         }
+    }
+
+    private void validateOrderTransition(Order order, OrderStatus nextStatus) {
+        OrderStatus currentStatus = order.getOrderStatus();
+        if (nextStatus == OrderStatus.CANCELED) {
+            if (currentStatus == OrderStatus.COMPLETED
+                    || currentStatus == OrderStatus.CANCELED
+                    || currentStatus == OrderStatus.EXPIRED_PAYMENT
+                    || currentStatus == OrderStatus.SHIPPING) {
+                throw new IllegalStateException("Không thể hủy đơn ở trạng thái hiện tại.");
+            }
+            return;
+        }
+        if (nextStatus == OrderStatus.EXPIRED_PAYMENT) {
+            if (currentStatus != OrderStatus.PENDING_PAYMENT && currentStatus != OrderStatus.CREATED) {
+                throw new IllegalStateException("Chỉ đơn đang chờ thanh toán mới có thể hết hạn.");
+            }
+            return;
+        }
+        if (nextStatus == OrderStatus.PROCESSING) {
+            if (currentStatus != OrderStatus.PENDING_PAYMENT && currentStatus != OrderStatus.CREATED) {
+                throw new IllegalStateException("Chỉ đơn mới hoặc đang chờ thanh toán mới có thể chuyển sang đang xử lý.");
+            }
+            if (order.getPaymentStatus() != PaymentStatus.PAID && order.getPaymentMethod() != PaymentMethod.COD) {
+                throw new IllegalStateException("Đơn PayOS chưa được xác nhận thanh toán.");
+            }
+            return;
+        }
+        if (nextStatus == OrderStatus.SHIPPING) {
+            if (currentStatus != OrderStatus.PROCESSING || order.getOrderType() != OrderType.SHIPPING) {
+                throw new IllegalStateException("Chỉ đơn giao hàng đang xử lý mới có thể chuyển sang đang giao.");
+            }
+            return;
+        }
+        if (nextStatus == OrderStatus.COMPLETED) {
+            boolean shippingCompleted = order.getOrderType() == OrderType.SHIPPING
+                    && currentStatus == OrderStatus.SHIPPING;
+            boolean workshopCompleted = order.getOrderType() == OrderType.AT_WORKSHOP
+                    && currentStatus == OrderStatus.PROCESSING;
+            if (!shippingCompleted && !workshopCompleted) {
+                throw new IllegalStateException("Đơn hàng chưa đạt trạng thái có thể hoàn tất.");
+            }
+            return;
+        }
+        throw new IllegalStateException("Trạng thái đơn hàng không được phép cập nhật thủ công.");
     }
 
     private void cancelOrderAndChildren(Order order) {

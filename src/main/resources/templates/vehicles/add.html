@@ -6,9 +6,8 @@
 
 <main class="container py-5">
     <div class="row g-4">
-        <aside th:replace="~{fragments/sidebar :: accountSidebar('vehicles')}"></aside>
-
-        <section class="col-lg-9">
+        <section class="col-12">
+            <div th:replace="~{fragments/sidebar :: accountTabs('vehicles')}"></div>
             <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
                     <h1 class="gs-h1 section-title mb-1"> Thêm xe </h1>
@@ -17,31 +16,79 @@
                 <a class="btn btn-outline-secondary" th:href="@{/vehicles}"> Quay lại </a>
             </div>
 
-            <form class="surface-card p-4 p-md-5" th:action="@{/vehicles}" th:object="${vehicleForm}" method="post">
+            <form class="surface-card p-4 p-md-5" th:action="@{/vehicles/add}" th:object="${vehicleForm}" method="post">
+                <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></div>
                 <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label"> Hãng xe </label>
-                        <input class="form-control" th:field="*{brand}" placeholder="BMW, Toyota..." required>
+                    <div class="col-md-8">
+                        <label class="form-label">Dòng xe</label>
+                        <select class="form-select" id="carModelId" th:field="*{carModelId}">
+                            <option value="">Chọn hãng, dòng xe và năm sản xuất</option>
+                            <option th:each="model : ${carModels}" th:value="${model.id}"
+                                    th:text="${model.brand + ' ' + model.modelName + ' ' + model.year}">Dòng xe</option>
+                        </select>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('carModelId')}" th:errors="*{carModelId}"></div>
+                        <div class="form-text">Không thấy xe của bạn? Chọn “Nhập xe khác” để điền thông tin.</div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label"> Mẫu xe </label>
-                        <input class="form-control" th:field="*{modelName}" placeholder="M4 G82, Supra GR..." required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label"> Năm </label>
-                        <input class="form-control gs-mono" th:field="*{year}" type="number" min="1886" max="2030" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">License Plate</label>
+                        <label class="form-label">Biển số xe</label>
                         <input class="form-control gs-mono" th:field="*{licensePlate}" required>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('licensePlate')}" th:errors="*{licensePlate}"></div>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-link p-0" id="toggleCustomVehicle" type="button">
+                            <i class="bi bi-pencil-square me-1"></i>Nhập xe khác
+                        </button>
+                    </div>
+                    <div class="col-12 d-none" id="customVehicleFields">
+                        <div class="row g-3 p-3 rounded border bg-light">
+                            <div class="col-md-5">
+                                <label class="form-label" for="brand">Hãng xe</label>
+                                <input class="form-control" id="brand" th:field="*{brand}" maxlength="100" placeholder="Ví dụ: VinFast">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label" for="modelName">Tên dòng xe</label>
+                                <input class="form-control" id="modelName" th:field="*{modelName}" maxlength="100" placeholder="Ví dụ: VF 8">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label" for="year">Năm sản xuất</label>
+                                <input class="form-control" id="year" th:field="*{year}" type="number" min="1886" max="2100" placeholder="2024">
+                            </div>
+                        </div>
                     </div>
                     <div class="col-12">
                         <button class="btn btn-primary" type="submit">
-                            <i class="bi bi-car-front me-2"></i>Lưu Vehicle
+                            <i class="bi bi-car-front me-2"></i>Lưu xe
                         </button>
                     </div>
                 </div>
             </form>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const select = document.getElementById('carModelId');
+                    const toggle = document.getElementById('toggleCustomVehicle');
+                    const customFields = document.getElementById('customVehicleFields');
+                    const customInputs = customFields.querySelectorAll('input');
+
+                    function setCustomMode(enabled) {
+                        customFields.classList.toggle('d-none', !enabled);
+                        select.disabled = enabled;
+                        customInputs.forEach(input => input.required = enabled);
+                    }
+
+                    toggle.addEventListener('click', function () {
+                        const enabled = customFields.classList.contains('d-none');
+                        setCustomMode(enabled);
+                        if (enabled) select.value = '';
+                    });
+
+                    select.addEventListener('change', function () {
+                        if (select.value) setCustomMode(false);
+                    });
+
+                    const hasCustomValues = Array.from(customInputs).some(input => input.value);
+                    if (!select.value && hasCustomValues) setCustomMode(true);
+                });
+            </script>
         </section>
     </div>
 </main>

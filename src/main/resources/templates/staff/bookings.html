@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Xử lý lịch hẹn | GearShift Pro')}"></head>
+<body class="ops-shell">
+<div th:replace="~{fragments :: navbar('staff')}"></div>
+<main class="container-fluid">
+    <div class="row">
+        <aside class="col-lg-3 col-xl-2 ops-sidebar p-4">
+            <h5 class="text-white fw-bold mb-4">Khu vực nhân viên</h5>
+            <nav class="d-grid gap-2">
+                <a th:href="@{/staff}"><i class="bi bi-grid"></i> Tổng quan</a>
+                <a class="active" th:href="@{/staff/bookings}"><i class="bi bi-calendar-check"></i> Lịch hẹn</a>
+                <a th:href="@{/staff/orders}"><i class="bi bi-receipt-cutoff"></i> Xử lý đơn hàng</a>
+                <a th:href="@{/staff/parts}"><i class="bi bi-search"></i> Tra cứu phụ tùng</a>
+            </nav>
+        </aside>
+        <section class="col-lg-9 col-xl-10 p-4 p-lg-5">
+            <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+            <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="gs-h1 mb-1">Xử lý lịch hẹn</h1>
+                    <p class="text-secondary mb-0">Lịch hẹn đã thanh toán được tự động xác nhận.</p>
+                </div>
+                <a class="btn btn-outline-primary" th:href="@{/staff/bookings}"><i class="bi bi-arrow-clockwise me-1"></i>Làm mới</a>
+            </div>
+            <div class="admin-table-card p-0 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                        <tr><th>Lịch hẹn</th><th>Khách hàng</th><th>Xe</th><th>Ngày, giờ</th><th>Dịch vụ</th><th>Tiền cọc</th><th>Trạng thái</th><th>Cập nhật</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(bookings)}"><td colspan="8" class="gs-empty-state">Chưa có lịch hẹn.</td></tr>
+                        <tr th:each="booking : ${bookings}">
+                            <td><strong class="gs-mono" th:text="'BK-' + ${booking.id}">BK-1</strong></td>
+                            <td th:text="${booking.user.fullName}">Khách hàng</td>
+                            <td th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Chưa chọn xe'}">Xe</td>
+                            <td class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Ngày</td>
+                            <td th:text="${bookingServices[booking.id]}">Dịch vụ</td>
+                            <td class="gs-mono" th:text="${#numbers.formatDecimal(booking.depositAmount ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">2.000 VNĐ</td>
+                            <td><span class="gs-badge" th:text="${booking.bookingStatus}">Chờ thanh toán</span></td>
+                            <td>
+                                <form class="d-flex gap-2" th:if="${booking.bookingStatus.name() == 'CONFIRMED' or booking.bookingStatus.name() == 'IN_PROGRESS'}" th:action="@{/staff/bookings/status}" method="post">
+                                    <input type="hidden" name="bookingId" th:value="${booking.id}">
+                                    <select class="form-select form-select-sm" name="status">
+                                        <option value="IN_PROGRESS" th:selected="${booking.bookingStatus.name() == 'IN_PROGRESS'}">Đang thực hiện</option>
+                                        <option value="COMPLETED">Hoàn tất</option>
+                                        <option value="CANCELED">Từ chối / hủy</option>
+                                    </select>
+                                    <button class="btn btn-outline-primary btn-sm" type="submit">Lưu</button>
+                                </form>
+                                <form th:if="${booking.bookingStatus.name() == 'PENDING_PAYMENT'}" th:action="@{/staff/bookings/status}" method="post">
+                                    <input type="hidden" name="bookingId" th:value="${booking.id}">
+                                    <input type="hidden" name="status" value="CANCELED">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">Từ chối / hủy</button>
+                                </form>
+                                <form th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}" th:action="@{/staff/bookings/refund}" method="post">
+                                    <input type="hidden" name="bookingId" th:value="${booking.id}">
+                                    <input class="form-control form-control-sm mb-1" name="note" required placeholder="Mã giao dịch hoàn tiền">
+                                    <button class="btn btn-success btn-sm" type="submit">Xác nhận hoàn cọc</button>
+                                </form>
+                                <span class="gs-badge gs-badge--success" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'COMPLETED'}">Đã hoàn cọc</span>
+                                <span class="text-secondary small" th:if="${booking.bookingStatus.name() == 'COMPLETED' or booking.bookingStatus.name() == 'CANCELED' or booking.bookingStatus.name() == 'EXPIRED_PAYMENT' or booking.bookingStatus.name() == 'EXPIRED_NO_SHOW'}">Đã kết thúc</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

@@ -53,10 +53,9 @@
                                 <a class="btn btn-outline-primary btn-sm me-1" title="Edit" th:href="@{/admin/services/edit/{id}(id=${service.id})}">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <a class="btn btn-outline-danger btn-sm" title="Xóa" th:href="@{/admin/services/delete/{id}(id=${service.id})}"
-                                   onclick="return confirm('Xóa this service?')">
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                                <form class="d-inline" th:action="@{/admin/services/delete/{id}(id=${service.id})}" method="post">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit" title="Xóa"><i class="bi bi-trash"></i></button>
+                                </form>
                             </td>
                         </tr>
                         </tbody>

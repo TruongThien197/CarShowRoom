@@ -9,6 +9,7 @@ import com.hsf302.carshowroom.service.FirebaseStorageService;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.ProductService;
 import com.hsf302.carshowroom.service.UserService;
+import com.hsf302.carshowroom.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -50,6 +51,8 @@ public class AdminController {
     private final BookingService bookingService;
     private final ProductService productService;
     private final FirebaseStorageService firebaseStorageService;
+    private final AuthService authService;
+    private final PaymentTransactionRepository paymentTransactionRepository;
 
     @GetMapping
     public String dashboard(Model model) {
@@ -254,7 +257,7 @@ public class AdminController {
         return "redirect:/admin/categories";
     }
 
-    @GetMapping("/categories/delete/{id}")
+    @PostMapping("/categories/delete/{id}")
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             categoryRepository.deleteById(id);
@@ -374,7 +377,7 @@ public class AdminController {
         return "redirect:/admin/products";
     }
 
-    @GetMapping("/products/delete/{id}")
+    @PostMapping("/products/delete/{id}")
     public String deleteProduct(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             productRepository.deleteById(id);
@@ -506,7 +509,7 @@ public class AdminController {
         return "redirect:/admin/services";
     }
 
-    @GetMapping("/services/delete/{id}")
+    @PostMapping("/services/delete/{id}")
     public String deleteService(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             serviceRepository.deleteById(id);
@@ -531,6 +534,7 @@ public class AdminController {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch hẹn"));
         model.addAttribute("booking", booking);
         model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(id));
+        model.addAttribute("paymentTransactions", paymentTransactionRepository.findByBooking(booking));
         return "admin/booking/detail";
     }
 
@@ -571,6 +575,23 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
         }
         return "redirect:/admin/bookings";
+    }
+
+    @PostMapping("/bookings/refund")
+    public String completeBookingRefund(@RequestParam Integer bookingId,
+                                        @RequestParam String bankName,
+                                        @RequestParam String accountHolder,
+                                        @RequestParam String accountNumber,
+                                        @RequestParam String note,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.completeRefund(bookingId, authService.getCurrentUser(),
+                    bankName, accountHolder, accountNumber, note);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền cọc cho lịch hẹn.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/bookings/" + bookingId;
     }
 
     @GetMapping("/users")
@@ -642,7 +663,7 @@ public class AdminController {
         return "redirect:/admin/users";
     }
 
-    @GetMapping("users/{id}/change-status")
+    @PostMapping("users/{id}/change-status")
     public String changeStatus(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             userService.changeStatus(id);
@@ -666,7 +687,9 @@ public class AdminController {
         return bookings.stream().collect(Collectors.toMap(
                 Booking::getId,
                 booking -> bookingServiceRepository.findByBookingId(booking.getId()).stream()
-                        .map(service -> service.getServiceNameSnapshot())
+                        .map(service -> service.getService() != null
+                                ? service.getService().getServiceName()
+                                : service.getServiceNameSnapshot())
                         .collect(Collectors.joining(", "))
         ));
     }
@@ -787,6 +810,19 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật thông tin vận chuyển.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
+
+    @PostMapping("/orders/{id}/refund")
+    public String completeOrderRefund(@PathVariable Integer id,
+                                      @RequestParam String note,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            orderService.completeRefund(id, authService.getCurrentUser(), note);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
         return "redirect:/admin/orders/" + id;
     }

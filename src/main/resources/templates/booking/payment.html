@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Thanh toán lịch hẹn | GearShift Pro')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar('booking')}"></div>
+<main class="container py-5"><div class="row justify-content-center"><section class="col-lg-7">
+    <div class="surface-card gs-stripe-top p-4 p-md-5">
+        <h1 class="gs-h2 mb-2">Thanh toán lịch hẹn</h1>
+        <p class="text-secondary">Lịch hẹn đã được giữ. Hãy thanh toán qua PayOS để xác nhận.</p>
+        <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+        <div class="border rounded p-3 mb-4">
+            <div class="d-flex justify-content-between mb-2"><span>Ngày hẹn</span><strong th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Ngày</strong></div>
+            <div class="d-flex justify-content-between"><span>Tiền cọc giữ lịch</span><strong class="gs-mono text-primary" th:text="${#numbers.formatDecimal(booking.depositAmount, 0, 'COMMA', 0, 'POINT')} + ' VND'">2.000 VND</strong></div>
+            <div class="small text-secondary mt-2">Tiền cọc sẽ được trừ vào chi phí dịch vụ cuối cùng.</div>
+        </div>
+        <form th:action="@{/booking/{id}/payment(id=${booking.id})}" method="post"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-qr-code me-2"></i>Thanh toán lại qua PayOS</button></form>
+        <a class="btn btn-link w-100 mt-2" th:href="@{/booking/my-bookings}">Thanh toán sau</a>
+    </div>
+</section></div></main>
+<div th:replace="~{fragments :: footer}"></div><div th:replace="~{fragments :: scripts}"></div>
+</body></html>
