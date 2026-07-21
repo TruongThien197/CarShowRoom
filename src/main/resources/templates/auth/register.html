@@ -29,7 +29,8 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label"> Số điện thoại </label>
-                            <input class="form-control" type="tel" name="txtPhone" pattern="[0-9]{9,15}" maxlength="15">
+                            <input class="form-control" type="tel" name="txtPhone" pattern="0[0-9]{9}" maxlength="10">
+                            <div class="invalid-feedback">Số điện thoại phải bắt đầu bằng 0 và có 10 chữ số.</div>
                         </div>
                         <div class="col-12">
                             <label class="form-label"> Địa chỉ </label>
