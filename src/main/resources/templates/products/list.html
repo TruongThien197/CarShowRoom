@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('GearShift Pro | Auto Parts')}"></head>
+<head th:replace="~{fragments/header :: head('GearShift Pro | Phụ tùng ô tô')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('shop')}"></div>
 
@@ -41,7 +41,7 @@
             <a class="nav-link text-nowrap px-3"
                th:classappend="${selectedCategoryId == null} ? 'active fw-semibold'"
                th:href="@{/products(carModelId=${selectedCarModelId}, brand=${selectedBrand}, modelName=${selectedModelName}, year=${selectedYear}, keyword=${keyword})}">
-                <i class="bi bi-grid me-2"></i>All
+                <i class="bi bi-grid me-2"></i>Tất cả
             </a>
             <a class="nav-link text-nowrap px-3"
                th:each="category : ${categories}"
@@ -108,7 +108,9 @@
                 <div class="position-relative bg-light d-flex align-items-center justify-content-center" style="height: 240px; overflow: hidden;">
                     <img class="w-100 h-100 object-fit-cover product-image"
                          th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
-                         th:src="${product.imageUrl}" alt="Product image">
+                         th:src="${product.imageUrl}"
+                         onerror="this.onerror=null; this.src='/images/default-product.jpg';"
+                         alt="Ảnh sản phẩm">
                     <i class="bi bi-tools display-1 text-secondary opacity-25"
                        th:if="${product.imageUrl == null or #strings.isEmpty(product.imageUrl)}"></i>
                     <span class="badge bg-primary position-absolute top-0 start-0 m-3 shadow-sm"
@@ -122,8 +124,15 @@
                         <div class="small text-secondary mb-3">
                             <i class="bi bi-car-front me-1"></i>
                             <span th:if="${#sets.isEmpty(product.compatibleCarModels)}"> Chưa gán mẫu xe trong danh mục </span>
-                            <span th:if="${!#sets.isEmpty(product.compatibleCarModels)}"
-                                  th:text="${#strings.listJoin(product.compatibleCarModels.![brand + ' ' + modelName], ', ')}">Toyota Camry</span>
+                            <span th:if="${!#sets.isEmpty(product.compatibleCarModels)}">Tương thích: </span>
+                            <th:block th:if="${!#sets.isEmpty(product.compatibleCarModels)}"
+                                      th:each="model, modelStat : ${product.compatibleCarModels}">
+                                <span th:if="${modelStat.index < 3}">
+                                    <span th:text="${model.brand + ' ' + model.modelName}">BMW 330xi</span><span th:if="${modelStat.index < 2 and modelStat.index + 1 < #sets.size(product.compatibleCarModels)}">, </span>
+                                </span>
+                            </th:block>
+                            <span th:if="${#sets.size(product.compatibleCarModels) > 3}"
+                                  th:text="${' + ' + (#sets.size(product.compatibleCarModels) - 3) + ' mẫu khác'}"> + 45 mẫu khác</span>
                         </div>
                     </div>
                     <div>

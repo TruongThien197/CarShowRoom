@@ -1,7 +1,7 @@
 /*
    Product catalog for 70 vehicle models.
    Each model receives 5 categories with 2 products each.
-   Every product is linked to exactly one car model and has no image.
+   Every product is linked to exactly one car model and uses a SKU-specific generated image URL.
 */
 USE CarShowRoom;
 GO
@@ -46,7 +46,7 @@ SET category_id = @engine_category_id,
     price = 1500,
     stock_quantity = 20,
     reserved_stock = 0,
-    image_url = NULL,
+    image_url = CONCAT(N'/product-images/', sku, N'.svg'),
     status = N'ACTIVE',
     version = 0,
     updated_at = SYSDATETIME()
@@ -112,14 +112,14 @@ SET category_id = @first_category_id,
     price = @first_price,
     stock_quantity = @first_stock,
     reserved_stock = 0,
-    image_url = NULL,
+    image_url = CONCAT(N'/product-images/', @first_sku, N'.svg'),
     status = N'ACTIVE',
     version = 0,
     updated_at = SYSDATETIME()
 WHERE product_id = @preserved_product_id;
 
 INSERT INTO product (category_id, product_name, sku, description, price, stock_quantity, reserved_stock, image_url, status, version, created_at, updated_at)
-SELECT category_id, product_name, sku, description, price, stock_quantity, 0, NULL, N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()
+SELECT category_id, product_name, sku, description, price, stock_quantity, 0, CONCAT(N'/product-images/', sku, N'.svg'), N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()
 FROM @catalog
 WHERE ordinal <> @first_catalog_id;
 
@@ -131,6 +131,6 @@ JOIN @catalog c ON c.sku = p.sku;
 SELECT
     (SELECT COUNT(*) FROM product) AS total_products,
     (SELECT COUNT(*) FROM product_car_models) AS total_product_car_model_links,
-    (SELECT COUNT(*) FROM product WHERE image_url IS NULL) AS products_without_images,
+    (SELECT COUNT(*) FROM product WHERE image_url IS NULL OR LTRIM(RTRIM(image_url)) = N'') AS products_without_images,
     (SELECT MAX(price) FROM product) AS maximum_price_vnd;
 GO

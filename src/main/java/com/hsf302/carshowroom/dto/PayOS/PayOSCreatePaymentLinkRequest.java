@@ -15,4 +15,5 @@ public class PayOSCreatePaymentLinkRequest {
     private Order parentOrder;
     private List<Order> subOrders;
     private Booking booking;
+    private String paymentPurpose;
 }

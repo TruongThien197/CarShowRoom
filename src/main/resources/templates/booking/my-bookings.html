@@ -36,6 +36,7 @@
                         <thead class="table-light">
                         <tr>
                             <th>STT</th>
+                            <th>Ngày tạo lịch</th>
                             <th> Ngày </th>
                             <th> Giờ </th>
                             <th> Dịch vụ </th>
@@ -48,6 +49,8 @@
                         <tbody>
                         <tr th:each="booking, stat : ${bookings}">
                             <td class="fw-bold gs-mono" th:text="${stat.count}">1</td>
+                            <td class="gs-mono text-nowrap"
+                                th:text="${booking.createdAt != null ? #temporals.format(booking.createdAt, 'dd/MM/yyyy HH:mm') : '—'}">21/07/2026 14:30</td>
                             <td class="gs-mono text-nowrap" th:text="${booking.bookingDate}">2026-07-01</td>
                             <td class="gs-mono text-nowrap" th:text="${booking.timeSlot}">09:30</td>
                             <td class="booking-service-cell" th:text="${bookingServices[booking.id]}"> Dịch vụ </td>

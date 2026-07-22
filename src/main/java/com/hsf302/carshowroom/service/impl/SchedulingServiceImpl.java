@@ -92,6 +92,8 @@ public class SchedulingServiceImpl implements SchedulingService {
         List<BookingStatus> blockingStatuses = List.of(
                 BookingStatus.PENDING_PAYMENT,
                 BookingStatus.CONFIRMED,
+                BookingStatus.WAITING_FOR_VEHICLE,
+                BookingStatus.RECEIVING_VEHICLE,
                 BookingStatus.IN_PROGRESS,
                 BookingStatus.PENDING_APPROVAL
         );

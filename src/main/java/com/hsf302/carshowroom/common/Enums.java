@@ -77,6 +77,8 @@ public class Enums {
         CREATED,
         PENDING_PAYMENT,
         CONFIRMED,
+        WAITING_FOR_VEHICLE,
+        RECEIVING_VEHICLE,
         IN_PROGRESS,
         PENDING_APPROVAL,
         COMPLETED,
@@ -89,6 +91,8 @@ public class Enums {
                 case CREATED -> "Đã tạo";
                 case PENDING_PAYMENT -> "Chờ thanh toán";
                 case CONFIRMED -> "Đã xác nhận";
+                case WAITING_FOR_VEHICLE -> "Đang đợi xe";
+                case RECEIVING_VEHICLE -> "Đang tiếp nhận";
                 case IN_PROGRESS -> "Đang thực hiện";
                 case PENDING_APPROVAL -> "Chờ duyệt";
                 case COMPLETED -> "Hoàn tất";

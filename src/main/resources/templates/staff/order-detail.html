@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Chi tiết đơn hàng | Staff')}"></head>
+<body class="ops-shell">
+<div th:replace="~{fragments :: navbar('staff')}"></div>
+<main class="container-fluid"><div class="row">
+    <aside class="col-lg-3 col-xl-2 ops-sidebar p-4">
+        <h5 class="text-white fw-bold mb-4">Khu vực nhân viên</h5>
+        <nav class="d-grid gap-2">
+            <a th:href="@{/staff}"><i class="bi bi-grid"></i> Tổng quan</a>
+            <a th:href="@{/staff/bookings}"><i class="bi bi-calendar-check"></i> Lịch hẹn</a>
+            <a class="active" th:href="@{/staff/orders}"><i class="bi bi-receipt-cutoff"></i> Xử lý đơn hàng</a>
+            <a th:href="@{/staff/parts}"><i class="bi bi-search"></i> Tra cứu phụ tùng</a>
+        </nav>
+    </aside>
+    <section class="col-lg-9 col-xl-10 p-4 p-lg-5">
+        <a class="btn btn-link px-0 mb-3" th:href="@{/staff/orders}"><i class="bi bi-arrow-left me-1"></i>Quay lại danh sách đơn hàng</a>
+        <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+        <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+        <div class="d-flex justify-content-between align-items-start mb-4"><div><h1 class="gs-h1 mb-1" th:text="'Đơn hàng ORD-' + ${order.id}">Chi tiết đơn hàng</h1><p class="text-secondary mb-0">Thông tin sản phẩm, giao hàng và cập nhật tiến trình.</p></div><span class="gs-badge fs-6" th:text="${order.orderStatus}">Đang xử lý</span></div>
+        <div class="row g-4">
+            <div class="col-xl-8">
+                <div class="surface-card gs-stripe-top p-4 mb-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-person me-2 text-primary"></i>Thông tin khách hàng</h5>
+                    <div class="row g-3"><div class="col-md-6"><div class="small text-secondary">Họ tên</div><strong th:text="${order.user.fullName}">Khách hàng</strong></div><div class="col-md-6"><div class="small text-secondary">Email</div><span th:text="${order.user.email}">email</span></div><div class="col-md-6"><div class="small text-secondary">Số điện thoại</div><span th:text="${order.user.phone ?: 'Chưa có'}">Số điện thoại</span></div><div class="col-12"><div class="small text-secondary">Địa chỉ giao hàng</div><strong th:text="${order.shippingAddress ?: 'Không áp dụng'}">Địa chỉ</strong></div></div>
+                </div>
+                <div class="admin-table-card p-0 overflow-hidden"><div class="p-4 border-bottom"><h5 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>Sản phẩm trong đơn</h5></div><div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Sản phẩm</th><th class="text-center">SL</th><th class="text-end">Đơn giá</th><th class="text-end">Thành tiền</th></tr></thead><tbody><tr th:each="item : ${orderDetails}"><td><strong th:text="${item.productNameSnapshot}">Sản phẩm</strong></td><td class="text-center gs-mono" th:text="${item.quantity}">1</td><td class="text-end gs-mono" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</td><td class="text-end fw-bold gs-mono" th:text="${#numbers.formatDecimal(item.unitPrice.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</td></tr></tbody></table></div></div>
+            </div>
+            <div class="col-xl-4">
+                <div class="surface-card gs-stripe-top p-4 mb-4"><h5 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2 text-primary"></i>Cập nhật trạng thái</h5><form th:action="@{/staff/orders/status}" method="post"><input type="hidden" name="orderId" th:value="${order.id}"><label class="form-label">Trạng thái</label><select class="form-select mb-3" name="status"><option value="PROCESSING" th:selected="${order.orderStatus.name() == 'PROCESSING'}">Đang xử lý</option><option value="SHIPPING" th:if="${order.orderType.name() == 'SHIPPING'}" th:selected="${order.orderStatus.name() == 'SHIPPING'}">Đang giao</option><option value="COMPLETED" th:selected="${order.orderStatus.name() == 'COMPLETED'}">Hoàn tất</option></select><div th:if="${order.orderType.name() == 'SHIPPING'}"><input class="form-control mb-2" name="shippingCarrier" th:value="${order.shippingCarrier}" placeholder="Đơn vị vận chuyển"><input class="form-control mb-3" name="trackingCode" th:value="${order.trackingCode}" placeholder="Mã vận đơn"></div><button class="btn btn-primary w-100" type="submit">Lưu thay đổi</button></form></div>
+                <div class="surface-card p-4 mb-4"><h5 class="fw-bold mb-3">Tóm tắt</h5><div class="d-flex justify-content-between mb-2"><span>Ngày tạo</span><span class="gs-mono" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Ngày</span></div><div class="d-flex justify-content-between fs-5 fw-bold text-success"><span>Tổng cộng</span><span class="gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span></div></div>
+                <div class="surface-card p-4 border border-warning-subtle" th:if="${order.refundStatus != null and order.refundStatus.name() == 'REQUESTED'}"><h5 class="fw-bold mb-3 text-warning">Yêu cầu hoàn tiền</h5><form th:action="@{/staff/orders/refund}" method="post"><input type="hidden" name="orderId" th:value="${order.id}"><textarea class="form-control mb-2" name="note" rows="3" required placeholder="Mã giao dịch hoặc ghi chú hoàn tiền"></textarea><button class="btn btn-success w-100" type="submit">Xác nhận hoàn tiền</button></form></div>
+            </div>
+        </div>
+    </section>
+</div></main>
+<div th:replace="~{fragments :: scripts}"></div>
+</body></html>

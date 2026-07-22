@@ -26,4 +26,11 @@ public interface BookingService {
 
     void submitRefundAccount(User user, Integer bookingId, String bankName,
                              String accountHolder, String accountNumber);
+
+    void checkIn(Integer bookingId);
+
+    void setFinalAmount(Integer bookingId, java.math.BigDecimal finalAmount);
+
+    void markNoShow(Integer bookingId);
+    void reopenDepositPayment(Integer bookingId);
 }

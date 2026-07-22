@@ -8,6 +8,7 @@ import com.hsf302.carshowroom.repository.BookingServiceRepository;
 import com.hsf302.carshowroom.repository.CarModelRepository;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.OrderRepository;
+import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
 import com.hsf302.carshowroom.service.BookingService;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.ProductService;
@@ -22,11 +23,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.math.BigDecimal;
 import java.util.stream.Collectors;
 
 @Controller
@@ -37,6 +40,7 @@ public class StaffController {
     private final OrderItemRepository orderItemRepository;
     private final BookingRepository bookingRepository;
     private final BookingServiceRepository bookingServiceRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
     private final CarModelRepository carModelRepository;
     private final OrderService orderService;
     private final BookingService bookingService;
@@ -69,6 +73,16 @@ public class StaffController {
         return "staff/bookings";
     }
 
+    @GetMapping("/bookings/{id}")
+    public String bookingDetail(@org.springframework.web.bind.annotation.PathVariable Integer id, Model model) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch hẹn."));
+        model.addAttribute("booking", booking);
+        model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(id));
+        model.addAttribute("paymentTransactions", paymentTransactionRepository.findByBooking(booking));
+        return "staff/booking-detail";
+    }
+
     @GetMapping("/parts")
     public String parts(@RequestParam(required = false) String brand,
                         @RequestParam(required = false) Integer carModelId,
@@ -98,6 +112,15 @@ public class StaffController {
         return "staff/orders";
     }
 
+    @GetMapping("/orders/{id}")
+    public String orderDetail(@PathVariable Integer id, Model model) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng."));
+        model.addAttribute("order", order);
+        model.addAttribute("orderDetails", orderItemRepository.findByOrderId(id));
+        return "staff/order-detail";
+    }
+
     @PostMapping("/orders/status")
     public String updateOrderStatus(@RequestParam Integer orderId,
                                     @RequestParam String status,
@@ -122,7 +145,7 @@ public class StaffController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể cập nhật đơn hàng: " + e.getMessage());
         }
-        return "redirect:/staff/orders";
+        return "redirect:/staff/orders/" + orderId;
     }
 
     @PostMapping("/bookings/status")
@@ -138,7 +161,41 @@ public class StaffController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể cập nhật lịch hẹn: " + e.getMessage());
         }
-        return "redirect:/staff/bookings";
+        return "redirect:/staff/bookings/" + bookingId;
+    }
+
+    @PostMapping("/bookings/check-in")
+    public String checkInBooking(@RequestParam Integer bookingId, RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.checkIn(bookingId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã tiếp nhận xe và chuyển lịch sang đang thực hiện.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/staff/bookings/" + bookingId;
+    }
+
+    @PostMapping("/bookings/final-amount")
+    public String setFinalAmount(@RequestParam Integer bookingId, @RequestParam BigDecimal finalAmount,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.setFinalAmount(bookingId, finalAmount);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã lưu giá cuối của dịch vụ.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/staff/bookings/" + bookingId;
+    }
+
+    @PostMapping("/bookings/no-show")
+    public String markBookingNoShow(@RequestParam Integer bookingId, RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.markNoShow(bookingId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã đánh dấu khách không đến.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/staff/bookings/" + bookingId;
     }
 
     @PostMapping("/bookings/refund")
@@ -155,7 +212,7 @@ public class StaffController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/staff/bookings";
+        return "redirect:/staff/bookings/" + bookingId;
     }
 
     @PostMapping("/orders/refund")
@@ -168,7 +225,7 @@ public class StaffController {
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
-        return "redirect:/staff/orders";
+        return "redirect:/staff/orders/" + orderId;
     }
 
     private long countOrderStatus(List<Order> orders, String status) {

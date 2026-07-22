@@ -20,6 +20,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     List<Product> findByNameContainingIgnoreCaseAndStatus(String keyword, ProductStatus status);
 
+    Optional<Product> findBySku(String sku);
+
     Page<Product> findByStatus(ProductStatus status, Pageable pageable);
 
     Page<Product> findByCategoryIdAndStatus(Integer categoryId, ProductStatus status, Pageable pageable);

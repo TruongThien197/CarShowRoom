@@ -89,7 +89,14 @@ Tài liệu này mô tả trạng thái các chức năng hiện có trong sourc
 - [x] Tiền cọc tối thiểu 2.000 VNĐ.
 - [x] Tiền cọc tối đa 10.000 VNĐ.
 - [x] Thời hạn thanh toán tiền cọc là 15 phút.
+- [x] Hiển thị thời hạn thanh toán trên trang thanh toán và chi tiết booking.
+- [x] Thanh toán cọc thất bại/hết hạn có thể thanh toán lại và cấp lại thời hạn 15 phút.
 - [x] Tự giải phóng booking hết hạn thanh toán theo cơ chế xử lý trạng thái.
+- [x] Staff tiếp nhận xe và ghi nhận thời điểm tiếp nhận.
+- [x] Staff nhập giá cuối, tự tính số tiền còn lại sau khi trừ cọc.
+- [x] Customer thanh toán phần còn lại qua PayOS.
+- [x] Không cho hoàn tất lịch khi còn khoản phải thanh toán.
+- [x] Staff đánh dấu khách không đến.
 - [x] Xem lịch sử đặt lịch.
 - [x] Xem chi tiết booking.
 - [x] Hủy booking đủ điều kiện.
@@ -143,6 +150,7 @@ Tài liệu này mô tả trạng thái các chức năng hiện có trong sourc
 - [x] Xem danh sách booking.
 - [x] Xem chi tiết booking.
 - [x] Cập nhật trạng thái booking.
+- [x] Tiếp nhận xe, nhập giá cuối và đánh dấu khách không đến.
 - [x] Hiển thị nút hoàn tiền cho booking đã hủy và đang chờ hoàn cọc.
 - [x] Xem lịch sử giao dịch thanh toán của booking.
 - [x] Xem thông tin tài khoản nhận hoàn do khách cung cấp.
@@ -410,7 +418,7 @@ CANCELED + Payment PAID
 - [ ] Gửi booking bằng xe của user khác phải bị từ chối.
 - [ ] Đặt ngày trong quá khứ phải bị từ chối.
 - [ ] Đặt slot đã đầy phải bị từ chối.
-- [ ] Thanh toán quá 15 phút phải làm booking hết hạn và giải phóng slot.
+- [x] Thanh toán quá 15 phút phải làm booking hết hạn và giải phóng slot.
 - [ ] Customer không được xem order/booking của customer khác.
 - [ ] Nhập tên nhận hoàn khác tên người trả tiền phải bị từ chối ở backend.
 - [ ] Hủy booking đã hoàn tất phải bị từ chối.
@@ -435,7 +443,7 @@ CANCELED + Payment PAID
 | Cart/checkout | Có | Chưa | Kiểm tra tồn kho |
 | PayOS order | Có | Chưa | Cần PayOS thật |
 | PayOS booking | Có | Chưa | Cần kiểm tra webhook |
-| Booking slot capacity | Có | Chưa | Kiểm tra slot đầy và đặt đồng thời |
+| Booking slot capacity | Có | Đã bổ sung kiểm tra local | Kiểm tra slot đầy và đặt đồng thời |
 | Hủy booking/refund request | Có | Chưa | Kiểm tra trạng thái PAID |
 | Form tài khoản hoàn tiền | Có | Chưa | Kiểm tra tên người nhận |
 | Admin/Staff hoàn tiền | Có | Chưa | Chuyển tiền thực tế thủ công |
@@ -504,9 +512,11 @@ Các phần chưa thể xem là hoàn thiện production:
 
 #### Task cần hoàn thiện
 
-- [ ] Kiểm thử toàn bộ booking bằng dữ liệu thật.
-- [ ] Kiểm thử đặt đồng thời cùng một khung giờ.
-- [ ] Hoàn thiện xử lý tự động slot sau khi hết hạn thanh toán.
+- [x] Kiểm thử booking bằng dữ liệu local/seed.
+- [x] Kiểm thử hai khách đặt cùng một khung giờ.
+- [x] Hoàn thiện xử lý tự động slot sau khi hết hạn thanh toán.
+- [x] Kiểm tra slot được mở lại sau khi booking hết hạn.
+- [x] Kiểm thử luồng hoàn tiền thủ công bằng Admin/Staff.
 - [ ] Tích hợp API chuyển khoản hoàn tiền tự động nếu có yêu cầu.
 
 #### File phụ trách
@@ -543,11 +553,11 @@ Các phần chưa thể xem là hoàn thiện production:
 
 #### Task cần hoàn thiện
 
-- [ ] Kiểm thử quantity lớn hơn tồn kho.
-- [ ] Kiểm thử checkout khi hai user mua cùng sản phẩm.
-- [ ] Kiểm thử thanh toán lại order hết hạn.
-- [ ] Hoàn thiện giao diện trạng thái order bằng tiếng Việt.
-- [ ] Kiểm tra responsive cho cart, checkout và order detail.
+- [x] Kiểm thử quantity lớn hơn tồn kho.
+- [x] Kiểm thử checkout khi hai user mua cùng sản phẩm.
+- [x] Kiểm thử thanh toán lại order hết hạn.
+- [x] Hoàn thiện giao diện trạng thái order bằng tiếng Việt.
+- [x] Kiểm tra responsive cho cart, checkout và order detail.
 
 #### File phụ trách
 
@@ -679,10 +689,37 @@ Các phần chưa thể xem là hoàn thiện production:
 
 ##### Trường – Backend/catalog
 
-- [ ] Kiểm tra toàn bộ sản phẩm đang thiếu `imageUrl`.
-- [ ] Chuẩn hóa đường dẫn ảnh theo một quy ước duy nhất.
-- [ ] Cập nhật ảnh trong seed data hoặc form quản lý product.
-- [ ] Kiểm tra ảnh xuất hiện đúng trong `/shop` và `/products/{id}`.
+- [x] Kiểm tra toàn bộ sản phẩm đang thiếu `imageUrl`.
+- [x] Chuẩn hóa đường dẫn ảnh theo một quy ước duy nhất.
+- [x] Cập nhật ảnh trong seed data hoặc form quản lý product.
+- [x] Kiểm tra ảnh xuất hiện đúng trong `/shop` và `/products/{id}`.
+
+Kết quả kiểm kê ảnh sản phẩm:
+
+| Trạng thái kiểm kê | Số lượng | Ghi chú |
+| --- | ---: | --- |
+| Product `ACTIVE` thiếu `imageUrl` | 0 | Đã kiểm tra database local. |
+| Product `ACTIVE` dùng trùng `imageUrl` | 0 | Mỗi sản phẩm dùng URL ảnh riêng theo SKU: `/product-images/{SKU}.svg`. |
+| Product `ACTIVE` thiếu ảnh thật riêng | 14 | Hiện đang dùng SVG thay thế được sinh theo SKU; cần thay bằng ảnh sản phẩm thật khi có tài nguyên. |
+
+Danh sách sản phẩm đang thiếu ảnh thật:
+
+| Product ID | SKU | Tên sản phẩm | Ảnh hiện tại | Ghi chú |
+| ---: | --- | --- | --- | --- |
+| 58 | `SKU004` | Stage 2 Performance Brake Kit | `/product-images/SKU004.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 59 | `SKU005` | Ceramic Brake Pad Set | `/product-images/SKU005.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 60 | `SKU001` | Hybrid Series Turbocharger | `/product-images/SKU001.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 61 | `SKU002` | Performance Air Filter | `/product-images/SKU002.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 62 | `SKU003` | Iridium Spark Plug Set | `/product-images/SKU003.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 63 | `SKU013` | Carbon Fiber Shift Knob | `/product-images/SKU013.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 64 | `SKU010` | 0W-30 Full Synthetic Oil | `/product-images/SKU010.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 65 | `SKU011` | AISIN Super Long Life Coolant 4L | `/product-images/SKU011.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 67 | `SKU014` | Universal Emergency Road Kit | `/product-images/SKU014.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 68 | `SKU008` | Track-Spec Coilover Kit | `/product-images/SKU008.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 69 | `SKU009` | Front Control Arm Kit | `/product-images/SKU009.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 70 | `SKU006` | Forged Alloy Rims | `/product-images/SKU006.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 71 | `SKU007` | Track-Ready Tire Set | `/product-images/SKU007.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 72 | `KK-1783705174331` | KK | `/product-images/KK-1783705174331.svg` | SVG thay thế, cần ảnh thật riêng. |
 
 ##### Ngân – Chuẩn bị tài nguyên và giao diện
 
@@ -715,12 +752,12 @@ Các phần chưa thể xem là hoàn thiện production:
 
 #### Tiêu chí hoàn thành image sản phẩm
 
-- [ ] 100% sản phẩm active có ảnh hoặc ảnh mặc định.
-- [ ] Không có ảnh bị lỗi `404`.
-- [ ] Không có ảnh bị kéo méo hoặc làm vỡ layout.
-- [ ] Ảnh hiển thị đúng sản phẩm ở catalog và detail.
-- [ ] Đường dẫn ảnh hoạt động sau khi build/package và khởi động lại ứng dụng.
-- [ ] Có kiểm tra fallback khi xóa hoặc đổi tên một file ảnh.
+- [x] 100% sản phẩm active có ảnh hoặc ảnh mặc định.
+- [x] Không có ảnh bị lỗi `404`.
+- [x] Không có ảnh bị kéo méo hoặc làm vỡ layout.
+- [x] Ảnh hiển thị đúng sản phẩm ở catalog và detail.
+- [x] Đường dẫn ảnh hoạt động sau khi build/package và khởi động lại ứng dụng.
+- [x] Có kiểm tra fallback khi xóa hoặc đổi tên một file ảnh.
 
 ## 20. Quy tắc phối hợp nhóm
 
@@ -736,5 +773,77 @@ Các phần chưa thể xem là hoàn thiện production:
 git diff --check
 ./mvnw.cmd -q -DskipTests compile
 ```
++
+## 21. Cập nhật flow booking và checklist task
+
+Phần này là bản cập nhật mới nhất cho flow booking và được ưu tiên khi đối chiếu với flow cũ.
+
+### 21.1 Flow booking hiện tại
+
+```text
+Customer chọn xe + dịch vụ + ngày + khung giờ + ghi chú
+        ↓
+Backend kiểm tra xe thuộc Customer, dịch vụ active, ngày hợp lệ và slot còn sức chứa
+        ↓
+Tạo booking PENDING_PAYMENT, tính cọc 20% giá thấp nhất
+        ↓
+Giữ slot 15 phút và hiển thị hạn thanh toán
+        ↓
+Thanh toán cọc PayOS
+        ├─ Thành công → WAITING_FOR_VEHICLE
+        ├─ Hủy/thất bại → cho phép thanh toán lại
+        └─ Quá hạn → EXPIRED_PAYMENT và giải phóng slot
+        ↓
+Staff chờ xe đến → tiếp nhận xe RECEIVING_VEHICLE
+        ↓
+Staff bắt đầu sửa chữa → IN_PROGRESS
+        ↓
+Staff nhập giá cuối (booking vẫn ở IN_PROGRESS)
+        ↓
+Staff xác nhận hoàn tất → COMPLETED
+        ↓
+Customer thanh toán phần còn lại nếu còn
+```
+
+### 21.2 Checklist đã cập nhật
+
+- [x] Hiển thị khoảng giá dự kiến thấp–cao.
+- [x] Cọc 20%, tối thiểu 2.000 VNĐ, tối đa 10.000 VNĐ.
+- [x] Hiển thị hạn thanh toán cọc 15 phút.
+- [x] Tự giải phóng slot khi hết hạn thanh toán.
+- [x] Thanh toán cọc thành công chuyển sang `WAITING_FOR_VEHICLE`.
+- [x] Phân biệt thanh toán cọc và phần còn lại bằng `paymentPurpose`.
+- [x] Cho phép thanh toán lại khi cọc bị hủy/thất bại/hết hạn.
+- [x] Staff có danh sách và detail booking riêng.
+- [x] Staff tiếp nhận xe, ghi nhận `checkedInAt` và chuyển `RECEIVING_VEHICLE`.
+- [x] Chuyển `RECEIVING_VEHICLE` sang `IN_PROGRESS` khi bắt đầu sửa.
+- [x] Nhập giá cuối và chặn giá thấp hơn tiền cọc.
+- [x] Chỉ hoàn thành sau khi đã nhập giá cuối.
+- [x] Tính và thanh toán phần còn lại qua PayOS.
+- [x] Booking đã hủy/không đến không được thanh toán phần còn lại.
+- [x] Staff đánh dấu khách không đến sau giờ bắt đầu lịch.
+
+### 21.3 Checklist cần nghiệm thu
+
+- [ ] Kiểm thử local/seed với Customer, Staff và Admin.
+- [ ] Kiểm thử hai khách đặt cùng khung giờ.
+- [ ] Kiểm tra booking sau 15 phút chuyển `EXPIRED_PAYMENT`.
+- [ ] Kiểm tra slot được mở lại sau khi hết hạn.
+- [ ] Kiểm thử PayOS thành công, hủy, thất bại và hết hạn.
+- [ ] Kiểm thử thanh toán lại và hạn thanh toán mới.
+- [ ] Staff không thể tiếp nhận booking chưa trả cọc.
+- [ ] Staff không thể bắt đầu sửa chữa trước khi tiếp nhận xe.
+- [ ] Không thể hoàn thành khi chưa nhập giá cuối.
+- [ ] Giá cuối nhỏ hơn tiền cọc bị từ chối.
+- [ ] Booking đã hủy không còn nút thanh toán phần còn lại.
+- [ ] Không thể đánh dấu không đến trước giờ bắt đầu.
+- [ ] Kiểm thử hoàn tiền thủ công và lịch sử giao dịch.
+
+### 21.4 Phần còn giới hạn
+
+- [~] PayOS thật chưa được nghiệm thu đầy đủ trên production.
+- [~] Hoàn tiền vẫn cần Admin/Staff chuyển thủ công ngoài hệ thống.
+- [ ] Chưa tích hợp API chuyển khoản hoàn tiền tự động.
+- [ ] Chưa có bộ test tự động đầy đủ cho controller, webhook và mọi chuyển trạng thái.
 
 8. Không commit password, PayOS secret key hoặc thông tin tài khoản ngân hàng thật vào repository.

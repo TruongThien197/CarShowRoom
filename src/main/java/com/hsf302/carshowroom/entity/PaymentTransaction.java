@@ -43,6 +43,9 @@ public class PaymentTransaction {
     @Column(name = "payos_order_code", unique = true, nullable = false)
     private String payosOrderCode;
 
+    @Column(name = "payment_purpose", length = 30)
+    private String paymentPurpose = "DEPOSIT";
+
     @Column(nullable = false)
     private BigDecimal amount;
 
