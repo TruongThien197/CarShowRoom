@@ -62,7 +62,7 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
         if (product.getStatus() != ProductStatus.ACTIVE) {
-            throw new RuntimeException("This product is currently unavailable.");
+            throw new RuntimeException("Sản phẩm này hiện không khả dụng.");
         }
 
         CartItem cartItem = cartItemRepository.findByUserAndProductAndFulfillmentType(user, product, resolvedFulfillmentType).orElseGet(() -> {
@@ -137,9 +137,9 @@ public class CartServiceImpl implements CartService {
     private void validateStock(Product product, int quantity) {
         if (product.getAvailableStock() < quantity) {
             throw new RuntimeException(
-                    "Not enough stock for " + product.getProductName() +
-                            ". Please reduce the quantity to " +
-                            product.getAvailableStock() + " or fewer."
+                    "Không đủ tồn kho cho " + product.getProductName() +
+                            ". Vui lòng giảm số lượng xuống tối đa " +
+                            product.getAvailableStock() + "."
             );
         }
     }

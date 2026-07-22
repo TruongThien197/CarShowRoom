@@ -9,11 +9,13 @@ import com.hsf302.carshowroom.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -71,9 +73,14 @@ public class ProductController {
 
     @GetMapping("/products/{id}")
     public String detail(@PathVariable Integer id, Model model) {
-        Product product = productService.getProduct(id);
+        Product product;
+        try {
+            product = productService.getProduct(id);
+        } catch (RuntimeException exception) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm.", exception);
+        }
         if (product.getStatus() != ProductStatus.ACTIVE) {
-            throw new RuntimeException("Sản phẩm này hiện không còn được bán.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Sản phẩm này hiện không còn được bán.");
         }
         model.addAttribute("product", product);
         return "products/detail";

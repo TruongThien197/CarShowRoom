@@ -77,7 +77,7 @@ public class OrderController {
             }
             return "redirect:/orders/" + result.orderId();
         } catch (RuntimeException exception) {
-            model.addAttribute("errorMessage", "Unable to create PayOS payment: " + exception.getMessage());
+            model.addAttribute("errorMessage", "Không thể tạo đơn hàng hoặc liên kết thanh toán: " + exception.getMessage());
             populateCheckoutModel(model, user, cartItems, form);
             return "order/checkout";
         }
@@ -116,6 +116,7 @@ public class OrderController {
                 && order.getOrderStatus() != OrderStatus.EXPIRED_PAYMENT);
         model.addAttribute("canEditAddress", order.getOrderType() == com.hsf302.carshowroom.common.Enums.OrderType.SHIPPING
                 && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT || order.getOrderStatus() == OrderStatus.PROCESSING));
+        model.addAttribute("canRetryPayment", canRetryPayment(order));
         return "order/detail";
     }
 
@@ -126,7 +127,7 @@ public class OrderController {
             return "redirect:/auth/login";
         }
         Order order = orderService.getOrderForUser(id, user);
-        if (order.getOrderStatus() != OrderStatus.PENDING_PAYMENT || order.getPaymentStatus() == PaymentStatus.PAID) {
+        if (!canRetryPayment(order)) {
             return "redirect:/orders/" + id;
         }
         model.addAttribute("order", order);
@@ -206,5 +207,11 @@ public class OrderController {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private boolean canRetryPayment(Order order) {
+        return order.getPaymentStatus() != PaymentStatus.PAID
+                && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT
+                || order.getOrderStatus() == OrderStatus.EXPIRED_PAYMENT);
     }
 }

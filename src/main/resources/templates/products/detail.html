@@ -18,7 +18,9 @@
             <div class="surface-card gs-stripe-top overflow-hidden bg-light d-flex align-items-center justify-content-center position-relative" style="min-height: 420px">
                 <img class="w-100 h-100 object-fit-cover"
                      th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
-                     th:src="${product.imageUrl}" alt="Product image">
+                     th:src="${product.imageUrl}"
+                     onerror="this.onerror=null; this.src='/images/default-product.jpg';"
+                     alt="Ảnh sản phẩm">
                 <i class="bi bi-tools display-1 text-secondary opacity-25"
                    th:if="${product.imageUrl == null or #strings.isEmpty(product.imageUrl)}"></i>
                 <span class="badge bg-primary fs-6 position-absolute top-0 start-0 m-4 shadow"
@@ -34,7 +36,7 @@
 
                 <h2 class="gs-h4 text-uppercase text-secondary mb-2">Mô tả sản phẩm</h2>
                 <p class="lead text-secondary fs-6 mb-4 lh-lg"
-                   th:text="${product.description ?: 'Genuine automotive part, built for durability.'}"> Mô tả </p>
+                   th:text="${product.description ?: 'Chưa có mô tả chi tiết.'}"> Mô tả </p>
 
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6">
@@ -52,6 +54,36 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="surface-card p-4 mb-4">
+                    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap mb-3">
+                        <div>
+                            <h2 class="gs-h4 fw-bold mb-1"><i class="bi bi-car-front me-2 text-primary"></i>Mẫu xe tương thích</h2>
+                            <p class="text-secondary small mb-0">Danh sách dòng xe hỗ trợ cho phụ tùng này.</p>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm"
+                                type="button"
+                                data-bs-toggle="modal"
+                                data-bs-target="#compatibleModelsModal"
+                                th:if="${!#sets.isEmpty(product.compatibleCarModels)}">
+                            Xem đầy đủ
+                        </button>
+                    </div>
+                    <p class="text-secondary mb-0" th:if="${#sets.isEmpty(product.compatibleCarModels)}">
+                        Chưa gán mẫu xe tương thích trong danh mục.
+                    </p>
+                    <div class="small text-secondary mb-0" th:if="${!#sets.isEmpty(product.compatibleCarModels)}">
+                        <i class="bi bi-car-front me-1"></i>
+                        <span>Tương thích: </span>
+                        <th:block th:each="model, modelStat : ${product.compatibleCarModels}">
+                            <span th:if="${modelStat.index < 3}">
+                                <span th:text="${model.brand + ' ' + model.modelName}">BMW 330xi</span><span th:if="${modelStat.index < 2 and modelStat.index + 1 < #sets.size(product.compatibleCarModels)}">, </span>
+                            </span>
+                        </th:block>
+                        <span th:if="${#sets.size(product.compatibleCarModels) > 3}"
+                              th:text="${' + ' + (#sets.size(product.compatibleCarModels) - 3) + ' mẫu khác'}"> + 45 mẫu khác</span>
+                    </div>
+                </div>
             </div>
 
             <div class="surface-card gs-stripe-top--amber p-4">
@@ -59,7 +91,7 @@
                     <input type="hidden" name="productId" th:value="${product.id}">
                     <select class="form-select form-select-lg" style="min-width: 190px; flex: 1 1 190px;" name="fulfillmentType" required>
                         <option value="SHIPPING">Giao hàng tận nhà</option>
-                        <option value="AT_WORKSHOP">Install at Workshop</option>
+                        <option value="AT_WORKSHOP">Lắp đặt tại xưởng</option>
                     </select>
                     <div class="d-flex align-items-center gap-2">
                         <label class="fw-semibold text-dark mb-0 me-1"> Số lượng </label>
@@ -87,6 +119,33 @@
         </div>
     </div>
 </main>
+
+<div class="modal fade" id="compatibleModelsModal" tabindex="-1" aria-labelledby="compatibleModelsModalLabel" aria-hidden="true"
+     th:if="${!#sets.isEmpty(product.compatibleCarModels)}">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="compatibleModelsModalLabel">
+                    <i class="bi bi-car-front me-2 text-primary"></i>Mẫu xe tương thích
+                </h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-sm-6 col-lg-4" th:each="model : ${product.compatibleCarModels}">
+                        <div class="border rounded-3 px-3 py-2 h-100 small">
+                            <i class="bi bi-car-front me-1 text-primary"></i>
+                            <span th:text="${model.brand + ' ' + model.modelName + ' ' + model.year}">BMW 330xi 2024</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 <div th:replace="~{fragments/footer :: scripts}"></div>

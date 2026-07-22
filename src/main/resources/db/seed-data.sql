@@ -362,12 +362,12 @@ IF NOT EXISTS (SELECT 1 FROM product WHERE sku = N'SKU001')
 BEGIN
     INSERT INTO product (category_id, product_name, sku, description, price, stock_quantity, reserved_stock, image_url, status, version, created_at, updated_at)
     VALUES
-    ((SELECT category_id FROM category WHERE category_name = N'Phụ tùng động cơ'), N'Bộ tăng áp Hybrid Series', N'SKU001', N'Bộ tăng áp nâng cấp lắp trực tiếp cho động cơ công suất cao.', 10000, 8, 0, N'/images/turbocharger.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Hệ thống phanh'), N'Bộ phanh hiệu năng Stage 2', N'SKU002', N'Bộ phanh dùng cho đường phố và đường đua với đĩa và má phanh nâng cấp.', 12000, 12, 0, N'/images/suspension-service.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Lốp và mâm xe'), N'Mâm hợp kim rèn', N'SKU003', N'Bộ mâm rèn nhẹ với lớp sơn đen mờ.', 14000, 6, 0, N'/images/forged-rims.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Lốp và mâm xe'), N'Bộ lốp sẵn sàng đường đua', N'SKU004', N'Bộ lốp bám đường cao cho xe sử dụng hằng ngày và cuối tuần đi đường đua.', 16000, 16, 0, N'/images/track-tire.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Hệ thống treo'), N'Bộ phuộc điều chỉnh Track-Spec', N'SKU005', N'Bộ phuộc điều chỉnh giúp xe ổn định và lái chính xác hơn.', 18000, 10, 0, N'/images/suspension-service.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
-    ((SELECT category_id FROM category WHERE category_name = N'Dầu nhớt và dung dịch'), N'Dầu động cơ tổng hợp 0W-30', N'SKU006', N'Dầu tổng hợp cao cấp cho động cơ hiện đại.', 20000, 50, 0, N'/images/turbocharger.jpg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME());
+    ((SELECT category_id FROM category WHERE category_name = N'Phụ tùng động cơ'), N'Bộ tăng áp Hybrid Series', N'SKU001', N'Bộ tăng áp nâng cấp lắp trực tiếp cho động cơ công suất cao.', 10000, 8, 0, N'/product-images/SKU001.svg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Hệ thống phanh'), N'Bộ phanh hiệu năng Stage 2', N'SKU002', N'Bộ phanh dùng cho đường phố và đường đua với đĩa và má phanh nâng cấp.', 12000, 12, 0, N'/product-images/SKU002.svg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Lốp và mâm xe'), N'Mâm hợp kim rèn', N'SKU003', N'Bộ mâm rèn nhẹ với lớp sơn đen mờ.', 14000, 6, 0, N'/product-images/SKU003.svg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Lốp và mâm xe'), N'Bộ lốp sẵn sàng đường đua', N'SKU004', N'Bộ lốp bám đường cao cho xe sử dụng hằng ngày và cuối tuần đi đường đua.', 16000, 16, 0, N'/product-images/SKU004.svg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Hệ thống treo'), N'Bộ phuộc điều chỉnh Track-Spec', N'SKU005', N'Bộ phuộc điều chỉnh giúp xe ổn định và lái chính xác hơn.', 18000, 10, 0, N'/product-images/SKU005.svg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME()),
+    ((SELECT category_id FROM category WHERE category_name = N'Dầu nhớt và dung dịch'), N'Dầu động cơ tổng hợp 0W-30', N'SKU006', N'Dầu tổng hợp cao cấp cho động cơ hiện đại.', 20000, 50, 0, N'/product-images/SKU006.svg', N'ACTIVE', 0, SYSDATETIME(), SYSDATETIME());
 END
 
 IF NOT EXISTS (SELECT 1 FROM service WHERE service_name = N'Chẩn đoán điện tử')
