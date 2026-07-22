@@ -1,6 +1,7 @@
 package com.hsf302.carshowroom.controller;
 
 import com.hsf302.carshowroom.common.Enums;
+import com.hsf302.carshowroom.dto.CarModelForm;
 import com.hsf302.carshowroom.dto.ServiceForm;
 import com.hsf302.carshowroom.entity.*;
 import com.hsf302.carshowroom.repository.*;
@@ -8,6 +9,9 @@ import com.hsf302.carshowroom.service.BookingService;
 import com.hsf302.carshowroom.service.FirebaseStorageService;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.ProductService;
+import com.hsf302.carshowroom.service.CategoryService;
+import com.hsf302.carshowroom.service.CarModelService;
+import com.hsf302.carshowroom.service.ServiceCatalogService;
 import com.hsf302.carshowroom.service.UserService;
 import com.hsf302.carshowroom.service.AuthService;
 import jakarta.validation.Valid;
@@ -50,6 +54,9 @@ public class AdminController {
     private final OrderService orderService;
     private final BookingService bookingService;
     private final ProductService productService;
+    private final CategoryService categoryService;
+    private final CarModelService carModelService;
+    private final ServiceCatalogService serviceCatalogService;
     private final FirebaseStorageService firebaseStorageService;
     private final AuthService authService;
     private final PaymentTransactionRepository paymentTransactionRepository;
@@ -172,11 +179,11 @@ public class AdminController {
                                  @RequestParam Integer year,
                                  RedirectAttributes redirectAttributes) {
         try {
-            CarModel carModel = new CarModel();
-            carModel.setBrand(brand.trim());
-            carModel.setModelName(modelName.trim());
-            carModel.setYear(year);
-            carModelRepository.save(carModel);
+            CarModelForm form = new CarModelForm();
+            form.setBrand(brand);
+            form.setModelName(modelName);
+            form.setYear(year);
+            carModelService.createCarModel(form);
             redirectAttributes.addFlashAttribute("successMessage", "Car model added successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error adding car model: " + e.getMessage());
@@ -187,7 +194,7 @@ public class AdminController {
     @PostMapping("/car-models/delete")
     public String deleteCarModel(@RequestParam Integer id, RedirectAttributes redirectAttributes) {
         try {
-            carModelRepository.deleteById(id);
+            carModelService.deleteCarModel(id);
             redirectAttributes.addFlashAttribute("successMessage", "Car model deleted successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error deleting car model: " + e.getMessage());
@@ -208,7 +215,7 @@ public class AdminController {
             Category category = new Category();
             category.setCategoryName(categoryName);
             category.setDescription(description);
-            categoryRepository.save(category);
+            categoryService.createCategory(category);
             redirectAttributes.addFlashAttribute("successMessage", "Category added successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error adding category: " + e.getMessage());
@@ -224,7 +231,7 @@ public class AdminController {
             Category category = new Category();
             category.setCategoryName(categoryName);
             category.setDescription(description);
-            categoryRepository.save(category);
+            categoryService.createCategory(category);
             redirectAttributes.addFlashAttribute("successMessage", "Category added successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error adding category: " + e.getMessage());
@@ -249,7 +256,7 @@ public class AdminController {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             category.setCategoryName(categoryName);
             category.setDescription(description);
-            categoryRepository.save(category);
+            categoryService.updateCategory(id, category);
             redirectAttributes.addFlashAttribute("successMessage", "Category updated successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error updating category: " + e.getMessage());
@@ -260,7 +267,7 @@ public class AdminController {
     @PostMapping("/categories/delete/{id}")
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
-            categoryRepository.deleteById(id);
+            categoryService.deleteCategory(id);
             redirectAttributes.addFlashAttribute("successMessage", "Category deleted successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error deleting category: " + e.getMessage());
@@ -307,16 +314,19 @@ public class AdminController {
                                       @RequestParam("stockQuantity") Integer physicalStock,
                                       @RequestParam(required = false) String imageUrl,
                                       @RequestParam(required = false) MultipartFile imageFile,
-                                      @RequestParam(required = false) List<Integer> carModelIds,
-                                      @RequestParam(defaultValue = "ACTIVE") String status,
-                                      RedirectAttributes redirectAttributes) {
+                                       @RequestParam(required = false) List<Integer> carModelIds,
+                                       @RequestParam(defaultValue = "ACTIVE") String status,
+                                       RedirectAttributes redirectAttributes) {
         try {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             Product product = new Product();
             product.setCategory(category);
             product.setName(name);
-            product.setSku((sku == null || sku.isBlank()) ? generateSku(name) : sku.trim());
+            String normalizedSku = (sku == null || sku.isBlank())
+                    ? generateSku(name)
+                    : sku.trim();
+            product.setSku(normalizedSku);
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
@@ -324,7 +334,7 @@ public class AdminController {
             product.setStatus(Enums.ProductStatus.valueOf(status));
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
-            productRepository.save(product);
+            productService.createProduct(product);
             redirectAttributes.addFlashAttribute("successMessage", "Product added successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error adding product: " + e.getMessage());
@@ -351,9 +361,9 @@ public class AdminController {
                                     @RequestParam("stockQuantity") Integer physicalStock,
                                     @RequestParam(required = false) String imageUrl,
                                     @RequestParam(required = false) MultipartFile imageFile,
-                                    @RequestParam(required = false) List<Integer> carModelIds,
-                                    @RequestParam(defaultValue = "ACTIVE") String status,
-                                    RedirectAttributes redirectAttributes) {
+                                     @RequestParam(required = false) List<Integer> carModelIds,
+                                     @RequestParam(defaultValue = "ACTIVE") String status,
+                                     RedirectAttributes redirectAttributes) {
         try {
             Product product = productRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
@@ -361,7 +371,10 @@ public class AdminController {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             product.setCategory(category);
             product.setName(name);
-            product.setSku((sku == null || sku.isBlank()) ? product.getSku() : sku.trim());
+            String normalizedSku = (sku == null || sku.isBlank())
+                    ? product.getSku()
+                    : sku.trim();
+            product.setSku(normalizedSku);
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
@@ -369,7 +382,7 @@ public class AdminController {
             product.setStatus(Enums.ProductStatus.valueOf(status));
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
-            productRepository.save(product);
+            productService.updateProduct(id, product);
             redirectAttributes.addFlashAttribute("successMessage", "Product updated successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error updating product: " + e.getMessage());
@@ -380,7 +393,7 @@ public class AdminController {
     @PostMapping("/products/delete/{id}")
     public String deleteProduct(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
-            productRepository.deleteById(id);
+            productService.deleteProduct(id);
             redirectAttributes.addFlashAttribute("successMessage", "Product deleted successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error deleting product: " + e.getMessage());
@@ -397,21 +410,21 @@ public class AdminController {
                                 @RequestParam Integer physicalStock,
                                 @RequestParam(required = false) String imageUrl,
                                 @RequestParam(required = false) MultipartFile imageFile,
-                                @RequestParam(defaultValue = "ACTIVE") String status,
-                                RedirectAttributes redirectAttributes) {
+                                 @RequestParam(defaultValue = "ACTIVE") String status,
+                                 RedirectAttributes redirectAttributes) {
         try {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             Product product = new Product();
             product.setCategory(category);
             product.setName(name);
-            product.setSku(sku);
+            product.setSku(sku.trim());
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
             product.setImageUrl(resolveImageUrl(imageFile, imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
-            productRepository.save(product);
+            productService.createProduct(product);
             redirectAttributes.addFlashAttribute("successMessage", "Product added successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error adding product: " + e.getMessage());
@@ -424,17 +437,16 @@ public class AdminController {
                                 @RequestParam(required = false) String description,
                                 @RequestParam BigDecimal minPrice,
                                 @RequestParam BigDecimal maxPrice,
-                                @RequestParam int duration,
-                                RedirectAttributes redirectAttributes) {
+                                 @RequestParam int duration,
+                                 RedirectAttributes redirectAttributes) {
         try {
-            com.hsf302.carshowroom.entity.Service service = new com.hsf302.carshowroom.entity.Service();
-            service.setServiceName(name);
-            service.setDescription(description);
-            service.setMinPrice(minPrice);
-            service.setMaxPrice(maxPrice);
-            service.setDurationMinutes(duration);
-            service.setStatus(Enums.ServiceStatus.ACTIVE);
-            serviceRepository.save(service);
+            ServiceForm form = new ServiceForm();
+            form.setServiceName(name);
+            form.setDescription(description);
+            form.setMinPrice(minPrice);
+            form.setMaxPrice(maxPrice);
+            form.setDurationMinutes(duration);
+            serviceCatalogService.create(form);
             redirectAttributes.addFlashAttribute("successMessage", "Service added successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error adding service: " + e.getMessage());
@@ -462,9 +474,7 @@ public class AdminController {
             return "admin/service/create";
         }
         try {
-            com.hsf302.carshowroom.entity.Service service = new com.hsf302.carshowroom.entity.Service();
-            fillService(service, form);
-            serviceRepository.save(service);
+            serviceCatalogService.create(form);
             redirectAttributes.addFlashAttribute("successMessage", "Service added successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error adding service: " + e.getMessage());
@@ -500,8 +510,7 @@ public class AdminController {
             return "admin/service/edit";
         }
         try {
-            fillService(service, form);
-            serviceRepository.save(service);
+            serviceCatalogService.update(id, form);
             redirectAttributes.addFlashAttribute("successMessage", "Service updated successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error updating service: " + e.getMessage());
@@ -512,7 +521,7 @@ public class AdminController {
     @PostMapping("/services/delete/{id}")
     public String deleteService(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
-            serviceRepository.deleteById(id);
+            serviceCatalogService.delete(id);
             redirectAttributes.addFlashAttribute("successMessage", "Service deleted successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error deleting service: " + e.getMessage());
@@ -542,10 +551,7 @@ public class AdminController {
     public String updateProductStatus(@RequestParam Integer productId, @RequestParam String status,
                                       RedirectAttributes redirectAttributes) {
         try {
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-            product.setStatus(Enums.ProductStatus.valueOf(status));
-            productRepository.save(product);
+            productService.changeStatus(productId, status);
             redirectAttributes.addFlashAttribute("successMessage", "Product status updated successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
@@ -760,13 +766,6 @@ public class AdminController {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private void fillService(com.hsf302.carshowroom.entity.Service service, ServiceForm form) {
-        service.setServiceName(form.getServiceName());
-        service.setDescription(form.getDescription());
-        service.setMinPrice(form.getMinPrice());
-        service.setMaxPrice(form.getMaxPrice());
-        service.setDurationMinutes(form.getDurationMinutes());
-    }
     @GetMapping("/orders")
     public String listOrders(@RequestParam(value = "status", required = false) String status, Model model) {
         List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -826,4 +825,5 @@ public class AdminController {
         }
         return "redirect:/admin/orders/" + id;
     }
+
 }

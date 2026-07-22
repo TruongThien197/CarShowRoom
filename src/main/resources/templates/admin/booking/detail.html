@@ -21,13 +21,13 @@
 
             <div class="row g-4">
                 <div class="col-lg-5">
-                    <div class="surface-card gs-stripe-top p-4 border border-warning-subtle">
+                    <div class="surface-card gs-stripe-top p-4 h-100">
                         <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>Thông tin lịch hẹn</h5>
-                        <p><span class="text-secondary">Khách hàng:</span> <span th:text="${booking.user != null ? booking.user.fullName : 'Không xác định'}">Khách hàng</span>
+                        <p><span class="text-secondary">Khách hàng:</span> <strong th:text="${booking.user.fullName}"> Khách hàng </strong></p>
                         <p><span class="text-secondary">Email:</span> <span th:text="${booking.user.email}">email</span></p>
                         <p><span class="text-secondary">Xe:</span> <span th:text="${booking.vehicle != null ? booking.vehicle.brand + ' ' + booking.vehicle.modelName + ' ' + booking.vehicle.year + ' - ' + booking.vehicle.licensePlate : 'Chưa chọn xe'}"> Xe </span></p>
                         <p><span class="text-secondary">Ngày và giờ:</span> <strong class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}"> Ngày </strong></p>
-                        <p><span class="text-secondary">Tiền cọc:</span><strong class="gs-mono text-primary" th:text="${booking.depositAmount != null  ? #numbers.formatDecimal(booking.depositAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</strong></p>
+                        <p><span class="text-secondary">Tiền cọc:</span> <strong class="gs-mono text-primary" th:text="${#numbers.formatDecimal(booking.depositAmount ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">2.000 VNĐ</strong></p>
                         <p>
                             <span class="text-secondary">Trạng thái:</span>
                             <span class="gs-badge"
@@ -110,7 +110,7 @@
                         <tr th:each="transaction : ${paymentTransactions}">
                             <td class="gs-mono" th:text="${transaction.payosOrderCode}">Mã</td>
                             <td class="gs-mono" th:text="${#numbers.formatDecimal(transaction.amount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
-                            <td th:text="${transaction.status.name() == 'PAID' ? 'Đã thanh toán' : (transaction.status.name() == 'FAILED' ? 'Thất bại' : 'Chờ thanh toán')}">Đang chờ thanh toán</td>
+                            <td th:text="${transaction.status}">Đang chờ thanh toán</td>
                             <td class="gs-mono" th:text="${transaction.paidAt != null ? #temporals.format(transaction.paidAt, 'dd-MM-yyyy HH:mm') : #temporals.format(transaction.createdAt, 'dd-MM-yyyy HH:mm')}">Thời gian</td>
                         </tr>
                         </tbody>

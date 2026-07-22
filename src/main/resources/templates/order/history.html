@@ -47,10 +47,7 @@
                                       th:classappend="${order.orderStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${order.orderStatus.name() == 'CANCELED' or order.orderStatus.name() == 'EXPIRED_PAYMENT'} ? 'gs-badge--danger' : (${order.orderStatus.name() == 'PROCESSING' or order.orderStatus.name() == 'SHIPPING'} ? 'gs-badge--info' : 'gs-badge--neutral'))"
                                       th:text="${order.orderStatus}">Chờ xử lý</span>
                             </td>
-                            <td class="text-end fw-bold gs-mono"
-                                th:text="${#numbers.formatDecimal(order.productTotal, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">
-                                0 VNĐ
-                            </td>
+                            <td class="text-end fw-bold gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 2, 'POINT')} + ' VND'">0 VND</td>
                             <td class="text-end">
                                 <a class="btn btn-outline-primary btn-sm" th:href="@{/orders/{id}(id=${order.id})}">
                                     <i class="bi bi-eye me-1"></i>Chi tiết

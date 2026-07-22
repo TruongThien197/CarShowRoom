@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
+    Service findByServiceNameIgnoreCase(String serviceName);
     List<Service> findAllByOrderByServiceNameAsc();
     List<Service> findByStatusOrderByServiceNameAsc(ServiceStatus status);
 }
