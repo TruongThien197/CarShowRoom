@@ -83,6 +83,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product createProduct(Product product) {
+        validateProduct(product, null);
         if (product.getStatus() == null) {
             product.setStatus(ProductStatus.ACTIVE);
         }
@@ -92,11 +93,15 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Product updateProduct(Integer id, Product updatedProduct) {
         Product existing = getProduct(id);
+        validateProduct(updatedProduct, id);
         existing.setName(updatedProduct.getName());
         existing.setCategory(updatedProduct.getCategory());
+        existing.setSku(updatedProduct.getSku());
         existing.setPrice(updatedProduct.getPrice());
         existing.setPhysicalStock(updatedProduct.getPhysicalStock());
         existing.setDescription(updatedProduct.getDescription());
+        existing.getCompatibleCarModels().clear();
+        existing.getCompatibleCarModels().addAll(updatedProduct.getCompatibleCarModels());
         if (updatedProduct.getImageUrl() != null) {
             existing.setImageUrl(updatedProduct.getImageUrl());
         }
@@ -122,5 +127,44 @@ public class ProductServiceImpl implements ProductService {
 
     private String normalize(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private void validateProduct(Product product, Integer productId) {
+        if (product == null || !StringUtils.hasText(product.getName())) {
+            throw new IllegalArgumentException("Product name must not be empty.");
+        }
+        if (product.getName().trim().length() > 150) {
+            throw new IllegalArgumentException("Product name must not exceed 150 characters.");
+        }
+        if (!StringUtils.hasText(product.getSku())) {
+            throw new IllegalArgumentException("SKU must not be empty.");
+        }
+        String normalizedSku = product.getSku().trim();
+        boolean skuUsed = productId == null
+                ? productRepository.existsBySkuIgnoreCase(normalizedSku)
+                : productRepository.existsBySkuIgnoreCaseAndIdNot(normalizedSku, productId);
+        if (skuUsed) {
+            throw new IllegalArgumentException("SKU already belongs to another product.");
+        }
+        if (product.getCategory() == null) {
+            throw new IllegalArgumentException("Product category must not be empty.");
+        }
+        if (product.getPrice() == null || product.getPrice().signum() < 0) {
+            throw new IllegalArgumentException("Product price must not be negative.");
+        }
+        if (product.getPhysicalStock() == null || product.getPhysicalStock() < 0) {
+            throw new IllegalArgumentException("Stock quantity must not be negative.");
+        }
+        if (productId != null) {
+            Product existing = productRepository.findById(productId).orElseThrow();
+            int reservedStock = existing.getReservedStock() == null ? 0 : existing.getReservedStock();
+            if (product.getPhysicalStock() < reservedStock) {
+                throw new IllegalArgumentException(
+                        "Stock quantity cannot be lower than the currently reserved stock."
+                );
+            }
+        }
+        product.setName(product.getName().trim());
+        product.setSku(normalizedSku);
     }
 }

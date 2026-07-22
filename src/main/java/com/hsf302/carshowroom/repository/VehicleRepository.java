@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface VehicleRepository extends JpaRepository<Vehicle, Integer> {
     List<Vehicle> findByUser(User user);
+
+    long countByCarModel_Id(Integer carModelId);
 }
