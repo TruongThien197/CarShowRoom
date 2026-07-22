@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Add New Category | GearShift Admin')}"></head>
+<head th:replace="~{fragments/header :: head('Thêm danh mục | GearShift Admin')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments/header :: navbar('admin')}"></div>
 
@@ -27,12 +27,12 @@
                     <form class="surface-card gs-stripe-top p-4 p-md-5" th:action="@{/admin/categories/create}" method="post">
                         <div class="mb-4">
                             <label class="form-label fw-semibold text-dark">Tên danh mục <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-lg" name="categoryName" placeholder="e.g. Engine Parts, Brake System..." required maxlength="100">
+                            <input type="text" class="form-control form-control-lg" name="categoryName" placeholder="Ví dụ: Động cơ, Hệ thống phanh..." required maxlength="100">
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold text-dark">Mô tả danh mục</label>
-                            <textarea class="form-control" name="description" rows="4" placeholder="Enter a detailed description of this parts group..."></textarea>
+                            <textarea class="form-control" name="description" rows="4" placeholder="Nhập mô tả chi tiết cho nhóm phụ tùng này..."></textarea>
                         </div>
 
                         <div class="d-flex gap-2 justify-content-end pt-3 border-top">

@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('My Xe | GearShift Pro')}"></head>
+<head th:replace="~{fragments/header :: head('Xe của tôi | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('account')}"></div>
 
@@ -28,13 +28,13 @@
                     <div class="surface-card gs-stripe-top p-4 h-100">
                         <div class="d-flex justify-content-between gap-3">
                             <div>
-                                <h5 class="fw-bold mb-1" th:text="${vehicle.brand + ' ' + vehicle.modelName}">Car</h5>
+                                <h5 class="fw-bold mb-1" th:text="${vehicle.brand + ' ' + vehicle.modelName}">Tên Xe</h5>
                                 <div class="text-secondary" th:text="${vehicle.year}">2024</div>
                             </div>
-                            <span class="gs-mono badge text-bg-light align-self-start" th:text="${vehicle.licensePlate}">Plate</span>
+                            <span class="gs-mono badge text-bg-light align-self-start" th:text="${vehicle.licensePlate}">Biển số</span>
                         </div>
                         <form class="mt-4" th:action="@{/vehicles/{id}/delete(id=${vehicle.id})}" method="post">
-                            <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Xóa this vehicle?')">
+                            <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Bạn có chắc xóa phương tiện này không ?')">
                                 <i class="bi bi-trash me-1"></i> Xóa </button>
                         </form>
                     </div>

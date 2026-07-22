@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('An Error Occurred | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Đã xảy ra lỗi | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('error')}"></div>
 
@@ -12,8 +12,9 @@
         <div class="py-5">
             <div class="gs-mono fw-bold mb-3" style="font-size: clamp(4rem, 12vw, 8rem); color: var(--gs-accent); line-height: 1;" th:text="${status != null ? status : '!'}">!</div>
             <h1 class="gs-h1 text-white mb-3"> Đã xảy ra lỗi </h1>
-            <p class="mb-4 mx-auto" style="max-width: 480px; color: #dbe4f0;" th:text="${message != null and !#strings.isEmpty(message)} ? ${message} : 'Please return to the home page or try that action again.'">
-                Please return to the home page or try that action again.
+            <p class="mb-4 mx-auto" style="max-width: 480px; color: #dbe4f0;" th:text="${message != null and !#strings.isEmpty(message) ? message : 'Vui lòng quay lại trang chủ hoặc thử lại thao tác này.'}">
+                Vui lòng quay lại trang chủ hoặc thử lại thao tác này.
+
             </p>
             <a class="btn btn-primary btn-lg gs-cut" th:href="@{/}"><i class="bi bi-house-door me-2"></i> Về trang chủ </a>
         </div>

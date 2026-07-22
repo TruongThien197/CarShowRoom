@@ -30,17 +30,18 @@
             <div>
                 <h1 class="gs-h2 text-dark mb-3" th:text="${product.productName}">Tên phụ tùng</h1>
                 <div class="price gs-mono mb-4" style="font-size: 2rem;"
-                     th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</div>
-
+                     th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
+                    0 VNĐ
+                </div>
                 <h2 class="gs-h4 text-uppercase text-secondary mb-2">Mô tả sản phẩm</h2>
                 <p class="lead text-secondary fs-6 mb-4 lh-lg"
-                   th:text="${product.description ?: 'Genuine automotive part, built for durability.'}"> Mô tả </p>
+                   th:text="${product.description ?: 'Phụ tùng ô tô chất lượng cao, đảm bảo độ bền và hiệu suất.'}"> Mô tả </p>
 
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6">
                         <div class="surface-card p-3 text-center">
                             <div class="small text-secondary mb-1"><i class="bi bi-check-circle me-1"></i> Trạng thái </div>
-                            <span class="gs-badge"
+                            <span clasProduct images="gs-badge"
                                   th:classappend="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0} ? 'gs-badge--success' : 'gs-badge--danger'"
                                   th:text="${product.status.name() == 'ACTIVE' and product.stockQuantity > 0 ? 'Còn hàng' : 'Hết hàng'}"> Trạng thái </span>
                         </div>
@@ -48,7 +49,7 @@
                     <div class="col-sm-6">
                         <div class="surface-card p-3 text-center">
                             <div class="small text-secondary mb-1"><i class="bi bi-tag me-1"></i> Danh mục </div>
-                            <strong class="fs-6 text-dark" th:text="${product.category.categoryName}">Parts</strong>
+                            <strong class="fs-6 text-dark" th:text="${product.category.categoryName}">Phụ tùng</strong>
                         </div>
                     </div>
                 </div>
@@ -59,7 +60,7 @@
                     <input type="hidden" name="productId" th:value="${product.id}">
                     <select class="form-select form-select-lg" style="min-width: 190px; flex: 1 1 190px;" name="fulfillmentType" required>
                         <option value="SHIPPING">Giao hàng tận nhà</option>
-                        <option value="AT_WORKSHOP">Install at Workshop</option>
+                        <option value="AT_WORKSHOP">Lắp đặt tại xưởng</option>
                     </select>
                     <div class="d-flex align-items-center gap-2">
                         <label class="fw-semibold text-dark mb-0 me-1"> Số lượng </label>
