@@ -32,7 +32,14 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, .08);
     box-shadow: 0 10px 24px rgba(17, 24, 39, .16);
 }
+.gs-navbar .btn-outline-primary {
+    border-width: 2px;
+}
 
+.gs-navbar .btn-outline-primary:hover {
+    background-color: var(--bs-primary);
+    color: #fff;
+}
 .navbar-brand {
     color: #fff !important;
     font-weight: 800;
@@ -717,4 +724,42 @@ body {
 .car-model-chip:has(.car-model-chip-input:checked) .car-model-chip-label {
     font-weight: 600;
     color: #0d6efd;
+}
+.footer-dark {
+    background: var(--apex-dark);
+    color: #dbe4f0;
+}
+
+.footer-dark .text-secondary {
+    color: rgba(255,255,255,.82) !important;
+}
+
+.footer-dark a.text-secondary {
+    color: rgba(255,255,255,.82) !important;
+    transition: color .2s ease;
+}
+
+.footer-dark a.text-secondary:hover {
+    color: #ffffff !important;
+}
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link,
+.btn-outline-primary:active,
+.btn-outline-primary.active,
+.btn-primary:active,
+.btn-primary.active,
+.btn-check:checked + .btn-outline-primary {
+    color: #ffffff !important; /* Ép màu chữ hiển thị rõ (trắng) khi được chọn */
+}
+
+@media (min-width: 992px) {
+    .admin-fixed-shell footer {
+        margin-left: 25%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .admin-fixed-shell footer {
+        margin-left: 16.666667%;
+    }
 }

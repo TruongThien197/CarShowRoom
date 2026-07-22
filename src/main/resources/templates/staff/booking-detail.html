@@ -35,8 +35,16 @@
                         <p><span class="text-secondary">Xe:</span> <strong th:text="${booking.vehicle != null ? booking.vehicle.brand + ' ' + booking.vehicle.modelName + ' ' + booking.vehicle.year + ' - ' + booking.vehicle.licensePlate : 'Chưa chọn xe'}">Xe</strong></p>
                         <p><span class="text-secondary">Ngày và giờ:</span> <strong class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Ngày</strong></p>
                         <p><span class="text-secondary">Ngày tạo:</span> <span class="gs-mono" th:text="${booking.createdAt != null ? #temporals.format(booking.createdAt, 'dd/MM/yyyy HH:mm') : 'Chưa xác định'}">Ngày tạo</span></p>
-                        <p><span class="text-secondary">Tiền cọc:</span> <strong class="gs-mono text-primary" th:text="${#numbers.formatDecimal(booking.depositAmount ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">2.000 VNĐ</strong></p>
-                        <p><span class="text-secondary">Giá dự kiến:</span> <strong class="gs-mono text-info" th:text="${#numbers.formatDecimal(booking.estimatedMinAmount ?: 0, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(booking.estimatedMaxAmount ?: 0, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">30.000 - 45.000 VNĐ</strong></p>
+<!--                        truyênf sai tiền cọc-->
+                        <p><span class="text-secondary">Tiền cọc:</span> <strong class="gs-mono text-primary" th:text="${#numbers.formatDecimal(booking.depositAmount, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">2.000 VNĐ</strong></p>
+                        <p>
+                            <span class="text-secondary">Giá dự kiến:</span>
+
+                            <strong class="gs-mono text-info"
+                                    th:text="${#numbers.formatDecimal(booking.estimatedMinAmount != null ? booking.estimatedMinAmount : 0, 0, 'POINT', 0, 'COMMA')+ ' - ' + #numbers.formatDecimal(booking.estimatedMaxAmount != null ? booking.estimatedMaxAmount : 0, 0, 'POINT', 0, 'COMMA') + ' VNĐ'}">30.000 - 45.000 VNĐ
+                            </strong>
+                        </p>
+                        <!--                        <p><span class="text-secondary">Giá dự kiến:</span> <strong class="gs-mono text-info" th:text="${#numbers.formatDecimal(booking.estimatedMinAmount ?: 0, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(booking.estimatedMaxAmount ?: 0, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">30.000 - 45.000 VNĐ</strong></p>-->
                         <p th:if="${booking.checkedInAt != null}"><span class="text-secondary">Tiếp nhận lúc:</span> <span class="gs-mono" th:text="${#temporals.format(booking.checkedInAt, 'dd/MM/yyyy HH:mm')}">Thời gian</span></p>
                         <p class="mb-0"><span class="text-secondary">Ghi chú:</span> <span th:text="${booking.notes ?: 'Không có ghi chú'}">Ghi chú</span></p>
                     </div>
@@ -85,7 +93,7 @@
 
                     <div class="surface-card p-4 mb-4" th:if="${booking.finalAmount != null and (booking.bookingStatus.name() == 'IN_PROGRESS' or booking.bookingStatus.name() == 'COMPLETED')}">
                         <h5 class="fw-bold mb-3">Tổng kết chi phí</h5>
-                        <div class="d-flex justify-content-between mb-2"><span>Giá cuối</span><strong class="gs-mono" th:text="${#numbers.formatDecimal(booking.finalAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">30.000 VNĐ</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span>Giá cuối</span><strong class="gs-mono" th:text="${#numbers.formatDecimal(booking.finalAmount, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">30.000 VNĐ</strong></div>
                         <div class="d-flex justify-content-between"><span>Khách còn phải thanh toán</span><strong class="gs-mono text-warning" th:text="${#numbers.formatDecimal((booking.finalAmount - (booking.depositAmount ?: 0)), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">24.000 VNĐ</strong></div>
                     </div>
 

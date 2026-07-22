@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Thanh toán an toàn | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Xác nhận thanh toán | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('shop')}"></div>
 
@@ -55,7 +55,7 @@
                                 <option value=""> Chọn dịch vụ </option>
                                 <option th:each="service : ${services}"
                                         th:value="${service.id}"
-                                        th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}"> Dịch vụ </option>
+                                        th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}"> Dịch vụ </option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -106,12 +106,12 @@
                 <h4 class="fw-bold">Đơn hàng của bạn</h4>
                 <div class="d-flex justify-content-between my-3" th:each="item : ${cartItems}">
                     <span th:text="${item.product.productName + ' x' + item.quantity}"> Sản phẩm </span>
-                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')} + ' VNĐ'"> 0 VNĐ </strong>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between fs-5 mb-4">
                     <span> Tổng cộng </span>
-                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')} + ' VNĐ'"> 0 VNĐ </strong>
                 </div>
             </div>
         </div>

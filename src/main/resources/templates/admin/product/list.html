@@ -70,11 +70,11 @@
                             <th class="ps-4">STT</th>
                             <th>Ảnh</th>
                             <th>Tên phụ tùng</th>
-                            <th> Danh mục </th>
+                            <th> Danh mục</th>
                             <th>Dòng xe</th>
-                            <th> Giá </th>
+                            <th> Giá</th>
                             <th>Tồn kho</th>
-                            <th> Trạng thái </th>
+                            <th> Trạng thái</th>
                             <th class="text-end pe-4"> Thao tác </th>
                         </tr>
                         </thead>
@@ -90,7 +90,7 @@
                             <td class="ps-4 fw-bold gs-mono text-secondary" th:text="${stat.count}">1</td>
                             <td>
                                 <img th:if="${prod.imageUrl != null and !#strings.isEmpty(prod.imageUrl)}"
-                                     th:src="${prod.imageUrl}" alt="img" class="product-image rounded shadow-sm" style="width:48px;height:48px;">
+                                     th:src="${prod.imageUrl}" alt="Ảnh sản phẩm" class="product-image rounded shadow-sm" style="width:48px;height:48px;">
                                 <div th:if="${prod.imageUrl == null or #strings.isEmpty(prod.imageUrl)}"
                                      class="bg-light rounded d-flex align-items-center justify-content-center border" style="width:48px;height:48px;">
                                     <i class="bi bi-tools text-secondary"></i>
@@ -100,17 +100,17 @@
                                 <div class="fw-bold text-dark" th:text="${prod.productName}"> Sản phẩm </div>
                                 <small class="text-secondary gs-mono" th:text="${prod.sku}">SKU</small>
                             </td>
-                            <td><span class="badge bg-light text-dark border" th:text="${prod.category != null ? prod.category.categoryName : 'N/A'}"> Danh mục </span></td>
+                            <td><span class="badge bg-light text-dark border" th:text="${prod.category != null ? prod.category.categoryName : 'Không có danh mục'}"> Danh mục </span></td>
                             <td class="small text-secondary">
                                 <span th:if="${#sets.isEmpty(prod.compatibleCarModels)}">Chưa gán dòng xe</span>
                                 <span th:if="${!#sets.isEmpty(prod.compatibleCarModels)}"
-                                      th:text="${#strings.listJoin(prod.compatibleCarModels.![brand + ' ' + modelName + ' ' + year], ', ')}">Models</span>
+                                      th:text="${#strings.listJoin(prod.compatibleCarModels.![brand + ' ' + modelName + ' ' + year], ', ')}">Dòng xe</span>
                             </td>
-                            <td class="fw-bold text-primary gs-mono" th:text="${#numbers.formatDecimal(prod.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</td>
+                            <td class="fw-bold text-primary gs-mono" th:text="${#numbers.formatDecimal(prod.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
                             <td class="gs-mono" th:text="${prod.stockQuantity}">0</td>
                             <td><span class="gs-badge" th:classappend="${'ACTIVE'.equalsIgnoreCase(prod.status) ? 'gs-badge--success' : 'gs-badge--neutral'}" th:text="${prod.status}">Đang hoạt động</span></td>
                             <td class="text-end pe-4 table-action">
-                                <a th:href="@{/admin/products/edit/{id}(id=${prod.id})}" class="btn btn-outline-primary btn-sm me-1" title="Edit">
+                                <a th:href="@{/admin/products/edit/{id}(id=${prod.id})}" class="btn btn-outline-primary btn-sm me-1" title="Chỉnh sửa">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
                                 <form class="d-inline" th:action="@{/admin/products/delete/{id}(id=${prod.id})}" method="post">
