@@ -225,8 +225,8 @@ public class OrderServiceImpl implements OrderService {
     public CheckoutResult choosePaymentMethod(Integer id, User user, String paymentMethodValue) {
         Order selectedOrder = getOrderForUser(id, user);
         Order rootOrder = selectedOrder.getParentOrder() != null ? selectedOrder.getParentOrder() : selectedOrder;
-        if (rootOrder.getOrderStatus() != OrderStatus.PENDING_PAYMENT || rootOrder.getPaymentStatus() == PaymentStatus.PAID) {
-            throw new IllegalStateException("Chỉ có thể chọn lại thanh toán cho đơn đang chờ thanh toán.");
+        if (!isRetryablePaymentOrder(rootOrder)) {
+            throw new IllegalStateException("Chỉ có thể chọn lại thanh toán cho đơn chưa thanh toán hoặc đã hết hạn thanh toán.");
         }
         List<Order> stockOrders = rootOrder.getParentOrder() == null && rootOrder.getOrderType() != OrderType.PARENT
                 ? List.of(rootOrder)
@@ -376,7 +376,7 @@ public class OrderServiceImpl implements OrderService {
 
     private void validateWorkshopCheckout(CheckoutForm form) {
         if (form.getVehicleId() == null || form.getServiceId() == null || form.getBookingDate() == null || form.getStartTime() == null) {
-            throw new RuntimeException("Please select a vehicle, service, date, and appointment time for workshop installation items.");
+            throw new RuntimeException("Vui lòng chọn xe, dịch vụ, ngày và giờ hẹn cho sản phẩm lắp đặt tại xưởng.");
         }
     }
 
@@ -478,5 +478,11 @@ public class OrderServiceImpl implements OrderService {
                 && order.getOrderStatus() != OrderStatus.COMPLETED
                 && order.getOrderStatus() != OrderStatus.CANCELED
                 && order.getOrderStatus() != OrderStatus.EXPIRED_PAYMENT;
+    }
+
+    private boolean isRetryablePaymentOrder(Order order) {
+        return order.getPaymentStatus() != PaymentStatus.PAID
+                && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT
+                || order.getOrderStatus() == OrderStatus.EXPIRED_PAYMENT);
     }
 }

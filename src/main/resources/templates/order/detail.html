@@ -38,7 +38,8 @@
                     <div class="col"><div class="border rounded-3 p-3 h-100" th:classappend="${order.orderStatus.name() == 'SHIPPING'} ? ' border-primary bg-primary-subtle' : ''"><div class="small text-secondary">Bước 3</div><strong>Đang giao</strong></div></div>
                     <div class="col"><div class="border rounded-3 p-3 h-100" th:classappend="${order.orderStatus.name() == 'COMPLETED'} ? ' border-success bg-success-subtle' : ''"><div class="small text-secondary">Bước 4</div><strong>Hoàn tất</strong></div></div>
                 </div>
-                <div class="alert alert-light border mb-0" th:if="${order.orderStatus.name() == 'CANCELED' or order.orderStatus.name() == 'EXPIRED_PAYMENT'}"><i class="bi bi-info-circle me-2"></i>Đơn hàng này đã được hủy và không thể tiếp tục xử lý.</div>
+                <div class="alert alert-light border mb-0" th:if="${order.orderStatus.name() == 'CANCELED'}"><i class="bi bi-info-circle me-2"></i>Đơn hàng này đã được hủy và không thể tiếp tục xử lý.</div>
+                <div class="alert alert-warning border mb-0" th:if="${order.orderStatus.name() == 'EXPIRED_PAYMENT'}"><i class="bi bi-clock-history me-2"></i>Đơn hàng đã hết hạn thanh toán. Bạn có thể thanh toán lại nếu sản phẩm vẫn còn tồn kho.</div>
             </div>
 
             <div class="surface-card p-0 overflow-hidden mb-4">
@@ -84,6 +85,9 @@
                 <div class="d-flex justify-content-between mb-2" th:if="${order.refundStatus.name() != 'NONE'}"><span class="text-secondary">Hoàn tiền</span><strong th:text="${order.refundStatus}">Chờ hoàn tiền</strong></div>
                 <div class="d-flex justify-content-between mb-2"><span class="text-secondary">Ngày tạo</span><strong class="gs-mono" th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}">Ngày</strong></div>
                 <hr><div class="d-flex justify-content-between fs-5 fw-bold"><span>Tổng cộng</span><span class="gs-mono text-primary" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</span></div>
+                <a class="btn btn-primary w-100 mt-4" th:if="${canRetryPayment}" th:href="@{/orders/{id}/payment(id=${order.id})}">
+                    <i class="bi bi-credit-card me-1"></i>Thanh toán lại
+                </a>
             </div>
         </aside>
     </div>

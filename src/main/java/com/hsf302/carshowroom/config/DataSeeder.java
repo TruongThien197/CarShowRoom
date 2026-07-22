@@ -110,7 +110,7 @@ public class DataSeeder implements CommandLineRunner {
                 "18000", 10, "/images/suspension-service.jpg"));
         seedProductIfMissing(createProduct(fluids, "0W-30 Full Synthetic Oil","SKU006",
                 "Premium engine oil formulated for modern turbocharged engines.",
-                "20000", 50, "/images/turbocharger.jpg"));
+                "20000", 50, "/product-images/SKU006.svg"));
     }
 
     private void seedProductIfMissing(Product product) {
