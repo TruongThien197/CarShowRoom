@@ -20,6 +20,7 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         migrateBookings();
         migrateServices();
         migrateCartAndOrderItems();
+        migrateRefundTransactions();
         migrateProductCarModels();
         migrateCustomerVehicles();
         removeProductsTable();
@@ -115,6 +116,10 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF COL_LENGTH('orders', 'tracking_code') IS NULL ALTER TABLE orders ADD tracking_code NVARCHAR(100) NULL",
                 "IF COL_LENGTH('orders', 'refund_status') IS NULL ALTER TABLE orders ADD refund_status VARCHAR(30) NULL",
                 "IF COL_LENGTH('orders', 'refund_note') IS NULL ALTER TABLE orders ADD refund_note NVARCHAR(500) NULL",
+                "IF COL_LENGTH('orders', 'refund_bank_name') IS NULL ALTER TABLE orders ADD refund_bank_name NVARCHAR(100) NULL",
+                "IF COL_LENGTH('orders', 'refund_bank_bin') IS NULL ALTER TABLE orders ADD refund_bank_bin NVARCHAR(20) NULL",
+                "IF COL_LENGTH('orders', 'refund_account_holder') IS NULL ALTER TABLE orders ADD refund_account_holder NVARCHAR(150) NULL",
+                "IF COL_LENGTH('orders', 'refund_account_number') IS NULL ALTER TABLE orders ADD refund_account_number NVARCHAR(50) NULL",
                 "IF COL_LENGTH('orders', 'refunded_at') IS NULL ALTER TABLE orders ADD refunded_at DATETIME2 NULL",
                 "IF COL_LENGTH('orders', 'refunded_by_id') IS NULL ALTER TABLE orders ADD refunded_by_id INT NULL",
                 "UPDATE orders SET refund_status = 'NONE' WHERE refund_status IS NULL",
@@ -147,6 +152,7 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'no_show_at') IS NULL ALTER TABLE bookings ADD no_show_at DATETIME2 NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_note') IS NULL ALTER TABLE bookings ADD refund_note NVARCHAR(500) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_bank_name') IS NULL ALTER TABLE bookings ADD refund_bank_name NVARCHAR(100) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_bank_bin') IS NULL ALTER TABLE bookings ADD refund_bank_bin NVARCHAR(20) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_account_holder') IS NULL ALTER TABLE bookings ADD refund_account_holder NVARCHAR(150) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_account_number') IS NULL ALTER TABLE bookings ADD refund_account_number NVARCHAR(50) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refunded_at') IS NULL ALTER TABLE bookings ADD refunded_at DATETIME2 NULL",
@@ -219,6 +225,49 @@ public class SchemaMigrationRunner implements CommandLineRunner {
             } catch (RuntimeException ignored) {
                 // Existing demo databases may have incompatible foreign keys from earlier scaffolds.
                 // Hibernate can still run with nullable integer ids; avoid blocking startup.
+            }
+        });
+    }
+
+    private void migrateRefundTransactions() {
+        List<String> statements = List.of(
+                "IF OBJECT_ID('refund_transactions', 'U') IS NULL " +
+                        "CREATE TABLE refund_transactions (" +
+                        "id BIGINT IDENTITY(1,1) PRIMARY KEY, " +
+                        "payment_transaction_id BIGINT NULL, " +
+                        "order_id INT NULL, " +
+                        "booking_id INT NULL, " +
+                        "processed_by_id INT NULL, " +
+                        "reference_id VARCHAR(80) NOT NULL, " +
+                        "provider_payout_id VARCHAR(100) NULL, " +
+                        "provider_transaction_id VARCHAR(100) NULL, " +
+                        "provider VARCHAR(30) NOT NULL, " +
+                        "amount NUMERIC(18, 2) NOT NULL, " +
+                        "bank_name NVARCHAR(100) NULL, " +
+                        "bank_bin NVARCHAR(20) NULL, " +
+                        "account_holder NVARCHAR(150) NULL, " +
+                        "account_number NVARCHAR(50) NULL, " +
+                        "status VARCHAR(30) NOT NULL, " +
+                        "note NVARCHAR(500) NULL, " +
+                        "raw_response NVARCHAR(1000) NULL, " +
+                        "error_message NVARCHAR(500) NULL, " +
+                        "refunded_at DATETIME2 NULL, " +
+                        "created_at DATETIME2 NULL, " +
+                        "updated_at DATETIME2 NULL)",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'raw_response') IS NULL ALTER TABLE refund_transactions ADD raw_response NVARCHAR(1000) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'provider_payout_id') IS NULL ALTER TABLE refund_transactions ADD provider_payout_id VARCHAR(100) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'provider_transaction_id') IS NULL ALTER TABLE refund_transactions ADD provider_transaction_id VARCHAR(100) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'bank_bin') IS NULL ALTER TABLE refund_transactions ADD bank_bin NVARCHAR(20) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'error_message') IS NULL ALTER TABLE refund_transactions ADD error_message NVARCHAR(500) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'created_at') IS NOT NULL UPDATE refund_transactions SET created_at = SYSDATETIME() WHERE created_at IS NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'updated_at') IS NOT NULL UPDATE refund_transactions SET updated_at = created_at WHERE updated_at IS NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('refund_transactions') AND name = 'UX_refund_transactions_reference_id') CREATE UNIQUE INDEX UX_refund_transactions_reference_id ON refund_transactions(reference_id)"
+        );
+        statements.forEach(statement -> {
+            try {
+                jdbcTemplate.execute(statement);
+            } catch (RuntimeException ignored) {
+                // Demo databases may differ across teammates; Hibernate update can still reconcile entities.
             }
         });
     }

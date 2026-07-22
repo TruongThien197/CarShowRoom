@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import vn.payos.PayOS;
 
 @Configuration
-@EnableConfigurationProperties(PayOSProperties.class)
+@EnableConfigurationProperties({PayOSProperties.class, PayOSPayoutProperties.class})
 public class PayOSConfig {
 
     @Bean

@@ -63,6 +63,7 @@ class CriticalWorkflowTests {
     @Mock private SchedulingService schedulingService;
     @Mock private PaymentService paymentService;
     @Mock private OrderWorkflowService orderWorkflowService;
+    @Mock private RefundPayoutService refundPayoutService;
     @InjectMocks private OrderServiceImpl orderService;
     @InjectMocks private CartServiceImpl cartService;
     @InjectMocks private InventoryReservationServiceImpl inventoryReservationServiceImpl;

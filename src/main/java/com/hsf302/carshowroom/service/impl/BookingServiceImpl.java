@@ -2,11 +2,13 @@ package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
+import com.hsf302.carshowroom.common.Enums.RefundPayoutStatus;
 import com.hsf302.carshowroom.common.Enums.RefundStatus;
 import com.hsf302.carshowroom.common.Enums.ServiceStatus;
 import com.hsf302.carshowroom.dto.BookingForm;
 import com.hsf302.carshowroom.entity.Booking;
 import com.hsf302.carshowroom.entity.BookingService;
+import com.hsf302.carshowroom.entity.RefundTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.repository.BookingRepository;
@@ -14,6 +16,7 @@ import com.hsf302.carshowroom.repository.BookingServiceRepository;
 import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
+import com.hsf302.carshowroom.service.RefundPayoutService;
 import com.hsf302.carshowroom.service.SchedulingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,6 +41,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     private final VehicleRepository vehicleRepository;
     private final SchedulingService schedulingService;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final RefundPayoutService refundPayoutService;
 
     @Override
     @Transactional
@@ -149,40 +153,56 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     @Override
     @Transactional
     public void completeRefund(Integer bookingId, User processedBy, String bankName,
-                               String accountHolder, String accountNumber, String note) {
+                               String bankBin, String accountHolder, String accountNumber, String note) {
         Booking booking = getBookingDetail(bookingId);
         if (booking.getBookingStatus() != BookingStatus.CANCELED
-                || booking.getRefundStatus() != RefundStatus.REQUESTED
+                || (booking.getRefundStatus() != RefundStatus.REQUESTED && booking.getRefundStatus() != RefundStatus.FAILED)
                 || booking.getPaymentStatus() != PaymentStatus.PAID) {
             throw new IllegalStateException("Lịch hẹn không có yêu cầu hoàn tiền đang chờ xử lý.");
         }
         if (bankName == null || bankName.isBlank()
+                || bankBin == null || bankBin.isBlank()
                 || accountHolder == null || accountHolder.isBlank()
                 || accountNumber == null || accountNumber.isBlank()
                 || note == null || note.isBlank()) {
-            throw new IllegalArgumentException("Vui lòng nhập đầy đủ ngân hàng, chủ tài khoản, số tài khoản và mã giao dịch.");
+            throw new IllegalArgumentException("Vui lòng nhập đầy đủ ngân hàng, mã BIN, chủ tài khoản, số tài khoản và ghi chú hoàn tiền.");
         }
         if (!samePerson(accountHolder, booking.getUser().getFullName())) {
             throw new IllegalArgumentException("Tên người nhận tiền phải trùng với khách hàng đã thanh toán tiền cọc.");
         }
-        booking.setRefundStatus(RefundStatus.COMPLETED);
-        booking.setPaymentStatus(PaymentStatus.REFUNDED);
         booking.setRefundNote(note.trim());
         booking.setRefundBankName(bankName.trim());
+        booking.setRefundBankBin(bankBin.trim());
         booking.setRefundAccountHolder(accountHolder.trim());
         booking.setRefundAccountNumber(accountNumber.trim());
-        booking.setRefundedAt(LocalDateTime.now());
         booking.setRefundedBy(processedBy);
-        paymentTransactionRepository.findByBooking(booking).forEach(transaction -> {
-            transaction.setStatus(PaymentStatus.REFUNDED);
-            paymentTransactionRepository.save(transaction);
-        });
+        RefundTransaction refundTransaction = refundPayoutService.payoutBookingRefund(booking, processedBy,
+                booking.getRefundBankName(), booking.getRefundBankBin(),
+                booking.getRefundAccountHolder(), booking.getRefundAccountNumber(), booking.getRefundNote());
+        applyBookingRefundResult(booking, refundTransaction);
         bookingRepository.save(booking);
+    }
+
+    private void applyBookingRefundResult(Booking booking, RefundTransaction refundTransaction) {
+        if (refundTransaction.getStatus() == RefundPayoutStatus.SUCCEEDED) {
+            booking.setRefundStatus(RefundStatus.COMPLETED);
+            booking.setPaymentStatus(PaymentStatus.REFUNDED);
+            booking.setRefundedAt(refundTransaction.getRefundedAt() == null ? LocalDateTime.now() : refundTransaction.getRefundedAt());
+            paymentTransactionRepository.findByBooking(booking).forEach(transaction -> {
+                transaction.setStatus(PaymentStatus.REFUNDED);
+                paymentTransactionRepository.save(transaction);
+            });
+        } else if (refundTransaction.getStatus() == RefundPayoutStatus.FAILED) {
+            booking.setRefundStatus(RefundStatus.FAILED);
+            booking.setRefundNote(refundTransaction.getErrorMessage());
+        } else {
+            booking.setRefundStatus(RefundStatus.PROCESSING);
+        }
     }
 
     @Override
     @Transactional
-    public void submitRefundAccount(User user, Integer bookingId, String bankName,
+    public void submitRefundAccount(User user, Integer bookingId, String bankName, String bankBin,
                                     String accountHolder, String accountNumber) {
         Booking booking = getBookingDetail(user, bookingId);
         if (booking.getBookingStatus() != BookingStatus.CANCELED
@@ -191,6 +211,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
             throw new IllegalStateException("Booking này không cần bổ sung thông tin hoàn tiền.");
         }
         if (bankName == null || bankName.isBlank()
+                || bankBin == null || bankBin.isBlank()
                 || accountHolder == null || accountHolder.isBlank()
                 || accountNumber == null || accountNumber.isBlank()) {
             throw new IllegalArgumentException("Vui lòng nhập đầy đủ thông tin tài khoản nhận tiền.");
@@ -199,6 +220,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
             throw new IllegalArgumentException("Tên người nhận tiền phải trùng với tên khách hàng đã thanh toán tiền cọc.");
         }
         booking.setRefundBankName(bankName.trim());
+        booking.setRefundBankBin(bankBin.trim());
         booking.setRefundAccountHolder(booking.getUser().getFullName());
         booking.setRefundAccountNumber(accountNumber.trim());
         bookingRepository.save(booking);

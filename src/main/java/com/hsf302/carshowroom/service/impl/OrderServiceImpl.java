@@ -5,6 +5,7 @@ import com.hsf302.carshowroom.common.Enums.OrderStatus;
 import com.hsf302.carshowroom.common.Enums.OrderType;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.common.Enums.PaymentMethod;
+import com.hsf302.carshowroom.common.Enums.RefundPayoutStatus;
 import com.hsf302.carshowroom.common.Enums.ServiceStatus;
 import com.hsf302.carshowroom.common.Enums.RefundStatus;
 import com.hsf302.carshowroom.dto.CheckoutForm;
@@ -16,6 +17,7 @@ import com.hsf302.carshowroom.entity.Order;
 import com.hsf302.carshowroom.entity.OrderItem;
 import com.hsf302.carshowroom.entity.Product;
 import com.hsf302.carshowroom.entity.PaymentTransaction;
+import com.hsf302.carshowroom.entity.RefundTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.repository.BookingRepository;
@@ -31,6 +33,7 @@ import com.hsf302.carshowroom.service.InventoryReservationService;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.OrderWorkflowService;
 import com.hsf302.carshowroom.service.PaymentService;
+import com.hsf302.carshowroom.service.RefundPayoutService;
 import com.hsf302.carshowroom.service.SchedulingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -61,6 +64,7 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentService paymentService;
     private final OrderWorkflowService orderWorkflowService;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final RefundPayoutService refundPayoutService;
 
     @Override
     @Transactional
@@ -201,23 +205,40 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void completeRefund(Integer id, User processedBy, String note) {
+    public void completeRefund(Integer id, User processedBy, String bankName, String bankBin,
+                               String accountHolder, String accountNumber, String note) {
         Order order = getOrderById(id);
         if (order.getOrderStatus() != OrderStatus.CANCELED
-                || order.getRefundStatus() != RefundStatus.REQUESTED
+                || (order.getRefundStatus() != RefundStatus.REQUESTED && order.getRefundStatus() != RefundStatus.FAILED)
                 || order.getPaymentStatus() != PaymentStatus.PAID) {
             throw new IllegalStateException("Đơn hàng không có yêu cầu hoàn tiền đang chờ xử lý.");
         }
-        order.setRefundStatus(RefundStatus.COMPLETED);
-        order.setPaymentStatus(PaymentStatus.REFUNDED);
+        order.setRefundBankName(requireText(bankName, "Vui lòng nhập ngân hàng nhận hoàn tiền."));
+        order.setRefundBankBin(requireText(bankBin, "Vui lòng nhập mã BIN ngân hàng nhận hoàn tiền."));
+        order.setRefundAccountHolder(requireText(accountHolder, "Vui lòng nhập tên chủ tài khoản nhận hoàn tiền."));
+        order.setRefundAccountNumber(requireText(accountNumber, "Vui lòng nhập số tài khoản nhận hoàn tiền."));
         order.setRefundNote(requireText(note, "Vui lòng nhập ghi chú hoàn tiền."));
-        order.setRefundedAt(LocalDateTime.now());
         order.setRefundedBy(processedBy);
-        paymentTransactionRepository.findByOrderOrParentOrder(order, order).forEach(transaction -> {
-            transaction.setStatus(PaymentStatus.REFUNDED);
-            paymentTransactionRepository.save(transaction);
-        });
+        RefundTransaction refundTransaction = refundPayoutService.payoutOrderRefund(order, processedBy, order.getRefundNote());
+        applyOrderRefundResult(order, refundTransaction);
         orderRepository.save(order);
+    }
+
+    private void applyOrderRefundResult(Order order, RefundTransaction refundTransaction) {
+        if (refundTransaction.getStatus() == RefundPayoutStatus.SUCCEEDED) {
+            order.setRefundStatus(RefundStatus.COMPLETED);
+            order.setPaymentStatus(PaymentStatus.REFUNDED);
+            order.setRefundedAt(refundTransaction.getRefundedAt() == null ? LocalDateTime.now() : refundTransaction.getRefundedAt());
+            paymentTransactionRepository.findByOrderOrParentOrder(order, order).forEach(transaction -> {
+                transaction.setStatus(PaymentStatus.REFUNDED);
+                paymentTransactionRepository.save(transaction);
+            });
+        } else if (refundTransaction.getStatus() == RefundPayoutStatus.FAILED) {
+            order.setRefundStatus(RefundStatus.FAILED);
+            order.setRefundNote(refundTransaction.getErrorMessage());
+        } else {
+            order.setRefundStatus(RefundStatus.PROCESSING);
+        }
     }
 
     @Override
