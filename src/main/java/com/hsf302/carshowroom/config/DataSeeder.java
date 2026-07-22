@@ -59,17 +59,21 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private List<Category> seedCategories() {
-        if (categoryRepository.count() == 0) {
-            categoryRepository.save(createCategory("Engine", "Turbochargers, air filters, spark plugs, exhausts, and engine performance parts."));
-            categoryRepository.save(createCategory("Brakes", "Brake pads, rotors, calipers, and brake upgrade kits."));
-            categoryRepository.save(createCategory("Tires & Wheels", "Performance tires, forged rims, and alignment accessories."));
-            categoryRepository.save(createCategory("Suspension", "Coilovers, springs, sway bars, and parts to improve handling stability."));
-            categoryRepository.save(createCategory("Oil & Fluids", "Engine oil, coolant, brake fluid, and maintenance fluids."));
-            categoryRepository.save(createCategory("Electrical & Sensors", "Sensors, batteries, lights, and vehicle electrical accessories."));
-            categoryRepository.save(createCategory("Interior", "Cabin accessories, floor mats, seats, and trim details."));
-            categoryRepository.save(createCategory("Car Care", "Wash solutions, protective coatings, towels, and detailing tools."));
-        }
+        createCategoryIfMissing("Engine", "Turbochargers, air filters, spark plugs, exhausts, and engine performance parts.");
+        createCategoryIfMissing("Brakes", "Brake pads, rotors, calipers, and brake upgrade kits.");
+        createCategoryIfMissing("Tires & Wheels", "Performance tires, forged rims, and alignment accessories.");
+        createCategoryIfMissing("Suspension", "Coilovers, springs, sway bars, and parts to improve handling stability.");
+        createCategoryIfMissing("Oil & Fluids", "Engine oil, coolant, brake fluid, and maintenance fluids.");
+        createCategoryIfMissing("Electrical & Sensors", "Sensors, batteries, lights, and vehicle electrical accessories.");
+        createCategoryIfMissing("Interior", "Cabin accessories, floor mats, seats, and trim details.");
+        createCategoryIfMissing("Car Care", "Wash solutions, protective coatings, towels, and detailing tools.");
         return categoryRepository.findAll();
+    }
+
+    private void createCategoryIfMissing(String name, String description) {
+        if (categoryRepository.findByCategoryNameIgnoreCase(name) == null) {
+            categoryRepository.save(createCategory(name, description));
+        }
     }
 
     private Category createCategory(String name, String description) {
@@ -80,7 +84,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedProducts(List<Category> categories) {
-        if (productRepository.count() > 0 || categories.isEmpty()) {
+        if (categories.isEmpty()) {
             return;
         }
         Category engine = findCategory(categories, "Engine");
@@ -89,24 +93,30 @@ public class DataSeeder implements CommandLineRunner {
         Category suspension = findCategory(categories, "Suspension");
         Category fluids = findCategory(categories, "Oil & Fluids");
 
-        productRepository.save(createProduct(engine, "Hybrid Series Turbocharger Kit","SKU001",
+        seedProductIfMissing(createProduct(engine, "Hybrid Series Turbocharger Kit","SKU001",
                 "A direct-fit upgrade turbo kit built for high-output engine setups.",
                 "10000", 8, "/images/turbocharger.jpg"));
-        productRepository.save(createProduct(brakes, "Stage 2 Performance Brake Kit","SKU002",
+        seedProductIfMissing(createProduct(brakes, "Stage 2 Performance Brake Kit","SKU002",
                 "A street and track brake kit featuring upgraded rotors and pads.",
                 "12000", 12, "/images/suspension-service.jpg"));
-        productRepository.save(createProduct(wheels, "Forged Alloy Rims","SKU003",
+        seedProductIfMissing(createProduct(wheels, "Forged Alloy Rims","SKU003",
                 "Lightweight forged rims finished in satin black.",
                 "14000", 6, "/images/forged-rims.jpg"));
-        productRepository.save(createProduct(wheels, "Track-Ready Tire Set","SKU004",
+        seedProductIfMissing(createProduct(wheels, "Track-Ready Tire Set","SKU004",
                 "High-grip tires built for daily-driven and weekend performance cars.",
                 "16000", 16, "/images/track-tire.jpg"));
-        productRepository.save(createProduct(suspension, "Track-Spec Coilover Kit","SKU005",
+        seedProductIfMissing(createProduct(suspension, "Track-Spec Coilover Kit","SKU005",
                 "An adjustable coilover kit that improves handling stability and driving feel.",
                 "18000", 10, "/images/suspension-service.jpg"));
-        productRepository.save(createProduct(fluids, "0W-30 Full Synthetic Oil","SKU006",
+        seedProductIfMissing(createProduct(fluids, "0W-30 Full Synthetic Oil","SKU006",
                 "Premium engine oil formulated for modern turbocharged engines.",
                 "20000", 50, "/images/turbocharger.jpg"));
+    }
+
+    private void seedProductIfMissing(Product product) {
+        if (productRepository.findBySkuIgnoreCase(product.getSku()) == null) {
+            productRepository.save(product);
+        }
     }
 
     private Category findCategory(List<Category> categories, String name) {
@@ -167,13 +177,16 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
     private void seedServices() {
-        if (serviceRepository.count() > 0) {
-            return;
+        seedServiceIfMissing(createService("Chẩn đoán kỹ thuật số", "Quét lỗi toàn bộ xe và lập báo cáo tình trạng hệ thống.", "20000", "30000", 30));
+        seedServiceIfMissing(createService("Kiểm tra phanh và gầm xe", "Kiểm tra hệ thống phanh, giảm xóc và các chi tiết dưới gầm.", "35000", "45000", 60));
+        seedServiceIfMissing(createService("Tinh chỉnh hiệu suất động cơ", "Kiểm tra ECU, rà soát cấu hình và tinh chỉnh hiệu suất.", "40000", "60000", 90));
+        seedServiceIfMissing(createService("Bảo dưỡng định kỳ", "Thay dầu, kiểm tra dung dịch, thay lọc và bảo dưỡng cơ bản.", "30000", "45000", 45));
+    }
+
+    private void seedServiceIfMissing(com.hsf302.carshowroom.entity.Service service) {
+        if (serviceRepository.findByServiceNameIgnoreCase(service.getServiceName()) == null) {
+            serviceRepository.save(service);
         }
-        serviceRepository.save(createService("Chẩn đoán kỹ thuật số", "Quét lỗi toàn bộ xe và lập báo cáo tình trạng hệ thống.", "20000", "30000", 30));
-        serviceRepository.save(createService("Kiểm tra phanh và gầm xe", "Kiểm tra hệ thống phanh, giảm xóc và các chi tiết dưới gầm.", "35000", "45000", 60));
-        serviceRepository.save(createService("Tinh chỉnh hiệu suất động cơ", "Kiểm tra ECU, rà soát cấu hình và tinh chỉnh hiệu suất.", "40000", "60000", 90));
-        serviceRepository.save(createService("Bảo dưỡng định kỳ", "Thay dầu, kiểm tra dung dịch, thay lọc và bảo dưỡng cơ bản.", "30000", "45000", 45));
     }
 
     private com.hsf302.carshowroom.entity.Service createService(String name, String description, String minPrice, String maxPrice, int duration) {

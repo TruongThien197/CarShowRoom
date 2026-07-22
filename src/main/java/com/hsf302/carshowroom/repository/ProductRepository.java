@@ -14,6 +14,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Integer> {
+    Product findBySkuIgnoreCase(String sku);
+    boolean existsBySkuIgnoreCase(String sku);
+
+    boolean existsBySkuIgnoreCaseAndIdNot(String sku, Integer id);
+
+    long countByCategory_Id(Integer categoryId);
+
+    long countByCompatibleCarModels_Id(Integer carModelId);
+
     List<Product> findByStatus(ProductStatus status);
 
     List<Product> findByCategoryIdAndStatus(Integer categoryId, ProductStatus status);
