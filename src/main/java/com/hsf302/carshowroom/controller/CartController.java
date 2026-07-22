@@ -47,7 +47,7 @@ public class CartController {
         }
         try{
             cartService.addToCart(user, productId, quantity, fulfillmentType);
-            redirectAttributes.addFlashAttribute("successMessage", "Product added to cart successfully.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã thêm sản phẩm vào giỏ hàng.");
         }catch (RuntimeException ex){
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
@@ -63,7 +63,12 @@ public class CartController {
             redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng đăng nhập để cập nhật giỏ hàng.");
             return "redirect:/auth/login";
         }
-        cartService.updateQuantity(user, cartItemId, quantity);
+        try {
+            cartService.updateQuantity(user, cartItemId, quantity);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật giỏ hàng.");
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
         return "redirect:/cart";
     }
 
@@ -76,10 +81,7 @@ public class CartController {
             return "redirect:/auth/login";
         }
         cartService.removeItem(user, cartItemId);
-        redirectAttributes.addFlashAttribute(
-                "successMessage",
-                "Product removed from cart successfully."
-        );
+        redirectAttributes.addFlashAttribute("successMessage", "Đã xóa sản phẩm khỏi giỏ hàng.");
         return "redirect:/cart";
     }
 

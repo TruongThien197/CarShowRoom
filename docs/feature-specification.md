@@ -553,11 +553,11 @@ Các phần chưa thể xem là hoàn thiện production:
 
 #### Task cần hoàn thiện
 
-- [ ] Kiểm thử quantity lớn hơn tồn kho.
-- [ ] Kiểm thử checkout khi hai user mua cùng sản phẩm.
-- [ ] Kiểm thử thanh toán lại order hết hạn.
-- [ ] Hoàn thiện giao diện trạng thái order bằng tiếng Việt.
-- [ ] Kiểm tra responsive cho cart, checkout và order detail.
+- [x] Kiểm thử quantity lớn hơn tồn kho.
+- [x] Kiểm thử checkout khi hai user mua cùng sản phẩm.
+- [x] Kiểm thử thanh toán lại order hết hạn.
+- [x] Hoàn thiện giao diện trạng thái order bằng tiếng Việt.
+- [x] Kiểm tra responsive cho cart, checkout và order detail.
 
 #### File phụ trách
 
@@ -689,10 +689,37 @@ Các phần chưa thể xem là hoàn thiện production:
 
 ##### Trường – Backend/catalog
 
-- [ ] Kiểm tra toàn bộ sản phẩm đang thiếu `imageUrl`.
-- [ ] Chuẩn hóa đường dẫn ảnh theo một quy ước duy nhất.
-- [ ] Cập nhật ảnh trong seed data hoặc form quản lý product.
-- [ ] Kiểm tra ảnh xuất hiện đúng trong `/shop` và `/products/{id}`.
+- [x] Kiểm tra toàn bộ sản phẩm đang thiếu `imageUrl`.
+- [x] Chuẩn hóa đường dẫn ảnh theo một quy ước duy nhất.
+- [x] Cập nhật ảnh trong seed data hoặc form quản lý product.
+- [x] Kiểm tra ảnh xuất hiện đúng trong `/shop` và `/products/{id}`.
+
+Kết quả kiểm kê ảnh sản phẩm:
+
+| Trạng thái kiểm kê | Số lượng | Ghi chú |
+| --- | ---: | --- |
+| Product `ACTIVE` thiếu `imageUrl` | 0 | Đã kiểm tra database local. |
+| Product `ACTIVE` dùng trùng `imageUrl` | 0 | Mỗi sản phẩm dùng URL ảnh riêng theo SKU: `/product-images/{SKU}.svg`. |
+| Product `ACTIVE` thiếu ảnh thật riêng | 14 | Hiện đang dùng SVG thay thế được sinh theo SKU; cần thay bằng ảnh sản phẩm thật khi có tài nguyên. |
+
+Danh sách sản phẩm đang thiếu ảnh thật:
+
+| Product ID | SKU | Tên sản phẩm | Ảnh hiện tại | Ghi chú |
+| ---: | --- | --- | --- | --- |
+| 58 | `SKU004` | Stage 2 Performance Brake Kit | `/product-images/SKU004.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 59 | `SKU005` | Ceramic Brake Pad Set | `/product-images/SKU005.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 60 | `SKU001` | Hybrid Series Turbocharger | `/product-images/SKU001.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 61 | `SKU002` | Performance Air Filter | `/product-images/SKU002.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 62 | `SKU003` | Iridium Spark Plug Set | `/product-images/SKU003.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 63 | `SKU013` | Carbon Fiber Shift Knob | `/product-images/SKU013.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 64 | `SKU010` | 0W-30 Full Synthetic Oil | `/product-images/SKU010.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 65 | `SKU011` | AISIN Super Long Life Coolant 4L | `/product-images/SKU011.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 67 | `SKU014` | Universal Emergency Road Kit | `/product-images/SKU014.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 68 | `SKU008` | Track-Spec Coilover Kit | `/product-images/SKU008.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 69 | `SKU009` | Front Control Arm Kit | `/product-images/SKU009.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 70 | `SKU006` | Forged Alloy Rims | `/product-images/SKU006.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 71 | `SKU007` | Track-Ready Tire Set | `/product-images/SKU007.svg` | SVG thay thế, cần ảnh thật riêng. |
+| 72 | `KK-1783705174331` | KK | `/product-images/KK-1783705174331.svg` | SVG thay thế, cần ảnh thật riêng. |
 
 ##### Ngân – Chuẩn bị tài nguyên và giao diện
 
@@ -725,12 +752,12 @@ Các phần chưa thể xem là hoàn thiện production:
 
 #### Tiêu chí hoàn thành image sản phẩm
 
-- [ ] 100% sản phẩm active có ảnh hoặc ảnh mặc định.
-- [ ] Không có ảnh bị lỗi `404`.
-- [ ] Không có ảnh bị kéo méo hoặc làm vỡ layout.
-- [ ] Ảnh hiển thị đúng sản phẩm ở catalog và detail.
-- [ ] Đường dẫn ảnh hoạt động sau khi build/package và khởi động lại ứng dụng.
-- [ ] Có kiểm tra fallback khi xóa hoặc đổi tên một file ảnh.
+- [x] 100% sản phẩm active có ảnh hoặc ảnh mặc định.
+- [x] Không có ảnh bị lỗi `404`.
+- [x] Không có ảnh bị kéo méo hoặc làm vỡ layout.
+- [x] Ảnh hiển thị đúng sản phẩm ở catalog và detail.
+- [x] Đường dẫn ảnh hoạt động sau khi build/package và khởi động lại ứng dụng.
+- [x] Có kiểm tra fallback khi xóa hoặc đổi tên một file ảnh.
 
 ## 20. Quy tắc phối hợp nhóm
 

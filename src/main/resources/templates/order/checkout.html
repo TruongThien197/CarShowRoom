@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Secure Checkout | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Thanh toán an toàn | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('shop')}"></div>
 
@@ -10,13 +10,13 @@
     <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
     <div class="alert alert-light border" th:if="${#lists.isEmpty(cartItems)}">
-        Your cart is empty. <a th:href="@{/shop}"> Tiếp tục mua sắm </a>.
+        Giỏ hàng đang trống. <a th:href="@{/shop}"> Tiếp tục mua sắm </a>.
     </div>
 
     <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
         <div class="col-lg-8">
             <form class="surface-card p-4 needs-validation" th:action="@{/orders/checkout}" th:object="${checkoutForm}" method="post">
-                <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">1</span>Contact &amp; Thông tin giao hàng<span class="gs-chevron-divider" th:if="${needsWorkshop}"></span></h4>
+                <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">1</span>Liên hệ và giao hàng<span class="gs-chevron-divider" th:if="${needsWorkshop}"></span></h4>
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label class="form-label"> Họ và tên </label>
@@ -38,7 +38,7 @@
                 </div>
 
                 <div th:if="${needsWorkshop}" class="mb-4">
-                    <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">2</span>Workshop Installation Schedule<span class="gs-chevron-divider"></span></h4>
+                    <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">2</span>Lịch lắp đặt tại xưởng<span class="gs-chevron-divider"></span></h4>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label"> Xe </label>
