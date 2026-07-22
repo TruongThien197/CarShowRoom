@@ -15,6 +15,7 @@ import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
 import com.hsf302.carshowroom.service.OrderWorkflowService;
 import com.hsf302.carshowroom.service.PaymentService;
 import com.hsf302.carshowroom.service.InventoryReservationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final InventoryReservationService inventoryReservationService;
     private final PayOS payOS;
     private final PayOSProperties properties;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -54,7 +56,7 @@ public class PaymentServiceImpl implements PaymentService {
         requireConfigured();
         BigDecimal paymentAmount = resolvePaymentAmount(request);
         long amount = toPayOSAmount(paymentAmount);
-        long orderCode = generateOrderCode();
+        long orderCode = generateUniqueOrderCode();
         long expiredAt = Instant.now().plusSeconds(15 * 60).getEpochSecond();
 
         CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder paymentBuilder = CreatePaymentLinkRequest.builder()
@@ -117,11 +119,15 @@ public class PaymentServiceImpl implements PaymentService {
     public void handlePayOSWebhook(PayOSWebhookRequest request) {
         requireConfigured();
         WebhookData data = payOS.webhooks().verify(request);
+        if (!isSuccessfulWebhook(request)) {
+            throw new IllegalArgumentException("Webhook PayOS không phải sự kiện thanh toán thành công.");
+        }
         PaymentTransaction transaction = paymentTransactionRepository
                 .findByPayosOrderCode(String.valueOf(data.getOrderCode()))
                 .orElseThrow(() -> new IllegalArgumentException(
                         "PayOS transaction not found: " + data.getOrderCode()));
         validateAmount(transaction, data.getAmount());
+        transaction.setRawWebhookPayload(writeWebhookPayload(request));
         markPaid(transaction);
         paymentTransactionRepository.save(transaction);
     }
@@ -270,9 +276,6 @@ public class PaymentServiceImpl implements PaymentService {
             }
             bookingRepository.save(booking);
         }
-        if (transaction.getOrder() != null) {
-        } else if (parent != null) {
-        }
     }
 
     private void resetOrderForPaymentRetry(Order order) {
@@ -302,6 +305,16 @@ public class PaymentServiceImpl implements PaymentService {
     private long generateOrderCode() {
         return System.currentTimeMillis() * 100
                 + ThreadLocalRandom.current().nextInt(10, 100);
+    }
+
+    private long generateUniqueOrderCode() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            long orderCode = generateOrderCode();
+            if (!paymentTransactionRepository.existsByPayosOrderCode(String.valueOf(orderCode))) {
+                return orderCode;
+            }
+        }
+        throw new IllegalStateException("Không thể tạo mã giao dịch PayOS duy nhất.");
     }
 
     private void requireConfigured() {
@@ -363,6 +376,20 @@ public class PaymentServiceImpl implements PaymentService {
         }
         String normalized = value.trim();
         return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
+    }
+
+    private boolean isSuccessfulWebhook(PayOSWebhookRequest request) {
+        return request != null
+                && "00".equals(request.getCode())
+                && Boolean.TRUE.equals(request.getSuccess());
+    }
+
+    private String writeWebhookPayload(PayOSWebhookRequest request) {
+        try {
+            return objectMapper.writeValueAsString(request);
+        } catch (Exception exception) {
+            return null;
+        }
     }
 
     private boolean hasText(String value) {

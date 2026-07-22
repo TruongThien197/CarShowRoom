@@ -20,8 +20,8 @@ Tài liệu này mô tả trạng thái các chức năng hiện có trong sourc
 | Thanh toán PayOS | Một phần | Có tích hợp link/webhook; cần kiểm thử tài khoản PayOS thật |
 | Quản lý xe | Hoàn thiện | Thêm, xem, xóa xe của khách |
 | Đặt lịch dịch vụ | Hoàn thiện | Chọn xe, dịch vụ, ngày, khung giờ, tiền cọc |
-| Hoàn tiền đặt lịch | Một phần | Có form và thao tác admin/staff; việc chuyển tiền thực tế vẫn thủ công |
-| Hoàn tiền đơn hàng | Một phần | Có yêu cầu và xác nhận hoàn; chuyển tiền thực tế vẫn thủ công |
+| Hoàn tiền đặt lịch | Một phần | Có PayOS Lệnh chi live; cần kiểm thử tiền thật, IP whitelist và số dư tài khoản chi |
+| Hoàn tiền đơn hàng | Một phần | Có yêu cầu hoàn và PayOS Lệnh chi live; cần kiểm thử tiền thật |
 | Quản trị Admin | Hoàn thiện | Dashboard và CRUD chính |
 | Vận hành Staff | Hoàn thiện | Xử lý đơn hàng, lịch hẹn, hoàn tiền |
 
@@ -62,7 +62,7 @@ Tài liệu này mô tả trạng thái các chức năng hiện có trong sourc
 - [x] Thanh toán đơn hàng qua PayOS.
 - [x] Thanh toán lại đơn chưa thanh toán.
 - [x] Hủy đơn trước khi chuyển sang trạng thái giao hàng theo nghiệp vụ hiện tại.
-- [~] Hoàn tiền đơn đã thanh toán: có yêu cầu hoàn và thao tác admin/staff, nhưng chuyển khoản hoàn tiền vẫn thao tác thủ công.
+- [~] Hoàn tiền đơn đã thanh toán: có yêu cầu hoàn và tạo lệnh chi PayOS live; cần kiểm thử tiền thật.
 
 ### 3.4 Quản lý xe
 
@@ -104,7 +104,7 @@ Tài liệu này mô tả trạng thái các chức năng hiện có trong sourc
 - [x] Nhập ngân hàng, số tài khoản nhận hoàn cọc.
 - [x] Tên người nhận bị khóa theo người đã thanh toán tiền cọc.
 - [x] Backend kiểm tra tên người nhận phải trùng người thanh toán.
-- [~] Hoàn tiền đặt cọc: admin/staff xác nhận thủ công sau khi thực hiện chuyển tiền bên ngoài hệ thống.
+- [~] Hoàn tiền đặt cọc: admin/staff tạo lệnh chi PayOS live; cần kiểm thử tiền thật.
 
 ## 4. Chức năng Staff
 
@@ -167,7 +167,7 @@ Tài liệu này mô tả trạng thái các chức năng hiện có trong sourc
 - [x] Lưu lịch sử giao dịch thanh toán.
 - [x] Trạng thái giao dịch: chờ thanh toán, đã thanh toán, hoàn tiền.
 - [~] Môi trường production: cần cấu hình và kiểm thử đầy đủ PayOS credentials thật.
-- [ ] Tự động chuyển tiền hoàn vào tài khoản ngân hàng khách hàng.
+- [x] Tạo lệnh chi PayOS để chuyển tiền hoàn vào tài khoản ngân hàng khách hàng.
 
 ## 7. Chức năng chưa hoàn thiện hoặc cần bổ sung
 
@@ -284,7 +284,7 @@ Booking đã thanh toán nếu bị hủy hợp lệ sẽ đi theo luồng:
 CANCELED + Payment PAID
         -> RefundStatus REQUESTED
         -> Customer nhập tài khoản nhận hoàn
-        -> Admin/Staff chuyển tiền thủ công
+        -> Admin/Staff tạo lệnh chi PayOS
         -> RefundStatus COMPLETED + Payment REFUNDED
 ```
 
@@ -394,20 +394,23 @@ CANCELED + Payment PAID
 - [x] Có webhook PayOS.
 - [x] Đồng bộ trạng thái giao dịch.
 - [x] Lưu payment transaction và mã PayOS order code.
+- [x] Webhook PayOS chỉ ghi nhận paid khi payload thành công và đã verify.
+- [x] Sinh mã PayOS orderCode có kiểm tra trùng trước khi lưu.
 - [~] Cần kiểm thử bằng PayOS credentials thật trước khi nghiệm thu production.
 
 ### Hoàn tiền
 
 - [x] Customer hủy order đã trả tiền trước khi giao thì phát sinh yêu cầu hoàn.
 - [x] Customer hủy booking đã trả cọc hợp lệ thì phát sinh yêu cầu hoàn cọc.
-- [x] Customer nhập ngân hàng và số tài khoản nhận tiền.
+- [x] Customer nhập ngân hàng, mã BIN và số tài khoản nhận tiền.
 - [x] Tên tài khoản nhận hoàn tự động lấy theo người trả tiền.
 - [x] Backend chặn tên người nhận khác người thanh toán.
 - [x] Admin/Staff xem thông tin tài khoản hoàn.
-- [x] Admin/Staff nhập ghi chú hoặc mã giao dịch hoàn.
-- [x] Sau khi xác nhận, giao dịch chuyển sang `REFUNDED`.
-- [ ] Tự động chuyển khoản ngân hàng.
-- [ ] Đối soát tự động với ngân hàng.
+- [x] Admin/Staff tạo lệnh chi PayOS thật cho hoàn tiền.
+- [x] Lưu `RefundTransaction`, reference id, payout id, trạng thái và raw response để đối soát.
+- [x] Chỉ chuyển payment sang `REFUNDED` khi lệnh chi PayOS `SUCCEEDED`.
+- [x] Có thao tác đồng bộ trạng thái lệnh chi PayOS khi payout đang `PROCESSING`.
+- [~] Cần PayOS payout credentials, IP whitelist và số dư ví/tài khoản chi thật để chạy live.
 
 ## 15. Danh sách lỗi và trường hợp cần kiểm thử
 
@@ -446,7 +449,7 @@ CANCELED + Payment PAID
 | Booking slot capacity | Có | Đã bổ sung kiểm tra local | Kiểm tra slot đầy và đặt đồng thời |
 | Hủy booking/refund request | Có | Chưa | Kiểm tra trạng thái PAID |
 | Form tài khoản hoàn tiền | Có | Chưa | Kiểm tra tên người nhận |
-| Admin/Staff hoàn tiền | Có | Chưa | Chuyển tiền thực tế thủ công |
+| Admin/Staff hoàn tiền | Có | Chưa | Cần kiểm thử PayOS Lệnh chi live |
 | Lịch sử giao dịch | Có | Chưa | Kiểm tra giao dịch refund |
 | Customer tabbar | Có | Chưa | Kiểm tra responsive |
 
@@ -469,11 +472,11 @@ CANCELED + Payment PAID
 
 ## 18. Kết luận
 
-Phần lõi đã có đủ các luồng: đăng nhập, phụ tùng, giỏ hàng, đặt hàng, quản lý xe, booking, thanh toán, admin, staff và hoàn tiền thủ công.
+Phần lõi đã có đủ các luồng: đăng nhập, phụ tùng, giỏ hàng, đặt hàng, quản lý xe, booking, thanh toán, admin, staff và hoàn tiền qua PayOS Lệnh chi.
 
 Các phần chưa thể xem là hoàn thiện production:
 
-1. Tự động chuyển tiền hoàn vào tài khoản ngân hàng.
+1. Kiểm thử hoàn tiền PayOS Lệnh chi với tiền thật và tài khoản chi có số dư.
 2. Đối soát hoàn tiền tự động.
 3. Kiểm thử PayOS bằng credentials thật.
 4. Automated tests cho phân quyền, webhook, hết hạn tiền cọc và hoàn tiền.
@@ -516,7 +519,7 @@ Các phần chưa thể xem là hoàn thiện production:
 - [x] Kiểm thử hai khách đặt cùng một khung giờ.
 - [x] Hoàn thiện xử lý tự động slot sau khi hết hạn thanh toán.
 - [x] Kiểm tra slot được mở lại sau khi booking hết hạn.
-- [x] Kiểm thử luồng hoàn tiền thủ công bằng Admin/Staff.
+- [x] Kiểm thử luồng tạo yêu cầu hoàn tiền bằng Admin/Staff.
 - [ ] Tích hợp API chuyển khoản hoàn tiền tự động nếu có yêu cầu.
 
 #### File phụ trách
@@ -550,12 +553,17 @@ Các phần chưa thể xem là hoàn thiện production:
 - [x] Thanh toán order qua PayOS.
 - [x] Hủy order trước khi giao hàng.
 - [x] Tạo yêu cầu hoàn tiền order.
+- [x] Tích hợp hoàn tiền order bằng PayOS Lệnh chi live.
+- [x] Thêm thông tin ngân hàng nhận hoàn cho order: ngân hàng, mã BIN, chủ tài khoản, số tài khoản.
+- [x] Thêm đối soát `RefundTransaction` cho order refund.
 
 #### Task cần hoàn thiện
 
 - [x] Kiểm thử quantity lớn hơn tồn kho.
 - [x] Kiểm thử checkout khi hai user mua cùng sản phẩm.
 - [x] Kiểm thử thanh toán lại order hết hạn.
+- [x] Vá webhook PayOS và chống trùng mã orderCode.
+- [x] Kiểm thử compile/test sau chỉnh PayOS refund payout.
 - [x] Hoàn thiện giao diện trạng thái order bằng tiếng Việt.
 - [x] Kiểm tra responsive cho cart, checkout và order detail.
 
@@ -837,13 +845,13 @@ Customer thanh toán phần còn lại nếu còn
 - [ ] Giá cuối nhỏ hơn tiền cọc bị từ chối.
 - [ ] Booking đã hủy không còn nút thanh toán phần còn lại.
 - [ ] Không thể đánh dấu không đến trước giờ bắt đầu.
-- [ ] Kiểm thử hoàn tiền thủ công và lịch sử giao dịch.
+- [ ] Kiểm thử hoàn tiền PayOS live với số tiền nhỏ và tài khoản nhận thật.
 
 ### 21.4 Phần còn giới hạn
 
 - [~] PayOS thật chưa được nghiệm thu đầy đủ trên production.
-- [~] Hoàn tiền vẫn cần Admin/Staff chuyển thủ công ngoài hệ thống.
-- [ ] Chưa tích hợp API chuyển khoản hoàn tiền tự động.
+- [~] Hoàn tiền PayOS live đã có code nhưng cần tài khoản chi có số dư, IP whitelist và kiểm thử tiền thật.
+- [x] Đã tích hợp API chuyển khoản hoàn tiền qua PayOS Lệnh chi.
 - [ ] Chưa có bộ test tự động đầy đủ cho controller, webhook và mọi chuyển trạng thái.
 
 8. Không commit password, PayOS secret key hoặc thông tin tài khoản ngân hàng thật vào repository.
