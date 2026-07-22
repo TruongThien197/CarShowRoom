@@ -184,9 +184,9 @@ public class AdminController {
             form.setModelName(modelName);
             form.setYear(year);
             carModelService.createCarModel(form);
-            redirectAttributes.addFlashAttribute("successMessage", "Car model added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm mẫu xe thành công!!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding car model: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm mẫu xe: " + e.getMessage());
         }
         return "redirect:/admin/car-models";
     }
@@ -195,9 +195,9 @@ public class AdminController {
     public String deleteCarModel(@RequestParam Integer id, RedirectAttributes redirectAttributes) {
         try {
             carModelService.deleteCarModel(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Car model deleted successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Xoá mẫu xe thành công:!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting car model: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa mẫu xe: " + e.getMessage());
         }
         return "redirect:/admin/car-models";
     }
@@ -216,9 +216,9 @@ public class AdminController {
             category.setCategoryName(categoryName);
             category.setDescription(description);
             categoryService.createCategory(category);
-            redirectAttributes.addFlashAttribute("successMessage", "Category added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm danh mục thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding category: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm danh mục: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -232,9 +232,9 @@ public class AdminController {
             category.setCategoryName(categoryName);
             category.setDescription(description);
             categoryService.createCategory(category);
-            redirectAttributes.addFlashAttribute("successMessage", "Category added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm danh mục thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding category: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm danh mục: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -257,9 +257,9 @@ public class AdminController {
             category.setCategoryName(categoryName);
             category.setDescription(description);
             categoryService.updateCategory(id, category);
-            redirectAttributes.addFlashAttribute("successMessage", "Category updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật danh mục thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating category: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật danh mục: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -268,9 +268,9 @@ public class AdminController {
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             categoryService.deleteCategory(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Category deleted successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa danh mục thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting category: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa danh mục: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -335,9 +335,9 @@ public class AdminController {
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productService.createProduct(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Product added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding product: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -383,9 +383,9 @@ public class AdminController {
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productService.updateProduct(id, product);
-            redirectAttributes.addFlashAttribute("successMessage", "Product updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật sản phẩm thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating product: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -394,9 +394,9 @@ public class AdminController {
     public String deleteProduct(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             productService.deleteProduct(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Product deleted successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa sản phẩm thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting product: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -425,9 +425,9 @@ public class AdminController {
             product.setImageUrl(resolveImageUrl(imageFile, imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
             productService.createProduct(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Product added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding product: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -447,9 +447,9 @@ public class AdminController {
             form.setMaxPrice(maxPrice);
             form.setDurationMinutes(duration);
             serviceCatalogService.create(form);
-            redirectAttributes.addFlashAttribute("successMessage", "Service added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm dịch vụ thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding service: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm dịch vụ: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -475,9 +475,9 @@ public class AdminController {
         }
         try {
             serviceCatalogService.create(form);
-            redirectAttributes.addFlashAttribute("successMessage", "Service added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm dịch vụ thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding service: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm dịch vụ: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -511,9 +511,9 @@ public class AdminController {
         }
         try {
             serviceCatalogService.update(id, form);
-            redirectAttributes.addFlashAttribute("successMessage", "Service updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật dịch vụ thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating service: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật dịch vụ: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -522,9 +522,9 @@ public class AdminController {
     public String deleteService(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             serviceCatalogService.delete(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Service deleted successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa dịch vụ thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting service: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa dịch vụ:: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -552,9 +552,9 @@ public class AdminController {
                                       RedirectAttributes redirectAttributes) {
         try {
             productService.changeStatus(productId, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Product status updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái sản phẩm thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật trạng thái sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -564,9 +564,9 @@ public class AdminController {
                                     RedirectAttributes redirectAttributes) {
         try {
             orderService.updateOrderStatus(orderId, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Order status updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật trạng thái đơn hàng: " + e.getMessage());
         }
         return "redirect:/admin/orders";
     }
@@ -576,9 +576,9 @@ public class AdminController {
                                       RedirectAttributes redirectAttributes) {
         try {
             bookingService.updateStatus(bookingId, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Booking status updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái lịch hẹn thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật trạng thái lịch hẹn: " + e.getMessage());
         }
         return "redirect:/admin/bookings";
     }
@@ -640,9 +640,9 @@ public class AdminController {
                              RedirectAttributes redirectAttributes) {
         try {
             userService.createUser(email, password, fullName, phone, address, role);
-            redirectAttributes.addFlashAttribute("successMessage", "User added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm người dùng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding user: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm người dùng:: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
@@ -662,9 +662,9 @@ public class AdminController {
                            RedirectAttributes redirectAttributes) {
         try {
             userService.updateUser(id, fullName, phone, address, role);
-            redirectAttributes.addFlashAttribute("successMessage", "User updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật người dùng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating user: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm người dùng: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
@@ -673,9 +673,9 @@ public class AdminController {
     public String changeStatus(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             userService.changeStatus(id);
-            redirectAttributes.addFlashAttribute("successMessage", "User status updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái người dùng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật thông tin người dùng: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
@@ -792,9 +792,9 @@ public class AdminController {
                                           RedirectAttributes redirectAttributes) {
         try {
             orderService.updateOrderStatus(id, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Order status updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật trạng thái đơn hàng: " + e.getMessage());
         }
         return "redirect:/admin/orders/" + id;
     }
