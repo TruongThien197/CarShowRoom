@@ -64,7 +64,7 @@
                                       th:classappend="${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${booking.bookingStatus.name() == 'CANCELED' or booking.bookingStatus.name() == 'EXPIRED_PAYMENT' or booking.bookingStatus.name() == 'EXPIRED_NO_SHOW'} ? 'gs-badge--danger' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS' or booking.bookingStatus.name() == 'PENDING_APPROVAL'} ? 'gs-badge--warning' : 'gs-badge--neutral')))"
                                       th:text="${booking.bookingStatus.name() == 'PENDING_PAYMENT' ? 'Chờ thanh toán' : (booking.bookingStatus.name() == 'CONFIRMED' ? 'Đã xác nhận' : (booking.bookingStatus.name() == 'IN_PROGRESS' ? 'Đang thực hiện' : (booking.bookingStatus.name() == 'COMPLETED' ? 'Hoàn tất' : (booking.bookingStatus.name() == 'CANCELED' ? 'Đã hủy' : 'Hết hạn'))))}">Chờ xử lý</span>
                                 <div class="small text-warning fw-semibold"
-                                     th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}">
+                                     th:if="${booking.refundStatus != null and (booking.refundStatus.name() == 'REQUESTED' or booking.refundStatus.name() == 'PROCESSING' or booking.refundStatus.name() == 'FAILED')}">
                                     <i class="bi bi-arrow-counterclockwise me-1"></i>Chờ hoàn cọc
                                 </div>
                             </td>
@@ -73,7 +73,7 @@
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <a class="btn btn-warning btn-sm"
-                                   th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}"
+                                   th:if="${booking.refundStatus != null and (booking.refundStatus.name() == 'REQUESTED' or booking.refundStatus.name() == 'PROCESSING' or booking.refundStatus.name() == 'FAILED')}"
                                    th:href="@{/admin/bookings/{id}(id=${booking.id})}">
                                     <i class="bi bi-arrow-counterclockwise me-1"></i>Hoàn tiền
                                 </a>

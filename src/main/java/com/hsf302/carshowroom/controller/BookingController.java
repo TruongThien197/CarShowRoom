@@ -131,6 +131,7 @@ public class BookingController {
     @PostMapping("/{id}/refund-account")
     public String submitRefundAccount(@PathVariable Integer id,
                                       @RequestParam String bankName,
+                                      @RequestParam String bankBin,
                                       @RequestParam String accountHolder,
                                       @RequestParam String accountNumber,
                                       RedirectAttributes attributes) {
@@ -139,7 +140,7 @@ public class BookingController {
             return "redirect:/auth/login";
         }
         try {
-            bookingService.submitRefundAccount(user, id, bankName, accountHolder, accountNumber);
+            bookingService.submitRefundAccount(user, id, bankName, bankBin, accountHolder, accountNumber);
             attributes.addFlashAttribute("successMessage", "Đã lưu thông tin tài khoản nhận tiền hoàn.");
         } catch (RuntimeException exception) {
             attributes.addFlashAttribute("errorMessage", exception.getMessage());

@@ -22,9 +22,9 @@ public interface BookingService {
     void updateStatus(Integer bookingId, String status);
 
     void completeRefund(Integer bookingId, User processedBy, String bankName,
-                        String accountHolder, String accountNumber, String note);
+                        String bankBin, String accountHolder, String accountNumber, String note);
 
-    void submitRefundAccount(User user, Integer bookingId, String bankName,
+    void submitRefundAccount(User user, Integer bookingId, String bankName, String bankBin,
                              String accountHolder, String accountNumber);
 
     void checkIn(Integer bookingId);

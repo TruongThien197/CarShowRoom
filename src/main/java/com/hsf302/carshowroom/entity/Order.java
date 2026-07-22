@@ -83,6 +83,18 @@ public class Order {
     @Column(name = "refund_note",columnDefinition = "NVARCHAR(MAX)")
     private String refundNote;
 
+    @Column(name = "refund_bank_name", length = 100)
+    private String refundBankName;
+
+    @Column(name = "refund_bank_bin", length = 20)
+    private String refundBankBin;
+
+    @Column(name = "refund_account_holder", length = 150)
+    private String refundAccountHolder;
+
+    @Column(name = "refund_account_number", length = 50)
+    private String refundAccountNumber;
+
     @Column(name = "refunded_at")
     private LocalDateTime refundedAt;
 
