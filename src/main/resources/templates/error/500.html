@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Lỗi Hệ Thống | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('System Error | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('error')}"></div>
 
@@ -10,8 +10,8 @@
             <div class="gs-mono fw-bold mb-3" style="font-size: clamp(4rem, 12vw, 8rem); color: var(--gs-amber); line-height: 1;">500</div>
             <h1 class="gs-h1 text-white mb-3"> Đã xảy ra lỗi phía máy chủ </h1>
             <p class="mb-4 mx-auto" style="max-width: 480px; color: #dbe4f0;">
-                Chúng tôi chân thành xin lỗi, hệ thống đã gặp sự cố trong quá trình xử lý yêu cầu của bạn.
-                Đội ngũ kỹ thuật đã được thông báo. Vui lòng thử lại sau vài phút.
+                We're sorry, the system encountered an issue while processing your request. Our technical team has been notified.
+                Please try again in a few minutes.
             </p>
             <div class="d-flex justify-content-center flex-wrap gap-3">
                 <a class="btn btn-primary btn-lg gs-cut" th:href="@{/}"><i class="bi bi-house-door me-2"></i> Về trang chủ </a>

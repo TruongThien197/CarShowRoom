@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Tổng quan quản trị | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Admin Dashboard | GearShift Pro')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments :: navbar('admin')}"></div>
 
@@ -25,7 +25,7 @@
                 <div class="col-sm-6 col-xl-3">
                     <div class="metric-card gs-stripe-top--neutral d-flex justify-content-between gap-3">
                         <div>
-                            <div class="text-secondary small">Người dùng </div>
+                            <div class="text-secondary small"> Người dùng </div>
                             <div class="metric-value" th:text="${totalUsers}">0</div>
                             <div class="small text-success fw-semibold">Tất cả vai trò</div>
                         </div>
@@ -57,7 +57,7 @@
                         <div>
                             <div class="text-secondary small"> Lịch hẹn </div>
                             <div class="metric-value" th:text="${totalBookings}">0</div>
-                            <div class="small text-warning fw-semibold"><span th:text="${pendingBookings}">0</span> đang chờ duyệt</div>
+                            <div class="small text-warning fw-semibold"><span th:text="${pendingBookings}">0</span> awaiting approval</div>
                         </div>
                         <div class="metric-icon"><i class="bi bi-calendar-check"></i></div>
                     </div>
@@ -69,15 +69,15 @@
                     <div>
                         <h4 class="fw-bold mb-1">Lượng công việc xưởng hôm nay</h4>
                         <p class="text-secondary mb-0"> Ngày <span th:text="${today}">2026-07-07</span>,
-                            there are <strong th:text="${todayVehicleCount}">0</strong> xe được đặt lịch trong các khung giờ hôm nay.
+                            there are <strong th:text="${todayVehicleCount}">0</strong> vehicles scheduled across today's time slots.
                         </p>
                     </div>
                     <a class="btn btn-outline-primary align-self-lg-start" th:href="@{/admin/bookings}">
-                        <i class="bi bi-calendar-check me-2"></i>Xem lịch hẹn
+                        <i class="bi bi-calendar-check me-2"></i>View bookings
                     </a>
                 </div>
                 <div class="alert alert-light border mb-0" th:if="${#lists.isEmpty(todaySlotLoads)}">
-                    Không có xe nào đặt lịch dịch vụ hôm nay.
+                    No vehicles are booked for service today.
                 </div>
                 <div class="row g-3" th:if="${!#lists.isEmpty(todaySlotLoads)}">
                     <div class="col-sm-6 col-xl-3" th:each="slot : ${todaySlotLoads}">
@@ -100,7 +100,7 @@
             <div class="surface-card gs-stripe-top p-4 mb-4">
                 <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
                     <div>
-                        <h4 class="fw-bold mb-1">Doanh thu hệ thống</h4>
+                        <h4 class="fw-bold mb-1">Platform Revenue</h4>
                         <p class="text-secondary mb-0">Doanh thu được tính từ đơn hàng hoàn tất và lịch hẹn dịch vụ đã xong.</p>
                     </div>
                     <div class="row g-3 flex-grow-1">
@@ -148,7 +148,7 @@
                     </div>
                 </div>
                 <div style="height: 250px">
-                    <canvas id="monthlyOrdersChart" aria-label="Biểu đồ đơn hàng theo tháng"></canvas>
+                    <canvas id="monthlyOrdersChart" aria-label="Monthly orders chart"></canvas>
                 </div>
             </div>
 
