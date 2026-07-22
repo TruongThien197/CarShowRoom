@@ -49,44 +49,44 @@ public class RefundTransaction {
     @JoinColumn(name = "processed_by_id")
     private User processedBy;
 
-    @Column(name = "reference_id", nullable = false, unique = true, length = 80)
+    @Column(name = "reference_id", nullable = false, unique = true,columnDefinition = "NVARCHAR(80)")
     private String referenceId;
 
-    @Column(name = "provider_payout_id", length = 100)
+    @Column(name = "provider_payout_id",columnDefinition = "NVARCHAR(100)")
     private String providerPayoutId;
 
-    @Column(name = "provider_transaction_id", length = 100)
+    @Column(name = "provider_transaction_id",columnDefinition = "NVARCHAR(100)")
     private String providerTransactionId;
 
-    @Column(name = "provider", nullable = false, length = 30)
+    @Column(name = "provider", nullable = false,columnDefinition = "NVARCHAR(30)")
     private String provider;
 
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
 
-    @Column(name = "bank_name", length = 100)
+    @Column(name = "bank_name",columnDefinition = "NVARCHAR(100)")
     private String bankName;
 
-    @Column(name = "bank_bin", length = 20)
+    @Column(name = "bank_bin",columnDefinition = "NVARCHAR(20)")
     private String bankBin;
 
-    @Column(name = "account_holder", length = 150)
+    @Column(name = "account_holder",columnDefinition = "NVARCHAR(150)")
     private String accountHolder;
 
-    @Column(name = "account_number", length = 50)
+    @Column(name = "account_number",columnDefinition = "NVARCHAR(50)")
     private String accountNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 30)
+    @Column(name = "status", nullable = false,columnDefinition = "NVARCHAR(30)")
     private RefundPayoutStatus status;
 
-    @Column(name = "note", length = 500)
+    @Column(name = "note",columnDefinition = "NVARCHAR(500)")
     private String note;
 
-    @Column(name = "raw_response", length = 1000)
+    @Column(name = "raw_response",columnDefinition = "NVARCHAR(1000)")
     private String rawResponse;
 
-    @Column(name = "error_message", length = 500)
+    @Column(name = "error_message",columnDefinition = "NVARCHAR(500)")
     private String errorMessage;
 
     @Column(name = "refunded_at")

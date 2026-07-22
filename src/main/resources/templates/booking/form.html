@@ -34,7 +34,7 @@
                             <option value="">Chọn dịch vụ</option>
                             <option th:each="service : ${services}"
                                     th:value="${service.id}"
-                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 2, 'POINT') + ' VND'}"> Dịch vụ </option>
+                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}"> Dịch vụ </option>
                         </select>
                         <div class="text-danger small" th:if="${#fields.hasErrors('serviceId')}" th:errors="*{serviceId}"></div>
                     </div>
@@ -92,8 +92,8 @@
                         <td class="fw-bold gs-mono" th:text="${stat.count}">1</td>
                         <td class="gs-mono" th:text="${booking.bookingDate}">2026-07-01</td>
                         <td class="gs-mono" th:text="${booking.timeSlot}">09:30</td>
-                        <td th:text="${bookingServices[booking.id]}"> Dịch vụ </td>
-                        <td class="gs-mono" th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Not selected'}"> Xe </td>
+                        <td th:text="${bookingServices[booking.id] != null ? bookingServices[booking.id] : 'Chưa có dịch vụ'}">Dịch vụ</td>
+                        <td class="gs-mono" th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Chưa chọn xe''}"> Xe </td>
                         <td>
                             <span class="gs-badge"
                                   th:classappend="${booking.bookingStatus.name() == 'PENDING_PAYMENT'} ? 'gs-badge--neutral' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS'} ? 'gs-badge--warning' : (${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : 'gs-badge--danger')))"

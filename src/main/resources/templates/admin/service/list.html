@@ -48,7 +48,7 @@
                             <td class="text-secondary small" th:text="${service.description ?: 'Chưa có mô tả'}"> Mô tả </td>
                             <td class="gs-mono" th:text="${service.durationMinutes + ' min'}">60 min</td>
                             <td class="text-end fw-bold text-primary gs-mono"
-                                th:text="${#numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(service.maxPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}">0 - 0 VND</td>
+                                th:text="${#numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(service.maxPrice, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 - 0 VNĐ</td>
                             <td class="text-end pe-4 table-action">
                                 <a class="btn btn-outline-primary btn-sm me-1" title="Edit" th:href="@{/admin/services/edit/{id}(id=${service.id})}">
                                     <i class="bi bi-pencil-square"></i>

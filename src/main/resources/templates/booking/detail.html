@@ -128,7 +128,7 @@
                             <td class="fw-bold" th:text="${detail.service != null ? detail.service.serviceName : detail.serviceNameSnapshot}"> Dịch vụ </td>
                             <td th:text="${detail.service.description ?: 'Chưa có mô tả'}"> Mô tả </td>
                             <td class="text-end fw-bold gs-mono"
-                                th:text="${#numbers.formatDecimal(detail.minPriceSnapshot, 0, 'COMMA', 0, 'POINT')} + ' VND'">0</td>
+                                th:text="${#numbers.formatDecimal(detail.minPriceSnapshot, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</td>
                         </tr>
                         </tbody>
                     </table>

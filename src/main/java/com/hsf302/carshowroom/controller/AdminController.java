@@ -665,6 +665,7 @@ public class AdminController {
                            @RequestParam(value = "txtAddress", required = false) String address,
                            @RequestParam(defaultValue = "CUSTOMER") String role,
                            RedirectAttributes redirectAttributes) {
+        
         try {
             userService.updateUser(id, fullName, phone, address, role);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật người dùng thành công!");

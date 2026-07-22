@@ -10,7 +10,7 @@
         <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
         <div class="border rounded p-3 mb-4">
             <div class="d-flex justify-content-between mb-2"><span>Ngày hẹn</span><strong th:text="${booking.bookingDate + ' - ' + booking.timeSlot}">Ngày</strong></div>
-            <div class="d-flex justify-content-between"><span>Tiền cọc giữ lịch</span><strong class="gs-mono text-primary" th:text="${#numbers.formatDecimal(booking.depositAmount, 0, 'COMMA', 0, 'POINT')} + ' VND'">2.000 VND</strong></div>
+            <div class="d-flex justify-content-between"><span>Tiền cọc giữ lịch</span><strong class="gs-mono text-primary" th:text="${#numbers.formatDecimal(booking.depositAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">2.000 VNĐ</strong></div>
             <div class="small text-secondary mt-2">Tiền cọc sẽ được trừ vào chi phí dịch vụ cuối cùng.</div>
         </div>
         <form th:action="@{/booking/{id}/payment(id=${booking.id})}" method="post"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-qr-code me-2"></i>Thanh toán lại qua PayOS</button></form>
