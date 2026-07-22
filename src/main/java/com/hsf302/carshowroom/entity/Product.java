@@ -33,7 +33,7 @@ public class Product {
     private Category category;
 
     @Nationalized
-    @Column(name = "product_name", nullable = false, length = 150)
+    @Column(name = "product_name", nullable = false,columnDefinition = "NVARCHAR(150)")
     private String name;
 
     @Column(unique = true)

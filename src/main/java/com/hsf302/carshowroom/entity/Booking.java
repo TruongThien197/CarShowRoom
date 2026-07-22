@@ -74,16 +74,16 @@ public class Booking {
     @Column(name = "refund_status")
     private RefundStatus refundStatus = RefundStatus.NONE;
 
-    @Column(name = "refund_note", length = 500)
+    @Column(name = "refund_note",columnDefinition = "NVARCHAR(MAX)")
     private String refundNote;
 
-    @Column(name = "refund_bank_name", length = 100)
+    @Column(name = "refund_bank_name", columnDefinition = "NVARCHAR(MAX)")
     private String refundBankName;
 
-    @Column(name = "refund_account_holder", length = 150)
+    @Column(name = "refund_account_holder",columnDefinition = "NVARCHAR(MAX)")
     private String refundAccountHolder;
 
-    @Column(name = "refund_account_number", length = 50)
+    @Column(name = "refund_account_number", columnDefinition = "NVARCHAR(MAX)")
     private String refundAccountNumber;
 
     @Column(name = "refunded_at")
