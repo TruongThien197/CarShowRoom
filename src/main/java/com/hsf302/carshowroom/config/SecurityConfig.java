@@ -30,7 +30,8 @@ public class SecurityConfig {
                             .requestMatchers("/vehicles", "/vehicles/**").hasRole("CUSTOMER")
                             .requestMatchers("/account", "/account/**").hasRole("CUSTOMER")
                             .requestMatchers("/", "/shop", "/products/**", "/auth/**", "/bootstrap.css",
-                                    "/bootstrap.js", "/bootstrap-icons.css", "/apex.css", "/fonts/**", "/images/**")
+                                    "/bootstrap.js", "/bootstrap-icons.css", "/apex.css", "/fonts/**", "/images/**",
+                                    "/product-images/**")
                             .permitAll()
                             .anyRequest().permitAll())
             .exceptionHandling(exception -> exception

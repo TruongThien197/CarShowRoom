@@ -91,22 +91,22 @@ public class DataSeeder implements CommandLineRunner {
 
         productRepository.save(createProduct(engine, "Hybrid Series Turbocharger Kit","SKU001",
                 "A direct-fit upgrade turbo kit built for high-output engine setups.",
-                "10000", 8, "/images/turbocharger.jpg"));
+                "10000", 8, "/product-images/SKU001.svg"));
         productRepository.save(createProduct(brakes, "Stage 2 Performance Brake Kit","SKU002",
                 "A street and track brake kit featuring upgraded rotors and pads.",
-                "12000", 12, "/images/suspension-service.jpg"));
+                "12000", 12, "/product-images/SKU002.svg"));
         productRepository.save(createProduct(wheels, "Forged Alloy Rims","SKU003",
                 "Lightweight forged rims finished in satin black.",
-                "14000", 6, "/images/forged-rims.jpg"));
+                "14000", 6, "/product-images/SKU003.svg"));
         productRepository.save(createProduct(wheels, "Track-Ready Tire Set","SKU004",
                 "High-grip tires built for daily-driven and weekend performance cars.",
-                "16000", 16, "/images/track-tire.jpg"));
+                "16000", 16, "/product-images/SKU004.svg"));
         productRepository.save(createProduct(suspension, "Track-Spec Coilover Kit","SKU005",
                 "An adjustable coilover kit that improves handling stability and driving feel.",
-                "18000", 10, "/images/suspension-service.jpg"));
+                "18000", 10, "/product-images/SKU005.svg"));
         productRepository.save(createProduct(fluids, "0W-30 Full Synthetic Oil","SKU006",
                 "Premium engine oil formulated for modern turbocharged engines.",
-                "20000", 50, "/images/turbocharger.jpg"));
+                "20000", 50, "/product-images/SKU006.svg"));
     }
 
     private Category findCategory(List<Category> categories, String name) {
