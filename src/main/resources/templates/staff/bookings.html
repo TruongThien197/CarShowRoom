@@ -49,19 +49,7 @@
                         <td><div class="fw-bold" th:text="${booking.user.fullName}">Khách hàng</div><div class="small text-secondary gs-mono" th:text="${booking.vehicle != null ? booking.vehicle.licensePlate : 'Chưa chọn xe'}">Xe</div></td>
                         <td class="booking-schedule gs-mono"><span th:text="${#temporals.format(booking.bookingDate, 'dd/MM/yyyy')}">23/07/2026</span><span th:text="${booking.timeSlot}">08:00 - 08:45</span></td>
                         <td th:text="${bookingServices[booking.id]}">Dịch vụ</td>
-                        <td>
-                            <div class="fw-bold gs-mono mb-2"
-                                 th:text="${#numbers.formatDecimal(booking.depositAmount != null ? booking.depositAmount : 0, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'">6.000 VNĐ
-                            </div>
-                            <span class="gs-badge booking-status"
-                                  th:text="${booking.bookingStatus}">Đang đợi xe
-                            </span>
-                            <div class="small text-success mt-1"
-                                 th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'COMPLETED'}">
-                                Đã hoàn cọc
-                            </div>
-                        </td>
-
+                        <td><div class="fw-bold gs-mono mb-2" th:text="${#numbers.formatDecimal(booking.depositAmount ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">6.000 VNĐ</div><span class="gs-badge booking-status" th:text="${booking.bookingStatus}">Đang đợi xe</span><div class="small text-success mt-1" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'COMPLETED'}">Đã hoàn cọc</div></td>
                         <td class="booking-actions text-center">
                             <a class="btn btn-outline-primary btn-sm" th:href="@{/staff/bookings/{id}(id=${booking.id})}"><i class="bi bi-eye me-1"></i>Chi tiết</a>
                             <form th:if="${booking.bookingStatus.name() == 'CONFIRMED' or booking.bookingStatus.name() == 'WAITING_FOR_VEHICLE'}" th:action="@{/staff/bookings/check-in}" method="post"><input type="hidden" name="bookingId" th:value="${booking.id}"><button class="btn btn-primary btn-sm" type="submit">Tiếp nhận xe</button></form>

@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Không tìm thấy trang | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Page Not Found | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('error')}"></div>
 
@@ -10,7 +10,7 @@
             <div class="gs-mono fw-bold mb-3" style="font-size: clamp(4rem, 12vw, 8rem); color: var(--gs-accent); line-height: 1;">404</div>
             <h1 class="gs-h1 text-white mb-3">Không tìm thấy trang bạn yêu cầu</h1>
             <p class="mb-4 mx-auto" style="max-width: 480px; color: #dbe4f0;">
-                Trang này có thể đã bị xóa, di chuyển hoặc đường dẫn bạn nhập không chính xác.
+                The page may have been removed, moved, or the link you entered is incorrect.
             </p>
             <div class="d-flex justify-content-center flex-wrap gap-3">
                 <a class="btn btn-primary btn-lg gs-cut" th:href="@{/}"><i class="bi bi-house-door me-2"></i> Về trang chủ </a>

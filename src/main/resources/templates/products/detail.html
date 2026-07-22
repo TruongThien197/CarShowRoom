@@ -32,11 +32,11 @@
             <div>
                 <h1 class="gs-h2 text-dark mb-3" th:text="${product.productName}">Tên phụ tùng</h1>
                 <div class="price gs-mono mb-4" style="font-size: 2rem;"
-                     th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</div>
+                     th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</div>
 
                 <h2 class="gs-h4 text-uppercase text-secondary mb-2">Mô tả sản phẩm</h2>
                 <p class="lead text-secondary fs-6 mb-4 lh-lg"
-                   th:text="${product.description ?: 'Phụ tùng ô tô chất lượng cao, đảm bảo độ bền và hiệu suất..'}"> Mô tả </p>
+                   th:text="${product.description ?: 'Chưa có mô tả chi tiết.'}"> Mô tả </p>
 
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6">
