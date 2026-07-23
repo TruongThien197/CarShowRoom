@@ -15,6 +15,7 @@ import com.hsf302.carshowroom.service.ServiceCatalogService;
 import com.hsf302.carshowroom.service.UserService;
 import com.hsf302.carshowroom.service.AuthService;
 import com.hsf302.carshowroom.service.RefundPayoutService;
+import com.hsf302.carshowroom.service.ShippingFeeRuleManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -63,6 +64,7 @@ public class AdminController {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final RefundTransactionRepository refundTransactionRepository;
     private final RefundPayoutService refundPayoutService;
+    private final ShippingFeeRuleManagementService shippingFeeRuleManagementService;
 
     @GetMapping
     public String dashboard(Model model) {
@@ -100,6 +102,40 @@ public class AdminController {
         model.addAttribute("orderItems", buildOrderItems(orders));
         model.addAttribute("bookingServices", buildBookingServices(bookings));
         return "admin/dashboard";
+    }
+
+    @GetMapping("/shipping-fees")
+    public String shippingFees(Model model) {
+        model.addAttribute("shippingFeeRules", shippingFeeRuleManagementService.getAll());
+        return "admin/shipping-fee/list";
+    }
+
+    @PostMapping("/shipping-fees")
+    public String createShippingFee(@RequestParam String province,
+                                    @RequestParam String district,
+                                    @RequestParam BigDecimal fee,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            shippingFeeRuleManagementService.create(province, district, fee);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã thêm rule phí ship.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/shipping-fees";
+    }
+
+    @PostMapping("/shipping-fees/{id}")
+    public String updateShippingFee(@PathVariable Integer id,
+                                    @RequestParam BigDecimal fee,
+                                    @RequestParam(defaultValue = "false") boolean active,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            shippingFeeRuleManagementService.update(id, fee, active);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật rule phí ship.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/shipping-fees";
     }
 
     private long countTodayVehicles(List<Booking> bookings) {
@@ -319,6 +355,7 @@ public class AdminController {
                                       @RequestParam(required = false) MultipartFile imageFile,
                                        @RequestParam(required = false) List<Integer> carModelIds,
                                        @RequestParam(defaultValue = "ACTIVE") String status,
+                                       @RequestParam(defaultValue = "false") boolean installationSupported,
                                        RedirectAttributes redirectAttributes) {
         try {
             Category category = categoryRepository.findById(categoryId)
@@ -335,6 +372,7 @@ public class AdminController {
             product.setPhysicalStock(physicalStock);
             product.setImageUrl(resolveImageUrl(imageFile, imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
+            product.setInstallationSupported(installationSupported);
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productService.createProduct(product);
@@ -366,6 +404,7 @@ public class AdminController {
                                     @RequestParam(required = false) MultipartFile imageFile,
                                      @RequestParam(required = false) List<Integer> carModelIds,
                                      @RequestParam(defaultValue = "ACTIVE") String status,
+                                     @RequestParam(defaultValue = "false") boolean installationSupported,
                                      RedirectAttributes redirectAttributes) {
         try {
             Product product = productRepository.findById(id)
@@ -383,6 +422,7 @@ public class AdminController {
             product.setPhysicalStock(physicalStock);
             product.setImageUrl(resolveImageUrl(imageFile, imageUrl, product.getImageUrl()));
             product.setStatus(Enums.ProductStatus.valueOf(status));
+            product.setInstallationSupported(installationSupported);
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productService.updateProduct(id, product);
@@ -587,6 +627,19 @@ public class AdminController {
         return "redirect:/admin/bookings";
     }
 
+    @PostMapping("/bookings/labor-collection")
+    public String recordBookingLaborCollection(@RequestParam Integer bookingId,
+                                               @RequestParam BigDecimal laborFee,
+                                               RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.recordLaborCollection(bookingId, authService.getCurrentUser(), laborFee);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã ghi nhận tiền công lắp đặt đã thu tại xưởng.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/bookings/" + bookingId;
+    }
+
     @PostMapping("/bookings/refund")
     public String completeBookingRefund(@RequestParam Integer bookingId,
                                         @RequestParam String bankName,
@@ -603,6 +656,31 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/admin/bookings/" + bookingId;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/approve")
+    public String approveBookingCancellation(@PathVariable Integer id,
+                                             @RequestParam(required = false) String assessmentNote,
+                                             RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.approveCancellation(id, authService.getCurrentUser(), assessmentNote);
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request approved.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/bookings/" + id;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/reject")
+    public String rejectBookingCancellation(@PathVariable Integer id, @RequestParam String reason,
+                                            RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.rejectCancellation(id, authService.getCurrentUser(), reason);
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request rejected.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/bookings/" + id;
     }
 
     @GetMapping("/users")
@@ -832,6 +910,29 @@ public class AdminController {
         try {
             orderService.completeRefund(id, authService.getCurrentUser(), bankName, bankBin, accountHolder, accountNumber, note);
             redirectAttributes.addFlashAttribute("successMessage", "Đã tạo lệnh chi PayOS cho hoàn tiền.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/approve")
+    public String approveOrderCancellation(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            orderService.approveCancellation(id, authService.getCurrentUser());
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request approved.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/reject")
+    public String rejectOrderCancellation(@PathVariable Integer id, @RequestParam String reason,
+                                          RedirectAttributes redirectAttributes) {
+        try {
+            orderService.rejectCancellation(id, authService.getCurrentUser(), reason);
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request rejected.");
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }

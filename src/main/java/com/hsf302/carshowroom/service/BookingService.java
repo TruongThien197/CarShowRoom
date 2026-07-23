@@ -18,6 +18,8 @@ public interface BookingService {
     Booking getBookingDetail(Integer bookingId);
 
     void cancelBooking(User user, Integer bookingId);
+    void approveCancellation(Integer bookingId, User processedBy, String assessmentNote);
+    void rejectCancellation(Integer bookingId, User processedBy, String reason);
 
     void updateStatus(Integer bookingId, String status);
 
@@ -30,6 +32,8 @@ public interface BookingService {
     void checkIn(Integer bookingId);
 
     void setFinalAmount(Integer bookingId, java.math.BigDecimal finalAmount);
+
+    void recordLaborCollection(Integer bookingId, User staff, java.math.BigDecimal laborFee);
 
     void markNoShow(Integer bookingId);
     void reopenDepositPayment(Integer bookingId);

@@ -72,6 +72,24 @@ public class CartController {
         return "redirect:/cart";
     }
 
+    @PostMapping("/fulfillment")
+    public String updateFulfillment(@RequestParam Integer cartItemId,
+                                    @RequestParam String fulfillmentType,
+                                    RedirectAttributes redirectAttributes) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng đăng nhập để cập nhật giỏ hàng.");
+            return "redirect:/auth/login";
+        }
+        try {
+            cartService.updateFulfillmentType(user, cartItemId, fulfillmentType);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật hình thức nhận hàng.");
+        } catch (RuntimeException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/cart";
+    }
+
     @PostMapping("/remove")
     public String remove(@RequestParam Integer cartItemId,
                          RedirectAttributes redirectAttributes) {

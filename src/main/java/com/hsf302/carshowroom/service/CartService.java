@@ -18,6 +18,7 @@ public interface CartService {
     BigDecimal calculateSubtotal(List<CartItem> items);
     void addToCart(User user, Integer productId, Integer quantity);
     void addToCart(User user, Integer productId, Integer quantity, String fulfillmentType);
+    void updateFulfillmentType(User user, Integer itemId, String fulfillmentType);
     void updateQuantity(User user, Integer itemId, Integer quantity);
     void removeItem(User user, Integer itemId);
 }

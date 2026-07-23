@@ -103,6 +103,15 @@ public class Enums {
         }
     }
 
+    public enum BookingType {
+        REPAIR_SERVICE,
+        PART_INSTALLATION;
+
+        @Override public String toString() {
+            return this == PART_INSTALLATION ? "Lắp đặt phụ tùng" : "Sửa chữa / bảo dưỡng";
+        }
+    }
+
     public enum PaymentStatus {
         INITIATED,
         PENDING,
@@ -126,26 +135,27 @@ public class Enums {
     }
 
     public enum PaymentMethod {
-        PAYOS,
-        COD;
+        PAYOS;
 
         @Override public String toString() {
-            return this == COD ? "Thanh toán khi nhận hàng" : "Thanh toán trực tuyến qua PayOS";
+            return "Thanh toán trực tuyến qua PayOS";
         }
     }
 
     public enum RefundStatus {
         NONE,
         REQUESTED,
+        APPROVED,
+        REJECTED,
         PROCESSING,
         COMPLETED,
-        FAILED,
-        REJECTED;
+        FAILED;
 
         @Override public String toString() {
             return switch (this) {
                 case NONE -> "Không có";
                 case REQUESTED -> "Chờ hoàn tiền";
+                case APPROVED -> "Đã duyệt hoàn tiền";
                 case PROCESSING -> "Đang chuyển tiền";
                 case COMPLETED -> "Đã hoàn tiền";
                 case FAILED -> "Hoàn tiền lỗi";

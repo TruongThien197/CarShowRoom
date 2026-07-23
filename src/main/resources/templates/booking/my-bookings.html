@@ -69,11 +69,11 @@
                                       th:classappend="${booking.bookingStatus.name() == 'PENDING_PAYMENT'} ? 'gs-badge--neutral' : (${booking.bookingStatus.name() == 'CONFIRMED'} ? 'gs-badge--info' : (${booking.bookingStatus.name() == 'IN_PROGRESS'} ? 'gs-badge--warning' : (${booking.bookingStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : 'gs-badge--danger')))"
                                       th:text="${booking.bookingStatus}">Chờ xử lý</span>
                             <div class="small text-warning fw-semibold"
-                                 th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED' and (booking.refundAccountNumber == null or booking.refundBankBin == null)}">
+                                 th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'APPROVED' and (booking.refundAccountNumber == null or booking.refundBankBin == null)}">
                                 Cần nhập thông tin hoàn cọc
                             </div>
                             <div class="small text-warning"
-                                 th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED' and booking.refundAccountNumber != null and booking.refundBankBin != null}">
+                                 th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'APPROVED' and booking.refundAccountNumber != null and booking.refundBankBin != null}">
                                 Đang chờ hoàn cọc
                             </div>
                             <div class="small text-warning"
@@ -97,7 +97,7 @@
                                th:href="@{/booking/{id}/payment(id=${booking.id})}">
                                 <i class="bi bi-credit-card me-1"></i> Thanh toán </a>
                             <a class="btn btn-warning btn-sm"
-                               th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED' and (booking.refundAccountNumber == null or booking.refundBankBin == null)}"
+                               th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'APPROVED' and (booking.refundAccountNumber == null or booking.refundBankBin == null)}"
                                th:href="@{/booking/{id}(id=${booking.id})}">
                                 <i class="bi bi-bank me-1"></i> Nhập thông tin hoàn tiền </a>
                             <button class="btn btn-outline-danger btn-sm"

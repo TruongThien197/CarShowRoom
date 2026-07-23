@@ -60,6 +60,18 @@ public class Order {
 
     @Column(name = "product_total", nullable = false)
     private BigDecimal productTotal = BigDecimal.ZERO;
+
+    @Column(name = "shipping_fee", nullable = false)
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+
+    @Column(name = "shipping_province", columnDefinition = "NVARCHAR(100)")
+    private String shippingProvince;
+
+    @Column(name = "shipping_district", columnDefinition = "NVARCHAR(100)")
+    private String shippingDistrict;
+
+    @Column(name = "shipping_ward", columnDefinition = "NVARCHAR(100)")
+    private String shippingWard;
     
     @Column(name = "shipping_address",columnDefinition = "NVARCHAR(MAX)")
     private String shippingAddress;
@@ -69,6 +81,19 @@ public class Order {
 
     @Column(name = "cancellation_reason",columnDefinition = "NVARCHAR(MAX)")
     private String cancellationReason;
+
+    @Column(name = "cancellation_requested_at")
+    private LocalDateTime cancellationRequestedAt;
+
+    @Column(name = "cancellation_processed_at")
+    private LocalDateTime cancellationProcessedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancellation_processed_by_id")
+    private User cancellationProcessedBy;
+
+    @Column(name = "cancellation_decision_note", columnDefinition = "NVARCHAR(MAX)")
+    private String cancellationDecisionNote;
 
     @Column(name = "shipping_carrier",columnDefinition = "NVARCHAR(MAX)")
     private String shippingCarrier;

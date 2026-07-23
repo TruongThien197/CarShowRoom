@@ -193,6 +193,19 @@ public class StaffController {
         return "redirect:/staff/bookings/" + bookingId;
     }
 
+    @PostMapping("/bookings/labor-collection")
+    public String recordLaborCollection(@RequestParam Integer bookingId,
+                                        @RequestParam BigDecimal laborFee,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.recordLaborCollection(bookingId, authService.getCurrentUser(), laborFee);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã ghi nhận tiền công lắp đặt đã thu tại xưởng.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/staff/bookings/" + bookingId;
+    }
+
     @PostMapping("/bookings/no-show")
     public String markBookingNoShow(@RequestParam Integer bookingId, RedirectAttributes redirectAttributes) {
         try {
@@ -237,6 +250,34 @@ public class StaffController {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
         return "redirect:/staff/orders/" + orderId;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/approve")
+    public String approveOrderCancellation(@PathVariable Integer id, RedirectAttributes attributes) {
+        try { orderService.approveCancellation(id, authService.getCurrentUser()); attributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu hủy đơn."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/orders/" + id;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/reject")
+    public String rejectOrderCancellation(@PathVariable Integer id, @RequestParam String reason, RedirectAttributes attributes) {
+        try { orderService.rejectCancellation(id, authService.getCurrentUser(), reason); attributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu hủy đơn."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/orders/" + id;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/approve")
+    public String approveBookingCancellation(@PathVariable Integer id, @RequestParam(required = false) String assessmentNote, RedirectAttributes attributes) {
+        try { bookingService.approveCancellation(id, authService.getCurrentUser(), assessmentNote); attributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu hủy lịch."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/bookings/" + id;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/reject")
+    public String rejectBookingCancellation(@PathVariable Integer id, @RequestParam String reason, RedirectAttributes attributes) {
+        try { bookingService.rejectCancellation(id, authService.getCurrentUser(), reason); attributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu hủy lịch."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/bookings/" + id;
     }
 
     @PostMapping("/refunds/{id}/sync")
