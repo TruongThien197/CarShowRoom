@@ -63,11 +63,11 @@ public class PaymentServiceImpl implements PaymentService {
         CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder paymentBuilder = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
                 .amount(amount)
-                .description("Order " + orderCode)
+                .description("Đơn hàng " + orderCode)
                 .returnUrl(properties.returnUrl())
                 .cancelUrl(properties.cancelUrl())
                 .item(PaymentLinkItem.builder()
-                        .name("GearShift payment")
+                        .name("Thanh toán GearShift")
                         .quantity(1)
                         .price(amount)
                         .unit("VND")
@@ -82,10 +82,10 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             response = payOS.paymentRequests().create(paymentRequest);
         } catch (RuntimeException exception) {
-            throw new IllegalStateException("PayOS declined to create the payment link. Please check the API key, checksum key, and return/cancel URL configuration.", exception);
+            throw new IllegalStateException("PayOS từ chối tạo link thanh toán. Vui lòng kiểm tra lại cấu hình API key, checksum key và return/cancel URL.", exception);
         }
         if (response == null || !hasText(response.getCheckoutUrl())) {
-            throw new IllegalStateException("PayOS did not return a checkout URL.");
+            throw new IllegalStateException("PayOS không trả về đường dẫn thanh toán.");
         }
 
         PaymentTransaction transaction = new PaymentTransaction();
@@ -108,7 +108,7 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentTransaction syncPaymentStatus(String orderCode) {
         requireConfigured();
         PaymentTransaction transaction = paymentTransactionRepository.findByPayosOrderCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("PayOS transaction not found: " + orderCode));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch PayOS: " + orderCode));
         PaymentLink paymentLink = payOS.paymentRequests().get(Long.valueOf(orderCode));
         validateAmount(transaction, paymentLink.getAmount());
         applyStatus(transaction, paymentLink.getStatus());
@@ -126,7 +126,7 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentTransaction transaction = paymentTransactionRepository
                 .findByPayosOrderCode(String.valueOf(data.getOrderCode()))
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "PayOS transaction not found: " + data.getOrderCode()));
+                        "Không tìm thấy giao dịch PayOS: " + data.getOrderCode()));
         validateAmount(transaction, data.getAmount());
         transaction.setRawWebhookPayload(writeWebhookPayload(request));
         markPaid(transaction);

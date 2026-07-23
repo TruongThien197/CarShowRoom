@@ -62,7 +62,7 @@ public class CarModelServiceImpl implements CarModelService {
         long vehicleCount = vehicleRepository.countByCarModel_Id(id);
         if (productCount > 0 || vehicleCount > 0) {
             throw new IllegalStateException(
-                    "Cannot delete this car model because it is being used by products or customer vehicles."
+                    "Không thể xóa dòng xe này vì nó đang được sử dụng bởi các sản phẩm hoặc phương tiện của khách hàng."
             );
         }
         carModelRepository.deleteById(id);
@@ -78,15 +78,15 @@ public class CarModelServiceImpl implements CarModelService {
     private void validateCarModel(CarModelForm form) {
         if (form == null || form.getBrand() == null || form.getBrand().isBlank()
                 || form.getModelName() == null || form.getModelName().isBlank()) {
-            throw new IllegalArgumentException("Brand and model name must not be empty.");
+            throw new IllegalArgumentException("Tên hãng và tên dòng xe không được để trống.");
         }
         if (form.getBrand().trim().length() > 100
                 || form.getModelName().trim().length() > 100) {
-            throw new IllegalArgumentException("Brand and model name must not exceed 100 characters.");
+            throw new IllegalArgumentException("Tên hãng và tên dòng xe không được vượt quá 100 ký tự.");
         }
         if (form.getYear() == null || form.getYear() < 1900
                 || form.getYear() > java.time.LocalDate.now().getYear() + 1) {
-            throw new IllegalArgumentException("Car model year is invalid.");
+            throw new IllegalArgumentException("Năm sản xuất dòng xe không hợp lệ.");
         }
         form.setBrand(form.getBrand().trim());
         form.setModelName(form.getModelName().trim());
