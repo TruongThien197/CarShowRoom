@@ -22,6 +22,9 @@ public class SchedulingServiceImpl implements SchedulingService {
     private static final LocalTime WORK_END = LocalTime.of(17, 0);
     private static final int SLOT_STEP_MINUTES = 30;
     private static final int WORKSHOP_CAPACITY = 2;
+    private static final int INSTALLATION_DURATION_MINUTES = 120;
+    private static final List<LocalTime> INSTALLATION_SLOT_STARTS = List.of(
+            LocalTime.of(8, 0), LocalTime.of(10, 0), LocalTime.of(13, 0), LocalTime.of(15, 0));
 
     private final BookingRepository bookingRepository;
     private final ServiceRepository serviceRepository;
@@ -43,6 +46,23 @@ public class SchedulingServiceImpl implements SchedulingService {
             }
         }
         return slots;
+    }
+
+    @Override
+    public List<AvailableSlotDTO> findAvailableInstallationSlots(LocalDate date) {
+        if (date == null || date.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày đặt lịch không được nằm trong quá khứ.");
+        }
+        return INSTALLATION_SLOT_STARTS.stream()
+                .map(start -> new AvailableSlotDTO(start, start.plusMinutes(INSTALLATION_DURATION_MINUTES)))
+                .filter(slot -> {
+                    Booking probe = new Booking();
+                    probe.setBookingDate(date);
+                    probe.setStartTime(slot.getStartTime());
+                    probe.setEndTime(slot.getEndTime());
+                    return !hasCapacityConflict(probe);
+                })
+                .toList();
     }
 
     @Override

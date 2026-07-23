@@ -1,6 +1,7 @@
 package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.BookingType;
 import com.hsf302.carshowroom.common.Enums.OrderStatus;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.config.PayOSProperties;
@@ -205,7 +206,9 @@ public class PaymentServiceImpl implements PaymentService {
                 booking.setRemainingPaymentStatus(PaymentStatus.PAID);
             } else {
                 booking.setPaymentStatus(PaymentStatus.PAID);
-                    booking.setBookingStatus(BookingStatus.WAITING_FOR_VEHICLE);
+                booking.setBookingStatus(booking.getBookingType() == BookingType.PART_INSTALLATION
+                        ? BookingStatus.CONFIRMED
+                        : BookingStatus.WAITING_FOR_VEHICLE);
             }
             bookingRepository.save(booking);
         }
@@ -342,7 +345,8 @@ public class PaymentServiceImpl implements PaymentService {
             return finalAmount.subtract(deposit).max(BigDecimal.ZERO);
         }
         if (request.getParentOrder() != null) {
-            BigDecimal amount = request.getParentOrder().getProductTotal();
+            BigDecimal amount = request.getParentOrder().getProductTotal()
+                    .add(resolveShippingFee(request.getSubOrders()));
             if (request.getBooking() != null) {
                 amount = amount.add(resolveBookingDeposit(request.getBooking()));
             }
@@ -350,7 +354,8 @@ public class PaymentServiceImpl implements PaymentService {
         }
         BigDecimal amount = request.getSubOrders() == null ? BigDecimal.ZERO
                 : request.getSubOrders().stream()
-                .map(Order::getProductTotal)
+                .map(order -> order.getProductTotal().add(order.getShippingFee() == null
+                        ? BigDecimal.ZERO : order.getShippingFee()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         if (request.getBooking() != null) {
             amount = amount.add(resolveBookingDeposit(request.getBooking()));
@@ -359,6 +364,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private BigDecimal resolveBookingDeposit(Booking booking) {
+        if (booking.getBookingType() == BookingType.PART_INSTALLATION) {
+            return BigDecimal.ZERO;
+        }
         if (booking.getDepositAmount() != null && booking.getDepositAmount().compareTo(BigDecimal.ZERO) > 0) {
             return booking.getDepositAmount();
         }
@@ -368,6 +376,12 @@ public class PaymentServiceImpl implements PaymentService {
                 .max(BigDecimal.valueOf(2_000))
                 .min(BigDecimal.valueOf(10_000))
                 .setScale(0, RoundingMode.UP);
+    }
+
+    private BigDecimal resolveShippingFee(List<Order> orders) {
+        return orders == null ? BigDecimal.ZERO : orders.stream()
+                .map(order -> order.getShippingFee() == null ? BigDecimal.ZERO : order.getShippingFee())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private String safePayOSText(String value, int maxLength) {

@@ -31,6 +31,8 @@ public interface BookingService {
 
     void setFinalAmount(Integer bookingId, java.math.BigDecimal finalAmount);
 
+    void recordLaborCollection(Integer bookingId, User staff, java.math.BigDecimal laborFee);
+
     void markNoShow(Integer bookingId);
     void reopenDepositPayment(Integer bookingId);
 }

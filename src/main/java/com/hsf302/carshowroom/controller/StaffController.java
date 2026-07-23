@@ -193,6 +193,19 @@ public class StaffController {
         return "redirect:/staff/bookings/" + bookingId;
     }
 
+    @PostMapping("/bookings/labor-collection")
+    public String recordLaborCollection(@RequestParam Integer bookingId,
+                                        @RequestParam BigDecimal laborFee,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.recordLaborCollection(bookingId, authService.getCurrentUser(), laborFee);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã ghi nhận tiền công lắp đặt đã thu tại xưởng.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/staff/bookings/" + bookingId;
+    }
+
     @PostMapping("/bookings/no-show")
     public String markBookingNoShow(@RequestParam Integer bookingId, RedirectAttributes redirectAttributes) {
         try {

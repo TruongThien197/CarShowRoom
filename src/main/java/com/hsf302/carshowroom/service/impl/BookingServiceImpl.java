@@ -250,6 +250,9 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     @Transactional
     public void setFinalAmount(Integer bookingId, BigDecimal finalAmount) {
         Booking booking = getBookingDetail(bookingId);
+        if (booking.getBookingType() == BookingType.PART_INSTALLATION) {
+            throw new IllegalStateException("Đơn lắp đặt tại xưởng không dùng giá dịch vụ cuối. Vui lòng nhập tiền công lắp đặt.");
+        }
         if (booking.getBookingStatus() != BookingStatus.IN_PROGRESS) {
             throw new IllegalStateException("Chỉ có thể nhập giá cuối sau khi đã tiếp nhận xe.");
         }
@@ -262,6 +265,29 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         }
         booking.setFinalAmount(finalAmount);
         booking.setRemainingPaymentStatus(PaymentStatus.PENDING);
+        bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
+    public void recordLaborCollection(Integer bookingId, User staff, BigDecimal laborFee) {
+        Booking booking = getBookingDetail(bookingId);
+        if (booking.getBookingType() != BookingType.PART_INSTALLATION) {
+            throw new IllegalStateException("Chỉ lịch lắp đặt phụ tùng tại xưởng mới dùng tiền công lắp đặt.");
+        }
+        if (booking.getBookingStatus() != BookingStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Chỉ có thể thu tiền công khi lắp đặt đang được thực hiện.");
+        }
+        if (staff == null || staff.getId() == null) {
+            throw new IllegalArgumentException("Không xác định được nhân viên thu tiền công.");
+        }
+        if (laborFee == null || laborFee.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Tiền công phải lớn hơn hoặc bằng 0.");
+        }
+        booking.setLaborFee(laborFee);
+        booking.setLaborCollected(true);
+        booking.setLaborCollectedAt(LocalDateTime.now());
+        booking.setLaborCollectedBy(staff);
         bookingRepository.save(booking);
     }
 
@@ -344,9 +370,15 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         if (nextStatus == BookingStatus.COMPLETED && currentStatus != BookingStatus.IN_PROGRESS) {
             throw new IllegalStateException("Lịch hẹn phải ở trạng thái đang thực hiện trước khi hoàn tất.");
         }
-        if (nextStatus == BookingStatus.COMPLETED
-                && booking.getFinalAmount() == null) {
-            throw new IllegalStateException("Cần nhập giá cuối trước khi chuyển lịch sang hoàn thành.");
+        if (nextStatus == BookingStatus.COMPLETED) {
+            if (booking.getBookingType() == BookingType.PART_INSTALLATION
+                    && (booking.getLaborFee() == null || !booking.isLaborCollected())) {
+                throw new IllegalStateException("Cần nhập và xác nhận đã thu tiền công trước khi hoàn tất lắp đặt.");
+            }
+            if (booking.getBookingType() != BookingType.PART_INSTALLATION
+                    && booking.getFinalAmount() == null) {
+                throw new IllegalStateException("Cần nhập giá cuối trước khi chuyển lịch sang hoàn thành.");
+            }
         }
         if (nextStatus != BookingStatus.IN_PROGRESS && nextStatus != BookingStatus.COMPLETED) {
             throw new IllegalStateException("Trạng thái lịch hẹn không được phép cập nhật thủ công.");

@@ -64,6 +64,7 @@ public class CartServiceImpl implements CartService {
         if (product.getStatus() != ProductStatus.ACTIVE) {
             throw new RuntimeException("Sản phẩm này hiện không khả dụng.");
         }
+        validateWorkshopEligibility(product, resolvedFulfillmentType);
 
         CartItem cartItem = cartItemRepository.findByUserAndProductAndFulfillmentType(user, product, resolvedFulfillmentType).orElseGet(() -> {
             CartItem item = new CartItem();
@@ -77,6 +78,30 @@ public class CartServiceImpl implements CartService {
         int newQuantity = cartItem.getQuantity() + requestedQuantity;
         validateStock(product, newQuantity);
         cartItem.setQuantity(newQuantity);
+        cartItemRepository.save(cartItem);
+    }
+
+    @Override
+    @Transactional
+    public void updateFulfillmentType(User user, Integer cartItemId, String fulfillmentType) {
+        CartItem cartItem = getOwnedCartItem(user, cartItemId);
+        FulfillmentType targetType = resolveFulfillmentType(fulfillmentType);
+        Product product = cartItem.getProduct();
+        validateWorkshopEligibility(product, targetType);
+        if (cartItem.getFulfillmentType() == targetType) {
+            return;
+        }
+
+        CartItem existing = cartItemRepository.findByUserAndProductAndFulfillmentType(user, product, targetType)
+                .orElse(null);
+        if (existing != null && !existing.getId().equals(cartItem.getId())) {
+            validateStock(product, existing.getQuantity() + cartItem.getQuantity());
+            existing.setQuantity(existing.getQuantity() + cartItem.getQuantity());
+            cartItemRepository.save(existing);
+            cartItemRepository.delete(cartItem);
+            return;
+        }
+        cartItem.setFulfillmentType(targetType);
         cartItemRepository.save(cartItem);
     }
 
@@ -149,6 +174,12 @@ public class CartServiceImpl implements CartService {
             return FulfillmentType.valueOf((fulfillmentType == null ? "" : fulfillmentType).trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw new RuntimeException("Vui lòng chọn hình thức nhận hàng hợp lệ.");
+        }
+    }
+
+    private void validateWorkshopEligibility(Product product, FulfillmentType fulfillmentType) {
+        if (fulfillmentType == FulfillmentType.AT_WORKSHOP && !product.isInstallationSupported()) {
+            throw new RuntimeException("Sản phẩm này không hỗ trợ lắp đặt tại xưởng.");
         }
     }
 }

@@ -66,7 +66,7 @@
                             <input type="hidden" name="status" value="IN_PROGRESS">
                             <button class="btn btn-warning w-100" type="submit"><i class="bi bi-wrench-adjustable me-2"></i>Bắt đầu sửa chữa</button>
                         </form>
-                        <form th:if="${booking.bookingStatus.name() == 'IN_PROGRESS'}" th:action="@{/staff/bookings/final-amount}" method="post" class="mb-3">
+                        <form th:if="${booking.bookingType.name() != 'PART_INSTALLATION' and booking.bookingStatus.name() == 'IN_PROGRESS'}" th:action="@{/staff/bookings/final-amount}" method="post" class="mb-3">
                             <input type="hidden" name="bookingId" th:value="${booking.id}">
                             <label class="form-label fw-bold">Giá cuối cùng (VNĐ)</label>
                             <div class="input-group">
@@ -75,7 +75,19 @@
                             </div>
                             <div class="form-text">Giá cuối không được thấp hơn tiền cọc.</div>
                         </form>
-                        <form th:if="${booking.bookingStatus.name() == 'IN_PROGRESS' and booking.finalAmount != null}" th:action="@{/staff/bookings/status}" method="post">
+                        <form th:if="${booking.bookingType.name() == 'PART_INSTALLATION' and booking.bookingStatus.name() == 'IN_PROGRESS' and !booking.laborCollected}" th:action="@{/staff/bookings/labor-collection}" method="post" class="mb-3">
+                            <input type="hidden" name="bookingId" th:value="${booking.id}">
+                            <label class="form-label fw-bold">Tiền công lắp đặt đã thu tại xưởng (VNĐ)</label>
+                            <div class="input-group">
+                                <input class="form-control" type="number" min="0" step="1000" name="laborFee" required>
+                                <button class="btn btn-success" type="submit"><i class="bi bi-cash-coin me-1"></i>Xác nhận đã thu</button>
+                            </div>
+                            <div class="form-text">Tiền này không đi qua PayOS và chỉ ghi nhận sau khi hoàn tất lắp đặt.</div>
+                        </form>
+                        <div class="alert alert-success" th:if="${booking.bookingType.name() == 'PART_INSTALLATION' and booking.laborCollected}">
+                            Đã thu tiền công: <strong class="gs-mono" th:text="${#numbers.formatDecimal(booking.laborFee, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong>
+                        </div>
+                        <form th:if="${booking.bookingStatus.name() == 'IN_PROGRESS' and ((booking.bookingType.name() == 'PART_INSTALLATION' and booking.laborCollected) or (booking.bookingType.name() != 'PART_INSTALLATION' and booking.finalAmount != null))}" th:action="@{/staff/bookings/status}" method="post">
                             <input type="hidden" name="bookingId" th:value="${booking.id}">
                             <input type="hidden" name="status" value="COMPLETED">
                             <button class="btn btn-success w-100" type="submit"><i class="bi bi-check-circle me-2"></i>Hoàn thành sửa chữa</button>
@@ -83,7 +95,11 @@
                         <div class="alert alert-success mb-0" th:if="${booking.bookingStatus.name() == 'COMPLETED'}">Lịch hẹn đã hoàn thành.</div>
                     </div>
 
-                    <div class="surface-card p-4 mb-4" th:if="${booking.finalAmount != null and (booking.bookingStatus.name() == 'IN_PROGRESS' or booking.bookingStatus.name() == 'COMPLETED')}">
+                    <div class="surface-card p-4 mb-4" th:if="${booking.bookingType.name() == 'PART_INSTALLATION' and booking.laborFee != null}">
+                        <h5 class="fw-bold mb-3">Tiền công lắp đặt tại xưởng</h5>
+                        <div class="d-flex justify-content-between"><span>Đã thu trực tiếp</span><strong class="gs-mono text-success" th:text="${#numbers.formatDecimal(booking.laborFee, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong></div>
+                    </div>
+                    <div class="surface-card p-4 mb-4" th:if="${booking.bookingType.name() != 'PART_INSTALLATION' and booking.finalAmount != null and (booking.bookingStatus.name() == 'IN_PROGRESS' or booking.bookingStatus.name() == 'COMPLETED')}">
                         <h5 class="fw-bold mb-3">Tổng kết chi phí</h5>
                         <div class="d-flex justify-content-between mb-2"><span>Giá cuối</span><strong class="gs-mono" th:text="${#numbers.formatDecimal(booking.finalAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">30.000 VNĐ</strong></div>
                         <div class="d-flex justify-content-between"><span>Khách còn phải thanh toán</span><strong class="gs-mono text-warning" th:text="${#numbers.formatDecimal((booking.finalAmount - (booking.depositAmount ?: 0)), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">24.000 VNĐ</strong></div>

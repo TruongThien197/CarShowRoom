@@ -1,12 +1,13 @@
 package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.common.Enums.FulfillmentType;
+import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.BookingType;
 import com.hsf302.carshowroom.common.Enums.OrderStatus;
 import com.hsf302.carshowroom.common.Enums.OrderType;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.common.Enums.PaymentMethod;
 import com.hsf302.carshowroom.common.Enums.RefundPayoutStatus;
-import com.hsf302.carshowroom.common.Enums.ServiceStatus;
 import com.hsf302.carshowroom.common.Enums.RefundStatus;
 import com.hsf302.carshowroom.dto.CheckoutForm;
 import com.hsf302.carshowroom.dto.CheckoutResult;
@@ -21,13 +22,11 @@ import com.hsf302.carshowroom.entity.RefundTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.repository.BookingRepository;
-import com.hsf302.carshowroom.repository.BookingServiceRepository;
 import com.hsf302.carshowroom.repository.CartItemRepository;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.OrderRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
 import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
-import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.InventoryReservationService;
 import com.hsf302.carshowroom.service.OrderService;
@@ -35,12 +34,12 @@ import com.hsf302.carshowroom.service.OrderWorkflowService;
 import com.hsf302.carshowroom.service.PaymentService;
 import com.hsf302.carshowroom.service.RefundPayoutService;
 import com.hsf302.carshowroom.service.SchedulingService;
+import com.hsf302.carshowroom.service.ShippingFeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -55,16 +54,19 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemRepository orderItemRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
-    private final ServiceRepository serviceRepository;
     private final VehicleRepository vehicleRepository;
     private final BookingRepository bookingRepository;
-    private final BookingServiceRepository bookingServiceRepository;
     private final InventoryReservationService inventoryReservationService;
     private final SchedulingService schedulingService;
     private final PaymentService paymentService;
     private final OrderWorkflowService orderWorkflowService;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final RefundPayoutService refundPayoutService;
+    private final ShippingFeeService shippingFeeService;
+
+    private static final int INSTALLATION_DURATION_MINUTES = 120;
+    private static final List<LocalTime> INSTALLATION_SLOT_STARTS = List.of(
+            LocalTime.of(8, 0), LocalTime.of(10, 0), LocalTime.of(13, 0), LocalTime.of(15, 0));
 
     @Override
     @Transactional
@@ -81,15 +83,19 @@ public class OrderServiceImpl implements OrderService {
 
         List<CartItem> shippingItems = groupedItems.getOrDefault(FulfillmentType.SHIPPING, List.of());
         List<CartItem> workshopItems = groupedItems.getOrDefault(FulfillmentType.AT_WORKSHOP, List.of());
+        if (workshopItems.stream().anyMatch(item -> !item.getProduct().isInstallationSupported())) {
+            throw new IllegalStateException("Có sản phẩm trong giỏ không hỗ trợ lắp đặt tại xưởng.");
+        }
         boolean mixed = !shippingItems.isEmpty() && !workshopItems.isEmpty();
         PaymentMethod paymentMethod = parsePaymentMethod(form.getPaymentMethod());
+        ShippingDetails shippingDetails = shippingItems.isEmpty() ? null : resolveShippingDetails(form);
 
-        Order parentOrder = mixed ? createOrder(user, OrderType.PARENT, null, form.getShippingAddress(), form.getPhone(), List.of()) : null;
+        Order parentOrder = mixed ? createOrder(user, OrderType.PARENT, null, null, form.getPhone(), List.of()) : null;
         List<Order> stockOrders = new ArrayList<>();
         Booking booking = null;
 
         if (!shippingItems.isEmpty()) {
-            stockOrders.add(createOrder(user, OrderType.SHIPPING, parentOrder, form.getShippingAddress(), form.getPhone(), shippingItems));
+            stockOrders.add(createOrder(user, OrderType.SHIPPING, parentOrder, shippingDetails, form.getPhone(), shippingItems));
         }
         if (!workshopItems.isEmpty()) {
             validateWorkshopCheckout(form);
@@ -292,7 +298,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private Order createOrder(User user, OrderType orderType, Order parentOrder, String shippingAddress, String receiverPhone, List<CartItem> cartItems) {
+    private Order createOrder(User user, OrderType orderType, Order parentOrder, ShippingDetails shippingDetails, String receiverPhone, List<CartItem> cartItems) {
         BigDecimal productTotal = calculateProductTotal(cartItems);
         Order order = new Order();
         order.setUser(user);
@@ -301,7 +307,13 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderStatus(OrderStatus.PENDING_PAYMENT);
         order.setPaymentStatus(PaymentStatus.PENDING);
         order.setRefundStatus(RefundStatus.NONE);
-        order.setShippingAddress(shippingAddress);
+        if (shippingDetails != null) {
+            order.setShippingProvince(shippingDetails.province());
+            order.setShippingDistrict(shippingDetails.district());
+            order.setShippingWard(shippingDetails.ward());
+            order.setShippingAddress(shippingDetails.address());
+            order.setShippingFee(shippingDetails.fee());
+        }
         order.setReceiverPhone(receiverPhone);
         order.setProductTotal(productTotal);
         Order savedOrder = orderRepository.save(order);
@@ -325,11 +337,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private Booking createWorkshopBooking(User user, CheckoutForm form, Order relatedOrder) {
-        com.hsf302.carshowroom.entity.Service service = serviceRepository.findById(form.getServiceId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ."));
-        if (service.getStatus() != ServiceStatus.ACTIVE) {
-            throw new RuntimeException("Dịch vụ này hiện không khả dụng.");
-        }
         Vehicle vehicle = vehicleRepository.findById(form.getVehicleId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy xe."));
         if (!vehicle.getUser().getId().equals(user.getId())) {
@@ -342,39 +349,40 @@ public class OrderServiceImpl implements OrderService {
         booking.setRelatedOrder(relatedOrder);
         booking.setBookingDate(form.getBookingDate());
         booking.setStartTime(form.getStartTime());
-        booking.setEndTime(form.getStartTime().plusMinutes(service.getDurationMinutes()));
+        booking.setEndTime(form.getStartTime().plusMinutes(INSTALLATION_DURATION_MINUTES));
         booking.setTimeSlot(formatSlot(booking.getStartTime(), booking.getEndTime()));
-        booking.setTotalDurationMinutes(service.getDurationMinutes());
-        booking.setEstimatedMinAmount(service.getMinPrice());
-        booking.setEstimatedMaxAmount(service.getMaxPrice());
-        booking.setFinalAmount(service.getMinPrice());
-        booking.setDepositAmount(service.getMinPrice().multiply(BigDecimal.valueOf(0.20))
-                .max(BigDecimal.valueOf(2_000))
-                .min(BigDecimal.valueOf(10_000))
-                .setScale(0, RoundingMode.UP));
-        booking.setBookingStatus(com.hsf302.carshowroom.common.Enums.BookingStatus.PENDING_PAYMENT);
+        booking.setTotalDurationMinutes(INSTALLATION_DURATION_MINUTES);
+        booking.setEstimatedMinAmount(BigDecimal.ZERO);
+        booking.setEstimatedMaxAmount(BigDecimal.ZERO);
+        booking.setFinalAmount(null);
+        booking.setDepositAmount(BigDecimal.ZERO);
+        booking.setBookingType(BookingType.PART_INSTALLATION);
+        booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
         booking.setPaymentStatus(PaymentStatus.PENDING);
         booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
         booking.setNotes(form.getNotes());
         schedulingService.holdSlot(booking);
-        Booking savedBooking = bookingRepository.save(booking);
-
-        com.hsf302.carshowroom.entity.BookingService snapshot = new com.hsf302.carshowroom.entity.BookingService();
-        snapshot.setBooking(savedBooking);
-        snapshot.setService(service);
-        snapshot.setServiceNameSnapshot(service.getServiceName());
-        snapshot.setDurationMinutesSnapshot(service.getDurationMinutes());
-        snapshot.setMinPriceSnapshot(service.getMinPrice());
-        snapshot.setMaxPriceSnapshot(service.getMaxPrice());
-        bookingServiceRepository.save(snapshot);
-
-        return savedBooking;
+        return bookingRepository.save(booking);
     }
 
     private void validateWorkshopCheckout(CheckoutForm form) {
-        if (form.getVehicleId() == null || form.getServiceId() == null || form.getBookingDate() == null || form.getStartTime() == null) {
-            throw new RuntimeException("Vui lòng chọn xe, dịch vụ, ngày và giờ hẹn cho sản phẩm lắp đặt tại xưởng.");
+        if (form.getVehicleId() == null || form.getBookingDate() == null || form.getStartTime() == null) {
+            throw new RuntimeException("Vui lòng chọn xe, ngày và giờ hẹn cho sản phẩm lắp đặt tại xưởng.");
         }
+        if (!INSTALLATION_SLOT_STARTS.contains(form.getStartTime())) {
+            throw new RuntimeException("Vui lòng chọn một trong các khung giờ lắp đặt cố định.");
+        }
+    }
+
+    private ShippingDetails resolveShippingDetails(CheckoutForm form) {
+        String province = requireText(form.getShippingProvince(), "Vui lòng chọn tỉnh/thành phố giao hàng.");
+        String district = requireText(form.getShippingDistrict(), "Vui lòng chọn quận/huyện giao hàng.");
+        String ward = requireText(form.getShippingWard(), "Vui lòng nhập phường/xã giao hàng.");
+        String address = requireText(form.getShippingAddress(), "Vui lòng nhập địa chỉ giao hàng chi tiết.");
+        return new ShippingDetails(province, district, ward, address, shippingFeeService.resolveFee(province, district));
+    }
+
+    private record ShippingDetails(String province, String district, String ward, String address, BigDecimal fee) {
     }
 
     private BigDecimal calculateProductTotal(List<CartItem> items) {

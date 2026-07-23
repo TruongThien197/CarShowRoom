@@ -159,6 +159,15 @@ public class BookingController {
         }
     }
 
+    @GetMapping("/available-installation-slots")
+    public ResponseEntity<?> availableInstallationSlots(@RequestParam LocalDate date) {
+        try {
+            return ResponseEntity.ok(schedulingService.findAvailableInstallationSlots(date));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}/payment")
     public String payment(@PathVariable Integer id, Model model) {
         User user = currentUserOrNull();
