@@ -17,6 +17,7 @@ import java.util.List;
 public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
 
+    /** Tìm sản phẩm đang bán theo từ khóa hoặc danh mục cho giao diện cửa hàng. */
     @Override
     public List<Product> findProducts(Integer categoryId, String keyword) {
         if (StringUtils.hasText(keyword)) {
@@ -28,22 +29,26 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findByStatus(ProductStatus.ACTIVE);
     }
 
+    /** Lấy chi tiết sản phẩm theo mã, báo lỗi nếu không tồn tại. */
     @Override
     public Product getProduct(Integer id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm with ID: " + id));
     }
 
+    /** Lấy toàn bộ sản phẩm, bao gồm cả sản phẩm đã ngừng bán, cho quản trị. */
     @Override
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
+    /** Tìm kiếm và phân trang sản phẩm công khai với bộ lọc cơ bản. */
     @Override
     public Page<Product> findProductsPaged(Integer categoryId, String keyword, Pageable pageable) {
         return findProductsPaged(categoryId, keyword, null, null, null, null, pageable);
     }
 
+    /** Tìm kiếm catalog công khai theo danh mục, từ khóa và khả năng tương thích dòng xe. */
     @Override
     public Page<Product> findProductsPaged(Integer categoryId, String keyword, Integer carModelId,
                                            String brand, String modelName, Integer year, Pageable pageable) {
@@ -60,11 +65,13 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    /** Tìm kiếm và phân trang sản phẩm cho quản trị với bộ lọc cơ bản. */
     @Override
     public Page<Product> findAdminProductsPaged(Integer categoryId, String keyword, Pageable pageable) {
         return findAdminProductsPaged(categoryId, keyword, null, null, null, null, pageable);
     }
 
+    /** Tìm kiếm catalog quản trị, bao gồm cả sản phẩm không còn bán. */
     @Override
     public Page<Product> findAdminProductsPaged(Integer categoryId, String keyword, Integer carModelId,
                                                 String brand, String modelName, Integer year, Pageable pageable) {
@@ -81,6 +88,7 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    /** Tạo sản phẩm mới và đặt trạng thái hoạt động nếu chưa được chỉ định. */
     @Override
     public Product createProduct(Product product) {
         validateProduct(product, null);
@@ -90,6 +98,7 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.save(product);
     }
 
+    /** Cập nhật các thông tin có thể chỉnh sửa của sản phẩm. */
     @Override
     public Product updateProduct(Integer id, Product updatedProduct) {
         Product existing = getProduct(id);
@@ -111,6 +120,7 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.save(existing);
     }
 
+    /** Ngừng bán sản phẩm bằng cách chuyển sang trạng thái không hoạt động. */
     @Override
     public void deleteProduct(Integer id) {
         Product existing = getProduct(id);
@@ -118,6 +128,7 @@ public class ProductServiceImpl implements ProductService {
         productRepository.save(existing);
     }
 
+    /** Thay đổi trực tiếp trạng thái hoạt động của sản phẩm. */
     @Override
     public Product changeStatus(Integer id, String status) {
         Product existing = getProduct(id);
@@ -125,6 +136,7 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.save(existing);
     }
 
+    /** Chuẩn hóa giá trị lọc: bỏ khoảng trắng và đổi giá trị rỗng thành null. */
     private String normalize(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
     }

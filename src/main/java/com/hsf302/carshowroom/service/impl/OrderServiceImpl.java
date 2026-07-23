@@ -21,6 +21,7 @@ import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.RefundTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
+import com.hsf302.carshowroom.exception.MixedFulfillmentException;
 import com.hsf302.carshowroom.repository.BookingRepository;
 import com.hsf302.carshowroom.repository.CartItemRepository;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
@@ -35,10 +36,12 @@ import com.hsf302.carshowroom.service.OrderWorkflowService;
 import com.hsf302.carshowroom.service.PaymentService;
 import com.hsf302.carshowroom.service.RefundPayoutService;
 import com.hsf302.carshowroom.service.SchedulingService;
-import com.hsf302.carshowroom.service.ShippingFeeService;
+import com.hsf302.carshowroom.service.RefundService;
+import com.hsf302.carshowroom.service.SystemSettingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -51,6 +54,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
+    private static final String WORKSHOP_INSTALLATION_SERVICE = "Thay thế phụ tùng";
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartItemRepository cartItemRepository;
@@ -63,17 +68,20 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentService paymentService;
     private final OrderWorkflowService orderWorkflowService;
     private final PaymentTransactionRepository paymentTransactionRepository;
-    private final RefundPayoutService refundPayoutService;
-    private final ShippingFeeService shippingFeeService;
+    private final RefundService refundService;
+    private final SystemSettingService settingService;
 
-    private static final int INSTALLATION_DURATION_MINUTES = 120;
-    private static final List<LocalTime> INSTALLATION_SLOT_STARTS = List.of(
-            LocalTime.of(8, 0), LocalTime.of(10, 0), LocalTime.of(13, 0), LocalTime.of(15, 0));
-
+    /** Tạo đơn từ giỏ hàng, giữ tồn kho và tạo lịch hẹn khi khách chọn lắp tại xưởng. */
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    /**
+     * Tạo đơn từ giỏ hàng trong giao dịch cô lập để tránh bán vượt tồn kho.
+     * Đơn lắp tại xưởng sẽ tạo thêm Booking với dịch vụ cố định và giữ khung giờ.
+     */
     public CheckoutResult checkout(User user, CheckoutForm form) {
         List<CartItem> cartItems = cartItemRepository.findByUser(user);
+        validateSingleFulfillment(cartItems);
+        validateCartStock(cartItems);
         if (cartItems.isEmpty()) {
             throw new RuntimeException("Giỏ hàng đang trống.");
         }
@@ -132,17 +140,20 @@ public class OrderServiceImpl implements OrderService {
         return new CheckoutResult(confirmationOrderId, transaction.getCheckoutUrl());
     }
 
+    /** Lấy danh sách đơn hàng của khách theo thời điểm tạo giảm dần. */
     @Override
     public List<Order> getOrders(User user) {
         return orderRepository.findByUserOrderByCreatedAtDesc(user);
     }
 
+    /** Lấy đơn hàng theo mã cho các thao tác nội bộ hoặc quản trị. */
     @Override
     public Order getOrderById(Integer id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng."));
     }
 
+    /** Lấy đơn hàng theo mã sau khi kiểm tra quyền sở hữu của khách hàng. */
     @Override
     public Order getOrderForUser(Integer id, User user) {
         Order order = getOrderById(id);
@@ -150,6 +161,7 @@ public class OrderServiceImpl implements OrderService {
         return order;
     }
 
+    /** Hủy đơn theo yêu cầu khách, tạo hoàn tiền khi cần và hủy các đơn con. */
     @Override
     @Transactional
     public void cancelOrderForUser(Integer id, User user, String reason) {
@@ -158,20 +170,9 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Không thể hủy đơn khi đơn đã được giao, hoàn tất hoặc đã hủy.");
         }
         order.setCancellationReason(requireText(reason, "Vui lòng nhập lý do hủy đơn."));
-        if (order.getRefundStatus() == RefundStatus.REQUESTED) {
-            throw new IllegalStateException("Yêu cầu hủy đơn đã tồn tại và đang chờ duyệt.");
-        }
-        order.setRefundStatus(RefundStatus.REQUESTED);
-        order.setCancellationRequestedAt(LocalDateTime.now());
-        orderRepository.save(order);
-    }
-
-    @Override
-    @Transactional
-    public void approveCancellation(Integer id, User processedBy) {
-        Order order = getOrderById(id);
-        if (order.getRefundStatus() != RefundStatus.REQUESTED) {
-            throw new IllegalStateException("Đơn hàng không có yêu cầu hủy đang chờ duyệt.");
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            refundService.requestOrderRefund(order, order.getCancellationReason());
+            order.setRefundStatus(RefundStatus.REQUESTED);
         }
         cancelOrderAndChildren(order);
         order.setRefundStatus(order.getPaymentStatus() == PaymentStatus.PAID ? RefundStatus.APPROVED : RefundStatus.NONE);
@@ -196,6 +197,7 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
+    /** Cho khách sửa địa chỉ và số điện thoại nhận hàng khi đơn giao hàng còn được phép sửa. */
     @Override
     @Transactional
     public void updateShippingAddressForUser(Integer id, User user, String shippingAddress, String receiverPhone) {
@@ -211,6 +213,7 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
+    /** Cập nhật đơn vị vận chuyển, mã vận đơn và chuyển đơn sang đang giao khi cần. */
     @Override
     @Transactional
     public void updateShipment(Integer id, String shippingCarrier, String trackingCode) {
@@ -232,6 +235,7 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
+    /** Nhân viên xác nhận hoàn tiền cho đơn hàng đã hủy và đồng bộ giao dịch thanh toán. */
     @Override
     @Transactional
     public void completeRefund(Integer id, User processedBy, String bankName, String bankBin,
@@ -253,23 +257,7 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
-    private void applyOrderRefundResult(Order order, RefundTransaction refundTransaction) {
-        if (refundTransaction.getStatus() == RefundPayoutStatus.SUCCEEDED) {
-            order.setRefundStatus(RefundStatus.COMPLETED);
-            order.setPaymentStatus(PaymentStatus.REFUNDED);
-            order.setRefundedAt(refundTransaction.getRefundedAt() == null ? LocalDateTime.now() : refundTransaction.getRefundedAt());
-            paymentTransactionRepository.findByOrderOrParentOrder(order, order).forEach(transaction -> {
-                transaction.setStatus(PaymentStatus.REFUNDED);
-                paymentTransactionRepository.save(transaction);
-            });
-        } else if (refundTransaction.getStatus() == RefundPayoutStatus.FAILED) {
-            order.setRefundStatus(RefundStatus.FAILED);
-            order.setRefundNote(refundTransaction.getErrorMessage());
-        } else {
-            order.setRefundStatus(RefundStatus.PROCESSING);
-        }
-    }
-
+    /** Chọn lại phương thức thanh toán cho đơn đang chờ và tạo giao dịch trực tuyến nếu cần. */
     @Override
     @Transactional
     public CheckoutResult choosePaymentMethod(Integer id, User user, String paymentMethodValue) {
@@ -303,6 +291,7 @@ public class OrderServiceImpl implements OrderService {
         return new CheckoutResult(rootOrder.getId(), transaction.getCheckoutUrl());
     }
 
+    /** Cập nhật trạng thái đơn theo luồng xử lý, giao, hoàn tất, hủy hoặc hết hạn. */
     @Override
     @Transactional
     public void updateOrderStatus(Integer id, String status) {
@@ -334,7 +323,8 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private Order createOrder(User user, OrderType orderType, Order parentOrder, ShippingDetails shippingDetails, String receiverPhone, List<CartItem> cartItems) {
+    /** Tạo đơn hoặc đơn con, sao chép thông tin sản phẩm vào dòng đơn và kiểm tra tồn kho. */
+    private Order createOrder(User user, OrderType orderType, Order parentOrder, String shippingAddress, String receiverPhone, List<CartItem> cartItems) {
         BigDecimal productTotal = calculateProductTotal(cartItems);
         Order order = new Order();
         order.setUser(user);
@@ -371,7 +361,44 @@ public class OrderServiceImpl implements OrderService {
         return savedOrder;
     }
 
+    /** Cộng gộp số lượng theo sản phẩm và kiểm tra tồn kho lần cuối trước checkout. */
+    private void validateCartStock(List<CartItem> cartItems) {
+        Map<Integer, Integer> quantitiesByProductId = cartItems.stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.getProduct().getId(),
+                        Collectors.summingInt(CartItem::getQuantity)
+                ));
+
+        quantitiesByProductId.forEach((productId, totalQuantity) -> {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found."));
+            inventoryReservationService.checkStockAvailability(product, totalQuantity);
+        });
+    }
+
+    /** Bảo đảm giỏ chỉ chứa một kiểu nhận hàng theo chính sách tách đơn hiện tại. */
+    private void validateSingleFulfillment(List<CartItem> cartItems) {
+        long fulfillmentTypeCount = cartItems.stream()
+                .map(CartItem::getFulfillmentType)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .count();
+        if (fulfillmentTypeCount > 1) {
+            throw new MixedFulfillmentException();
+        }
+    }
+
+    /**
+     * Tạo lịch lắp đặt liên kết với đơn phụ tùng; phí và khoản cọc được chụp lại
+     * tại thời điểm đặt để không bị ảnh hưởng bởi thay đổi giá sau này.
+     */
+    /** Tạo lịch lắp đặt, chụp lại phí/cọc và liên kết lịch với đơn phụ tùng tại xưởng. */
     private Booking createWorkshopBooking(User user, CheckoutForm form, Order relatedOrder) {
+        com.hsf302.carshowroom.entity.Service service = serviceRepository
+                .findFirstByServiceNameIgnoreCase(WORKSHOP_INSTALLATION_SERVICE)
+                .filter(candidate -> candidate.getStatus() == ServiceStatus.ACTIVE)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Dịch vụ 'Thay thế phụ tùng' chưa sẵn sàng. Vui lòng liên hệ quản trị viên."));
         Vehicle vehicle = vehicleRepository.findById(form.getVehicleId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy xe."));
         if (!vehicle.getUser().getId().equals(user.getId())) {
@@ -386,50 +413,45 @@ public class OrderServiceImpl implements OrderService {
         booking.setStartTime(form.getStartTime());
         booking.setEndTime(form.getStartTime().plusMinutes(INSTALLATION_DURATION_MINUTES));
         booking.setTimeSlot(formatSlot(booking.getStartTime(), booking.getEndTime()));
-        booking.setTotalDurationMinutes(INSTALLATION_DURATION_MINUTES);
-        booking.setEstimatedMinAmount(BigDecimal.ZERO);
-        booking.setEstimatedMaxAmount(BigDecimal.ZERO);
-        booking.setFinalAmount(null);
-        booking.setDepositAmount(BigDecimal.ZERO);
-        booking.setBookingType(BookingType.PART_INSTALLATION);
-        booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
+        booking.setTotalDurationMinutes(service.getDurationMinutes());
+        booking.setEstimatedMinAmount(service.getMinPrice());
+        booking.setEstimatedMaxAmount(service.getMaxPrice());
+        booking.setFinalAmount(service.getMinPrice());
+        booking.setDepositAmount(service.getMinPrice().multiply(BigDecimal.valueOf(
+                        settingService.getInt(SystemSettingServiceImpl.DEPOSIT_RATE_PERCENT)))
+                .movePointLeft(2)
+                .max(BigDecimal.valueOf(settingService.getInt(SystemSettingServiceImpl.MIN_DEPOSIT_AMOUNT)))
+                .min(BigDecimal.valueOf(settingService.getInt(SystemSettingServiceImpl.MAX_DEPOSIT_AMOUNT)))
+                .setScale(0, RoundingMode.UP));
+        booking.setBookingStatus(com.hsf302.carshowroom.common.Enums.BookingStatus.PENDING_PAYMENT);
         booking.setPaymentStatus(PaymentStatus.PENDING);
-        booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
+        booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(
+                settingService.getInt(SystemSettingServiceImpl.PAYMENT_HOLD_MINUTES)));
         booking.setNotes(form.getNotes());
         schedulingService.holdSlot(booking);
         return bookingRepository.save(booking);
     }
 
+    /** Kiểm tra các dữ liệu bắt buộc trước khi giữ lịch lắp đặt tại xưởng. */
     private void validateWorkshopCheckout(CheckoutForm form) {
         if (form.getVehicleId() == null || form.getBookingDate() == null || form.getStartTime() == null) {
-            throw new RuntimeException("Vui lòng chọn xe, ngày và giờ hẹn cho sản phẩm lắp đặt tại xưởng.");
-        }
-        if (!INSTALLATION_SLOT_STARTS.contains(form.getStartTime())) {
-            throw new RuntimeException("Vui lòng chọn một trong các khung giờ lắp đặt cố định.");
+            throw new RuntimeException("Vui lòng chọn xe, ngày hẹn và giờ hẹn để lắp đặt tại xưởng.");
         }
     }
 
-    private ShippingDetails resolveShippingDetails(CheckoutForm form) {
-        String province = requireText(form.getShippingProvince(), "Vui lòng chọn tỉnh/thành phố giao hàng.");
-        String district = requireText(form.getShippingDistrict(), "Vui lòng chọn quận/huyện giao hàng.");
-        String ward = requireText(form.getShippingWard(), "Vui lòng nhập phường/xã giao hàng.");
-        String address = requireText(form.getShippingAddress(), "Vui lòng nhập địa chỉ giao hàng chi tiết.");
-        return new ShippingDetails(province, district, ward, address, shippingFeeService.resolveFee(province, district));
-    }
-
-    private record ShippingDetails(String province, String district, String ward, String address, BigDecimal fee) {
-    }
-
+    /** Tính tổng tiền phụ tùng từ các dòng giỏ hàng. */
     private BigDecimal calculateProductTotal(List<CartItem> items) {
         return items.stream()
                 .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    /** Ghép giờ bắt đầu và giờ kết thúc thành chuỗi khung giờ hiển thị. */
     private String formatSlot(LocalTime startTime, LocalTime endTime) {
         return startTime + " - " + endTime;
     }
 
+    /** Tạo giao dịch PayOS; khi có Booking, PayOS chỉ thu khoản cọc của lịch hẹn. */
     private PaymentTransaction createPayOSPayment(User user, Order parentOrder, List<Order> stockOrders, Booking booking) {
         return paymentService.createPaymentLink(PayOSCreatePaymentLinkRequest.builder()
                 .user(user)
@@ -439,6 +461,7 @@ public class OrderServiceImpl implements OrderService {
                 .build());
     }
 
+    /** Chuyển chuỗi phương thức thanh toán thành enum hợp lệ. */
     private PaymentMethod parsePaymentMethod(String value) {
         if (value == null || !PaymentMethod.PAYOS.name().equalsIgnoreCase(value.trim())) {
             throw new IllegalArgumentException("Chỉ hỗ trợ thanh toán trực tuyến qua PayOS.");
@@ -446,6 +469,7 @@ public class OrderServiceImpl implements OrderService {
         return PaymentMethod.PAYOS;
     }
 
+    /** Kiểm tra quy tắc chuyển trạng thái của đơn hàng trước khi thực hiện thao tác. */
     private void validateOrderTransition(Order order, OrderStatus nextStatus) {
         OrderStatus currentStatus = order.getOrderStatus();
         if (nextStatus == OrderStatus.CANCELED) {
@@ -491,6 +515,7 @@ public class OrderServiceImpl implements OrderService {
         throw new IllegalStateException("Trạng thái đơn hàng không được phép cập nhật thủ công.");
     }
 
+    /** Hủy đơn cha và toàn bộ đơn con, dùng chung lý do hủy. */
     private void cancelOrderAndChildren(Order order) {
         for (Order subOrder : order.getSubOrders()) {
             subOrder.setCancellationReason(order.getCancellationReason());
@@ -499,12 +524,14 @@ public class OrderServiceImpl implements OrderService {
         orderWorkflowService.cancelOrder(order);
     }
 
+    /** Kiểm tra đơn hàng thuộc khách hàng đang thao tác. */
     private void assertOrderOwner(Order order, User user) {
         if (!order.getUser().getId().equals(user.getId())) {
             throw new IllegalStateException("Bạn không có quyền thao tác đơn hàng này.");
         }
     }
 
+    /** Bắt buộc trường văn bản có giá trị và trả về giá trị đã bỏ khoảng trắng thừa. */
     private String requireText(String value, String errorMessage) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(errorMessage);
@@ -512,6 +539,7 @@ public class OrderServiceImpl implements OrderService {
         return value.trim();
     }
 
+    /** Xác định khách còn được phép hủy đơn theo trạng thái hiện tại hay không. */
     private boolean isCustomerCancelable(Order order) {
         return order.getOrderStatus() != OrderStatus.SHIPPING
                 && order.getOrderStatus() != OrderStatus.COMPLETED

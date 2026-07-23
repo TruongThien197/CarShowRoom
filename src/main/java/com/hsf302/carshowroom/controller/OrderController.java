@@ -9,12 +9,17 @@ import com.hsf302.carshowroom.entity.CartItem;
 import com.hsf302.carshowroom.entity.Order;
 import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.User;
+import com.hsf302.carshowroom.exception.InsufficientStockException;
+import com.hsf302.carshowroom.exception.MixedFulfillmentException;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.ShippingFeeRuleRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.AuthService;
 import com.hsf302.carshowroom.service.CartService;
 import com.hsf302.carshowroom.service.OrderService;
+import com.hsf302.carshowroom.service.RefundService;
+import com.hsf302.carshowroom.service.SystemSettingService;
+import com.hsf302.carshowroom.service.impl.SystemSettingServiceImpl;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -28,6 +33,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.time.LocalTime;
@@ -37,12 +44,16 @@ import java.util.stream.Collectors;
 @RequestMapping("/orders")
 @RequiredArgsConstructor
 public class OrderController {
+    private static final String WORKSHOP_INSTALLATION_SERVICE = "Thay thế phụ tùng";
+
     private final AuthService authService;
     private final CartService cartService;
     private final OrderService orderService;
     private final OrderItemRepository orderItemRepository;
     private final VehicleRepository vehicleRepository;
-    private final ShippingFeeRuleRepository shippingFeeRuleRepository;
+    private final ServiceRepository serviceRepository;
+    private final RefundService refundService;
+    private final SystemSettingService settingService;
 
     @GetMapping("/checkout")
     public String checkout(Model model) {
@@ -58,15 +69,21 @@ public class OrderController {
         return "order/checkout";
     }
 
+    /**
+     * Nhận thông tin checkout, khóa dịch vụ lắp đặt mặc định cho đơn tại xưởng
+     * và chuyển khách tới PayOS khi cần thanh toán trực tuyến.
+     */
     @PostMapping("/checkout")
     public String placeOrder(@Valid @ModelAttribute("checkoutForm") CheckoutForm form,
                              BindingResult bindingResult,
-                             Model model) {
+                             Model model,
+                             RedirectAttributes redirectAttributes) {
         User user = currentUserOrNull();
         if (user == null) {
             return "redirect:/auth/login";
         }
         List<CartItem> cartItems = cartService.getCartItems(user);
+        applyDefaultWorkshopService(cartItems, form);
         if (bindingResult.hasErrors()) {
             populateCheckoutModel(model, user, cartItems, form);
             return "order/checkout";
@@ -77,8 +94,11 @@ public class OrderController {
                 return "redirect:" + result.checkoutUrl();
             }
             return "redirect:/orders/" + result.orderId();
+        } catch (InsufficientStockException | MixedFulfillmentException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+            return "redirect:/cart";
         } catch (RuntimeException exception) {
-            model.addAttribute("errorMessage", "Không thể tạo đơn hàng hoặc liên kết thanh toán: " + exception.getMessage());
+            model.addAttribute("errorMessage", "Không thể tạo thanh toán PayOS: " + exception.getMessage());
             populateCheckoutModel(model, user, cartItems, form);
             return "order/checkout";
         }
@@ -111,6 +131,7 @@ public class OrderController {
         Order order = orderService.getOrderForUser(id, user);
         model.addAttribute("order", order);
         model.addAttribute("orderItems", orderItemRepository.findByOrderId(id));
+        model.addAttribute("refundTransactions", refundService.getOrderRefunds(order));
         model.addAttribute("canCancel", order.getOrderStatus() != OrderStatus.SHIPPING
                 && order.getOrderStatus() != OrderStatus.COMPLETED
                 && order.getOrderStatus() != OrderStatus.CANCELED
@@ -189,6 +210,7 @@ public class OrderController {
         return "redirect:/orders/" + id;
     }
 
+    /** Chuẩn bị dữ liệu hiển thị cho checkout, gồm tiền cọc và khoảng chi phí lắp đặt. */
     private void populateCheckoutModel(Model model, User user, List<CartItem> cartItems, CheckoutForm form) {
         model.addAttribute("user", user);
         model.addAttribute("cartItems", cartItems);
@@ -201,11 +223,55 @@ public class OrderController {
         model.addAttribute("needsWorkshop", needsWorkshop);
         model.addAttribute("hasShipping", hasShipping);
         model.addAttribute("vehicles", vehicleRepository.findByUser(user));
-        model.addAttribute("shippingFeeRules", shippingFeeRuleRepository.findByActiveTrueOrderByProvinceAscDistrictAsc());
-        model.addAttribute("shippingProvinces", shippingFeeRuleRepository.findByActiveTrueOrderByProvinceAscDistrictAsc()
-                .stream().map(rule -> rule.getProvince()).distinct().toList());
-        model.addAttribute("workshopSlots", List.of(
-                LocalTime.of(8, 0), LocalTime.of(10, 0), LocalTime.of(13, 0), LocalTime.of(15, 0)));
+        if (needsWorkshop) {
+            com.hsf302.carshowroom.entity.Service workshopService = getWorkshopInstallationService();
+            form.setServiceId(workshopService.getId());
+            form.setPaymentMethod("PAYOS");
+            BigDecimal deposit = calculateDeposit(workshopService.getMinPrice());
+            BigDecimal productTotal = cartService.calculateSubtotal(cartItems);
+            model.addAttribute("workshopService", workshopService);
+            model.addAttribute("workshopDeposit", deposit);
+            model.addAttribute("depositRatePercent",
+                    settingService.getInt(SystemSettingServiceImpl.DEPOSIT_RATE_PERCENT));
+            model.addAttribute("minDepositAmount",
+                    settingService.getInt(SystemSettingServiceImpl.MIN_DEPOSIT_AMOUNT));
+            model.addAttribute("maxDepositAmount",
+                    settingService.getInt(SystemSettingServiceImpl.MAX_DEPOSIT_AMOUNT));
+            model.addAttribute("minBookingLeadMinutes",
+                    settingService.getInt(SystemSettingServiceImpl.MIN_BOOKING_LEAD_MINUTES));
+            model.addAttribute("workshopTotalMin", productTotal.add(workshopService.getMinPrice()));
+            model.addAttribute("workshopTotalMax", productTotal.add(workshopService.getMaxPrice()));
+            model.addAttribute("workshopRemainingMin", productTotal.add(workshopService.getMinPrice()).subtract(deposit));
+            model.addAttribute("workshopRemainingMax", productTotal.add(workshopService.getMaxPrice()).subtract(deposit));
+        }
+    }
+
+    /** Không cho khách thay đổi dịch vụ: đơn lắp đặt luôn dùng "Thay thế phụ tùng". */
+    private void applyDefaultWorkshopService(List<CartItem> cartItems, CheckoutForm form) {
+        boolean needsWorkshop = cartItems.stream()
+                .anyMatch(item -> FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
+        if (needsWorkshop) {
+            form.setServiceId(getWorkshopInstallationService().getId());
+            form.setPaymentMethod("PAYOS");
+        }
+    }
+
+    /** Lấy dịch vụ cố định đang hoạt động; báo lỗi rõ ràng khi quản trị viên đã tắt dịch vụ. */
+    private com.hsf302.carshowroom.entity.Service getWorkshopInstallationService() {
+        return serviceRepository.findFirstByServiceNameIgnoreCase(WORKSHOP_INSTALLATION_SERVICE)
+                .filter(service -> service.getStatus() == com.hsf302.carshowroom.common.Enums.ServiceStatus.ACTIVE)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Dịch vụ mặc định 'Thay thế phụ tùng' chưa sẵn sàng. Vui lòng kích hoạt dịch vụ này trong trang quản trị."));
+    }
+
+    /** Tính tiền cọc theo tỷ lệ và mức trần/sàn do quản trị viên cấu hình. */
+    private BigDecimal calculateDeposit(BigDecimal serviceFee) {
+        return serviceFee.multiply(BigDecimal.valueOf(
+                        settingService.getInt(SystemSettingServiceImpl.DEPOSIT_RATE_PERCENT)))
+                .movePointLeft(2)
+                .max(BigDecimal.valueOf(settingService.getInt(SystemSettingServiceImpl.MIN_DEPOSIT_AMOUNT)))
+                .min(BigDecimal.valueOf(settingService.getInt(SystemSettingServiceImpl.MAX_DEPOSIT_AMOUNT)))
+                .setScale(0, RoundingMode.UP);
     }
 
     private User currentUserOrNull() {

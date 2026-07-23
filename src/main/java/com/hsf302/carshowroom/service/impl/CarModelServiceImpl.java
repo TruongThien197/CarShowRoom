@@ -20,11 +20,13 @@ public class CarModelServiceImpl implements CarModelService {
     private final ProductRepository productRepository;
     private final VehicleRepository vehicleRepository;
 
+    /** Lấy danh sách dòng xe theo thứ tự hãng, tên mẫu và năm sản xuất. */
     @Override
     public List<CarModel> getAllCarModels() {
         return carModelRepository.findAllByOrderByBrandAscModelNameAscYearDesc();
     }
 
+    /** Lọc các dòng xe theo hãng; nếu không có hãng thì trả về toàn bộ danh sách. */
     @Override
     public List<CarModel> getModelsByBrand(String brand) {
         if (!StringUtils.hasText(brand)) {
@@ -33,12 +35,14 @@ public class CarModelServiceImpl implements CarModelService {
         return carModelRepository.findByBrandIgnoreCaseOrderByModelNameAsc(brand.trim());
     }
 
+    /** Lấy chi tiết một dòng xe theo mã. */
     @Override
     public CarModel getCarModel(Integer id) {
         return carModelRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu xe"));
     }
 
+    /** Tạo dòng xe mới từ dữ liệu biểu mẫu quản trị. */
     @Override
     @Transactional
     public CarModel createCarModel(CarModelForm form) {
@@ -47,6 +51,7 @@ public class CarModelServiceImpl implements CarModelService {
         return carModelRepository.save(carModel);
     }
 
+    /** Cập nhật thông tin dòng xe theo mã. */
     @Override
     @Transactional
     public CarModel updateCarModel(Integer id, CarModelForm form) {
@@ -55,6 +60,7 @@ public class CarModelServiceImpl implements CarModelService {
         return carModelRepository.save(carModel);
     }
 
+    /** Xóa dòng xe theo mã. */
     @Override
     @Transactional
     public void deleteCarModel(Integer id) {
@@ -68,6 +74,7 @@ public class CarModelServiceImpl implements CarModelService {
         carModelRepository.deleteById(id);
     }
 
+    /** Sao chép các trường hãng, tên mẫu và năm từ biểu mẫu vào thực thể dòng xe. */
     private void fillCarModel(CarModel carModel, CarModelForm form) {
         validateCarModel(form);
         carModel.setBrand(form.getBrand());

@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Xác nhận thanh toán | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Thanh toán | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('shop')}"></div>
 
@@ -16,6 +16,7 @@
     <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
         <div class="col-lg-8">
             <form class="surface-card p-4 needs-validation" th:action="@{/orders/checkout}" th:object="${checkoutForm}" method="post">
+                <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">1</span>Thông tin liên hệ và giao hàng<span class="gs-chevron-divider" th:if="${needsWorkshop}"></span></h4>
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label class="form-label"> Họ và tên </label>
@@ -64,7 +65,7 @@
                 </div>
 
                 <div th:if="${needsWorkshop}" class="mb-4">
-                    <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2" th:text="${hasShipping ? 2 : 1}">2</span>Lịch lắp đặt tại xưởng<span class="gs-chevron-divider"></span></h4>
+                    <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">2</span>Lịch lắp đặt tại xưởng<span class="gs-chevron-divider"></span></h4>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label"> Xe </label>
@@ -74,33 +75,89 @@
                                         th:value="${vehicle.id}"
                                         th:text="${vehicle.brand + ' ' + vehicle.modelName + ' ' + vehicle.year + ' - ' + vehicle.licensePlate}"> Xe </option>
                             </select>
+                            <div class="form-text">
+                                <a th:href="@{/vehicles/add}">Thêm xe mới</a> nếu xe chưa có trong danh sách.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label"> Dịch vụ lắp đặt cố định </label>
+                            <input type="hidden" th:field="*{serviceId}">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-tools"></i></span>
+                                <input type="text" class="form-control bg-light" th:value="${workshopService.serviceName}" readonly>
+                            </div>
+                            <div class="form-text">Dịch vụ được áp dụng tự động cho phụ tùng lắp tại xưởng.</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="surface-card gs-stripe-top p-3">
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-md-5">
+                                        <span class="text-secondary d-block small">Khoảng phí thay thế</span>
+                                        <strong class="text-primary gs-mono fs-5">
+                                            <span th:text="${#numbers.formatDecimal(workshopService.minPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">50.000 VNĐ</span>
+                                            -
+                                            <span th:text="${#numbers.formatDecimal(workshopService.maxPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">150.000 VNĐ</span>
+                                        </strong>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <span class="text-secondary d-block small">Thời lượng dự kiến</span>
+                                        <strong><span th:text="${workshopService.durationMinutes}">45</span> phút</strong>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <span class="text-secondary d-block small">Tiền cọc cần thanh toán</span>
+                                        <strong class="text-primary gs-mono fs-5" th:text="${#numbers.formatDecimal(workshopDeposit, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">10.000 VNĐ</strong>
+                                        <div class="small text-secondary" th:text="'Cọc ' + ${depositRatePercent} + '% theo mức phí khởi điểm.'">Cọc 20% theo mức phí khởi điểm.</div>
+                                    </div>
+                                </div>
+                                <div class="small text-secondary mt-3" th:text="${workshopService.description}">Lắp đặt phụ tùng khách đã đặt tại xưởng.</div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label"> Ngày hẹn </label>
-                            <input class="form-control" type="date" th:field="*{bookingDate}" id="installationDate" th:required="${needsWorkshop}">
+                            <input class="form-control gs-mono" id="bookingDate" type="date" th:field="*{bookingDate}" required>
+                            <div class="form-text" th:text="'Vui lòng đặt lịch trước ít nhất ' + ${minBookingLeadMinutes} + ' phút.'">Vui lòng đặt lịch trước ít nhất 60 phút.</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label"> Khung giờ cố định </label>
-                            <select class="form-select" th:field="*{startTime}" id="installationSlot" th:required="${needsWorkshop}">
-                                <option value="">Chọn ngày trước</option>
-                                <option th:each="slot : ${workshopSlots}" th:value="${slot}" th:text="${slot + ' - ' + slot.plusHours(2)}">08:00 - 10:00</option>
+                            <label class="form-label"> Khung giờ </label>
+                            <select class="form-select" id="workshopTimeSlot" th:field="*{startTime}" required disabled>
+                                <option value="">Chọn ngày hẹn trước</option>
                             </select>
+                            <div id="workshopSlotHelp" class="form-text">Danh sách chỉ hiển thị các khung giờ còn chỗ.</div>
                         </div>
                         <div class="col-12">
                             <label class="form-label"> Ghi chú </label>
-                            <textarea class="form-control" rows="3" th:field="*{notes}"></textarea>
+                            <textarea class="form-control" rows="4" th:field="*{notes}" placeholder="Mô tả yêu cầu lắp đặt hoặc tình trạng xe cần lưu ý..."></textarea>
                         </div>
                         <div class="col-12"><div class="alert alert-info mb-0 small">Tiền công lắp đặt chưa bao gồm trong thanh toán này. Nhân viên sẽ báo và thu tiền công tại xưởng sau khi hoàn tất, tùy theo xe.</div></div>
                     </div>
                 </div>
 
-                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${hasShipping and needsWorkshop ? 3 : 2}">2</span> Phương thức thanh toán </h4>
-                <div class="border rounded p-3 mb-4">
-                    <input type="hidden" th:field="*{paymentMethod}" value="PAYOS">
-                    <strong>Thanh toán trực tuyến qua PayOS</strong>
-                    <span class="d-block small text-secondary">Thanh toán ngay bằng mã QR hoặc tài khoản ngân hàng.</span>
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${needsWorkshop ? 3 : 2}">2</span> Phương thức thanh toán </h4>
+                <div class="border rounded p-3 mb-3">
+                    <div class="form-check">
+                        <input id="payos" class="form-check-input" type="radio" th:field="*{paymentMethod}" value="PAYOS">
+                        <label class="form-check-label" for="payos">
+                            <strong th:text="${needsWorkshop ? 'Thanh toán tiền cọc trực tuyến' : 'Thanh toán trực tuyến qua PayOS'}">Thanh toán trực tuyến qua PayOS</strong>
+                            <span class="d-block small text-secondary" th:text="${needsWorkshop ? 'Thanh toán tiền cọc trực tuyến để giữ lịch lắp đặt và phụ tùng.' : 'Thanh toán ngay bằng mã QR hoặc tài khoản ngân hàng.'}">Thanh toán ngay bằng mã QR hoặc tài khoản ngân hàng.</span>
+                        </label>
+                    </div>
                 </div>
-                <button class="btn btn-primary btn-lg" type="submit"> Đặt hàng </button>
+                <div class="border rounded p-3 mb-3" th:classappend="${needsWorkshop} ? 'opacity-50 bg-light' : ''">
+                    <div class="form-check">
+                        <input id="cod" class="form-check-input" type="radio" th:field="*{paymentMethod}" value="COD" th:disabled="${needsWorkshop}">
+                        <label class="form-check-label" for="cod">
+                            <strong>Thanh toán khi nhận hàng (COD)</strong>
+                            <span class="d-block small text-secondary">Thanh toán cho nhân viên giao hàng khi nhận phụ tùng.</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="alert alert-info mb-4" th:if="${!needsWorkshop}">
+                    Bạn có thể chọn PayOS hoặc thanh toán khi nhận hàng. Hàng sẽ được giữ sau khi đặt đơn.
+                </div>
+                <div class="alert alert-warning mb-4" th:if="${needsWorkshop}">
+                    Đơn lắp đặt tại xưởng cần thanh toán tiền cọc trực tuyến. Phần còn lại thanh toán trực tiếp tại xưởng sau khi hoàn tất lắp đặt.
+                </div>
+                <button class="btn btn-primary btn-lg" type="submit" th:text="${needsWorkshop ? 'Đặt lịch và thanh toán cọc' : 'Đặt hàng'}">Đặt hàng</button>
             </form>
         </div>
         <div class="col-lg-4">
@@ -115,9 +172,17 @@
                     <strong id="shippingFeeSummary" class="gs-mono">Chọn khu vực để tính</strong>
                 </div>
                 <hr>
-                <div class="d-flex justify-content-between fs-5 mb-4">
+                <div th:if="${!needsWorkshop}" class="d-flex justify-content-between fs-5 mb-4">
                     <span> Tổng cộng </span>
-                    <strong id="checkoutTotal" class="gs-mono" th:data-subtotal="${subtotal}" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"> 0 VNĐ </strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"> 0 VNĐ </strong>
+                </div>
+                <div th:if="${needsWorkshop}" class="small">
+                    <div class="d-flex justify-content-between mb-2"><span>Tiền phụ tùng</span><strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong></div>
+                    <div class="d-flex justify-content-between mb-2"><span>Khoảng phí thay thế</span><strong class="gs-mono"><span th:text="${#numbers.formatDecimal(workshopService.minPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span> - <span th:text="${#numbers.formatDecimal(workshopService.maxPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span></strong></div>
+                    <div class="d-flex justify-content-between fw-bold mb-3"><span>Tổng dự kiến</span><span class="gs-mono"><span th:text="${#numbers.formatDecimal(workshopTotalMin, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span> - <span th:text="${#numbers.formatDecimal(workshopTotalMax, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span></span></div>
+                    <hr>
+                    <div class="d-flex justify-content-between fs-5 fw-bold text-primary"><span th:text="'Thanh toán cọc (' + ${depositRatePercent} + '%)'">Thanh toán cọc (20%)</span><span class="gs-mono" th:text="${#numbers.formatDecimal(workshopDeposit, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span></div>
+                    <p class="text-secondary mt-2 mb-0">Còn lại tại xưởng: <strong class="gs-mono"><span th:text="${#numbers.formatDecimal(workshopRemainingMin, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span> - <span th:text="${#numbers.formatDecimal(workshopRemainingMax, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span></strong></p>
                 </div>
             </div>
         </div>
@@ -126,52 +191,49 @@
 
 <div th:replace="~{fragments :: footer}"></div>
 <div th:replace="~{fragments :: scripts}"></div>
-<script th:if="${hasShipping or needsWorkshop}">
+<script th:inline="javascript">
     (() => {
-        const province = document.getElementById('shippingProvince');
-        const district = document.getElementById('shippingDistrict');
-        const feeSummary = document.getElementById('shippingFeeSummary');
-        const total = document.getElementById('checkoutTotal');
-        const format = value => new Intl.NumberFormat('vi-VN').format(value) + ' VNĐ';
-        const updateDistricts = () => {
-            if (!province || !district) return;
-            [...district.options].forEach(option => {
-                if (!option.dataset.province) return;
-                option.hidden = option.dataset.province !== province.value;
-                option.disabled = option.hidden;
-            });
-            if (district.selectedOptions[0]?.dataset.province !== province.value) district.value = '';
-            updateFee();
-        };
-        const updateFee = () => {
-            if (!district || !feeSummary || !total) return;
-            const fee = Number(district.selectedOptions[0]?.dataset.fee);
-            if (Number.isFinite(fee)) {
-                feeSummary.textContent = format(fee);
-                total.textContent = format(Number(total.dataset.subtotal) + fee);
-            } else {
-                feeSummary.textContent = 'Chọn khu vực để tính';
-                total.textContent = format(Number(total.dataset.subtotal));
-            }
-        };
-        province?.addEventListener('change', updateDistricts);
-        district?.addEventListener('change', updateFee);
-        updateDistricts();
+        const dateInput = document.getElementById('bookingDate');
+        const slotSelect = document.getElementById('workshopTimeSlot');
+        const slotHelp = document.getElementById('workshopSlotHelp');
+        const serviceId = document.getElementById('serviceId');
+        if (!dateInput || !slotSelect || !slotHelp || !serviceId) return;
 
-        const date = document.getElementById('installationDate');
-        const slot = document.getElementById('installationSlot');
-        date?.addEventListener('change', async () => {
-            slot.innerHTML = '<option value="">Đang tải khung giờ...</option>';
-            try {
-                const response = await fetch(`/booking/available-installation-slots?date=${encodeURIComponent(date.value)}`);
-                const slots = await response.json();
-                if (!response.ok) throw new Error(slots.message || 'Không thể tải khung giờ.');
-                slot.innerHTML = '<option value="">Chọn khung giờ</option>' + slots.map(item =>
-                    `<option value="${item.startTime}">${item.startTime} - ${item.endTime}</option>`).join('');
-            } catch (error) {
-                slot.innerHTML = `<option value="">${error.message || 'Không thể tải khung giờ'}</option>`;
+        const selectedStartTime = /*[[${checkoutForm.startTime != null ? checkoutForm.startTime.toString() : ''}]]*/ '';
+        dateInput.min = new Date().toLocaleDateString('en-CA');
+
+        const loadSlots = async () => {
+            if (!dateInput.value) {
+                slotSelect.disabled = true;
+                slotSelect.innerHTML = '<option value="">Chọn ngày hẹn trước</option>';
+                slotHelp.textContent = 'Danh sách chỉ hiển thị các khung giờ còn chỗ.';
+                return;
             }
-        });
+            slotSelect.disabled = true;
+            slotSelect.innerHTML = '<option value="">Đang tải khung giờ...</option>';
+            try {
+                const response = await fetch(`/booking/available-slots?date=${encodeURIComponent(dateInput.value)}&serviceId=${encodeURIComponent(serviceId.value)}`);
+                const payload = await response.json();
+                if (!response.ok) throw new Error(payload.message || 'Không thể tải khung giờ');
+                slotSelect.innerHTML = '<option value="">Chọn khung giờ</option>';
+                payload.forEach(slot => {
+                    const start = slot.startTime.substring(0, 5);
+                    const option = document.createElement('option');
+                    option.value = start;
+                    option.textContent = `${start} - ${slot.endTime.substring(0, 5)}`;
+                    option.selected = start === selectedStartTime;
+                    slotSelect.appendChild(option);
+                });
+                slotSelect.disabled = payload.length === 0;
+                slotHelp.textContent = payload.length ? `Còn ${payload.length} khung giờ phù hợp.` : 'Ngày này đã hết khung giờ phù hợp.';
+            } catch (error) {
+                slotSelect.innerHTML = '<option value="">Không thể tải khung giờ</option>';
+                slotHelp.textContent = error.message;
+            }
+        };
+
+        dateInput.addEventListener('change', loadSlots);
+        loadSlots();
     })();
 </script>
 </body>

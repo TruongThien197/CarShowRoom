@@ -5,6 +5,7 @@ import com.hsf302.carshowroom.entity.InventoryReservation;
 import com.hsf302.carshowroom.entity.Order;
 import com.hsf302.carshowroom.entity.OrderItem;
 import com.hsf302.carshowroom.entity.Product;
+import com.hsf302.carshowroom.exception.InsufficientStockException;
 import com.hsf302.carshowroom.repository.InventoryReservationRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
 import com.hsf302.carshowroom.service.InventoryReservationService;
@@ -23,13 +24,23 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
     private final ProductRepository productRepository;
     private final InventoryReservationRepository reservationRepository;
 
+    /** Kiểm tra số lượng yêu cầu có còn khả dụng sau khi trừ hàng đang được giữ chờ thanh toán. */
     @Override
     public void checkStockAvailability(Product product, int quantity) {
+        if (isInsufficient(product, quantity)) {
+            throw new InsufficientStockException(product.getAvailableStock());
+        }
         if (product.getAvailableStock() < quantity) {
             throw new RuntimeException("Không đủ tồn kho cho " + product.getProductName() + ".");
         }
     }
 
+    /** Xác định nhanh yêu cầu có vượt quá tồn kho khả dụng của sản phẩm hay không. */
+    private boolean isInsufficient(Product product, int quantity) {
+        return product.getAvailableStock() < quantity;
+    }
+
+    /** Tạo các bản ghi giữ hàng cho toàn bộ đơn con trong lúc chờ thanh toán. */
     @Override
     @Transactional
     public void reserveStock(List<Order> orders) {
@@ -38,6 +49,7 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
         }
     }
 
+    /** Khóa từng sản phẩm, tăng số lượng đã giữ và tạo phiếu giữ hàng cho một đơn. */
     private void reserveStock(Order order) {
         for (OrderItem item : order.getOrderItems()) {
             Product product = productRepository.findByIdForUpdate(item.getProduct().getId())
@@ -56,6 +68,7 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
         }
     }
 
+    /** Xác nhận các phiếu giữ hàng sau khi thanh toán thành công. */
     @Override
     @Transactional
     public void confirmReservation(Order order) {
@@ -66,6 +79,7 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
         }
     }
 
+    /** Hoàn lại lượng hàng đã giữ khi đơn bị hủy hoặc quá hạn thanh toán. */
     @Override
     @Transactional
     public void releaseReservation(Order order) {
@@ -79,6 +93,7 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
         }
     }
 
+    /** Trừ tồn kho thực tế khi đơn hoàn tất và đánh dấu phiếu giữ hàng đã sử dụng. */
     @Override
     @Transactional
     public void consumeStock(Order order) {
@@ -93,6 +108,7 @@ public class InventoryReservationServiceImpl implements InventoryReservationServ
         }
     }
 
+    /** Lấy các phiếu giữ hàng vẫn còn hiệu lực của một đơn. */
     private List<InventoryReservation> activeReservations(Order order) {
         return reservationRepository.findByOrderAndReservationStatusIn(
                 order,
