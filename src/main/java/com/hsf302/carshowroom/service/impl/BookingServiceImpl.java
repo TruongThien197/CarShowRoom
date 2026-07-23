@@ -142,7 +142,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
             throw new RuntimeException("Không thể hủy lịch hẹn ở trạng thái hiện tại.");
         }
         if (booking.getRefundStatus() == RefundStatus.REQUESTED) {
-            throw new IllegalStateException("Cancellation request is already pending.");
+            throw new IllegalStateException("Yêu cầu hủy đã đang chờ xử lý.");
         }
         booking.setRefundStatus(RefundStatus.REQUESTED);
         booking.setCancellationRequestedAt(LocalDateTime.now());
@@ -155,7 +155,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         Booking booking = getBookingDetail(bookingId);
         if (booking.getRefundStatus() != RefundStatus.REQUESTED) throw new IllegalStateException("Lịch hẹn không có yêu cầu hủy đang chờ duyệt.");
         if (requiresManualCancellationAssessment(booking) && (assessmentNote == null || assessmentNote.isBlank())) {
-            throw new IllegalArgumentException("Late workshop cancellation requires a staff assessment note.");
+            throw new IllegalArgumentException("Việc hủy lịch hẹn muộn tại xưởng cần có ghi chú đánh giá của nhân viên.");
         }
         booking.setBookingStatus(BookingStatus.CANCELED);
         if (booking.getRemainingPaymentStatus() != PaymentStatus.PAID) booking.setRemainingPaymentStatus(PaymentStatus.CANCELED);
@@ -163,7 +163,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         booking.setCancellationProcessedBy(processedBy);
         booking.setCancellationProcessedAt(LocalDateTime.now());
         booking.setCancellationDecisionNote(assessmentNote == null || assessmentNote.isBlank()
-                ? "Approved before the 24-hour cutoff." : assessmentNote.trim());
+                ? "Đã duyệt do hủy trước hạn 24 giờ." : assessmentNote.trim());
         bookingRepository.save(booking);
     }
 

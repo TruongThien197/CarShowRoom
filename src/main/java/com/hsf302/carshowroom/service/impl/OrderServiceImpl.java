@@ -155,7 +155,7 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setCancellationReason(requireText(reason, "Vui lòng nhập lý do hủy đơn."));
         if (order.getRefundStatus() == RefundStatus.REQUESTED) {
-            throw new IllegalStateException("Cancellation request is already pending.");
+            throw new IllegalStateException("Yêu cầu hủy đơn đã tồn tại và đang chờ duyệt.");
         }
         order.setRefundStatus(RefundStatus.REQUESTED);
         order.setCancellationRequestedAt(LocalDateTime.now());
@@ -173,7 +173,7 @@ public class OrderServiceImpl implements OrderService {
         order.setRefundStatus(order.getPaymentStatus() == PaymentStatus.PAID ? RefundStatus.APPROVED : RefundStatus.NONE);
         order.setCancellationProcessedBy(processedBy);
         order.setCancellationProcessedAt(LocalDateTime.now());
-        order.setCancellationDecisionNote("Approved cancellation request.");
+        order.setCancellationDecisionNote("Đã duyệt yêu cầu hủy đơn.");
         orderRepository.save(order);
     }
 
