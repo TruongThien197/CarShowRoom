@@ -8,6 +8,7 @@ import com.hsf302.carshowroom.entity.Product;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.repository.CartItemRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
+import com.hsf302.carshowroom.service.CartInventoryValidationService;
 import com.hsf302.carshowroom.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.List;
 public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final CartInventoryValidationService cartInventoryValidationService;
 
     @Override
     public CartDTO getCart(User user) {
@@ -76,7 +78,7 @@ public class CartServiceImpl implements CartService {
         });
 
         int newQuantity = cartItem.getQuantity() + requestedQuantity;
-        validateStock(product, newQuantity);
+        cartInventoryValidationService.validateCartItemStock(user, product, cartItem.getId(), newQuantity);
         cartItem.setQuantity(newQuantity);
         cartItemRepository.save(cartItem);
     }
@@ -95,7 +97,7 @@ public class CartServiceImpl implements CartService {
         CartItem existing = cartItemRepository.findByUserAndProductAndFulfillmentType(user, product, targetType)
                 .orElse(null);
         if (existing != null && !existing.getId().equals(cartItem.getId())) {
-            validateStock(product, existing.getQuantity() + cartItem.getQuantity());
+            cartInventoryValidationService.validateCartItemStock(user, product, existing.getId(), existing.getQuantity() + cartItem.getQuantity());
             existing.setQuantity(existing.getQuantity() + cartItem.getQuantity());
             cartItemRepository.save(existing);
             cartItemRepository.delete(cartItem);
@@ -114,7 +116,7 @@ public class CartServiceImpl implements CartService {
             return;
         }
         Product product = cartItem.getProduct();
-        validateStock(product, quantity);
+        cartInventoryValidationService.validateCartItemStock(user, product, cartItem.getId(), quantity);
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
     }
@@ -158,16 +160,6 @@ public class CartServiceImpl implements CartService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-
-    private void validateStock(Product product, int quantity) {
-        if (product.getAvailableStock() < quantity) {
-            throw new RuntimeException(
-                    "Không đủ tồn kho cho " + product.getProductName() +
-                            ". Vui lòng giảm số lượng xuống tối đa " +
-                            product.getAvailableStock() + "."
-            );
-        }
-    }
 
     private FulfillmentType resolveFulfillmentType(String fulfillmentType) {
         try {

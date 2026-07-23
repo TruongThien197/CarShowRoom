@@ -28,6 +28,7 @@ import com.hsf302.carshowroom.repository.OrderRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
 import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
+import com.hsf302.carshowroom.service.CartInventoryValidationService;
 import com.hsf302.carshowroom.service.InventoryReservationService;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.OrderWorkflowService;
@@ -57,6 +58,7 @@ public class OrderServiceImpl implements OrderService {
     private final VehicleRepository vehicleRepository;
     private final BookingRepository bookingRepository;
     private final InventoryReservationService inventoryReservationService;
+    private final CartInventoryValidationService cartInventoryValidationService;
     private final SchedulingService schedulingService;
     private final PaymentService paymentService;
     private final OrderWorkflowService orderWorkflowService;
@@ -75,6 +77,8 @@ public class OrderServiceImpl implements OrderService {
         if (cartItems.isEmpty()) {
             throw new RuntimeException("Giỏ hàng đang trống.");
         }
+
+        cartInventoryValidationService.validateCheckoutStock(cartItems);
 
         Map<FulfillmentType, List<CartItem>> groupedItems = cartItems.stream()
                 .collect(Collectors.groupingBy(item -> item.getFulfillmentType() == null
@@ -353,7 +357,6 @@ public class OrderServiceImpl implements OrderService {
         for (CartItem cartItem : cartItems) {
             Product product = productRepository.findById(cartItem.getProduct().getId())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
-            inventoryReservationService.checkStockAvailability(product, cartItem.getQuantity());
             OrderItem item = new OrderItem();
             item.setOrder(savedOrder);
             item.setProduct(product);
