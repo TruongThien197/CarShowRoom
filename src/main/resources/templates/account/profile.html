@@ -4,92 +4,112 @@
 <body>
 <div th:replace="~{fragments :: navbar('account')}"></div>
 
-<main class="container py-5">
+<main class="container-fluid px-4 px-lg-5 py-5">
     <div class="row g-4">
         <section class="col-12">
             <div th:replace="~{fragments/sidebar :: accountTabs('profile')}"></div>
-            <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
-            <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
-            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+
+            <div class="alert alert-success mt-3" th:if="${successMessage}" th:text="${successMessage}"></div>
+            <div class="alert alert-danger mt-3" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4 mt-3">
                 <div>
                     <h1 class="gs-h1 section-title">Tài khoản của tôi</h1>
                     <p class="text-secondary mb-0">Trang tổng quan về hồ sơ, xe, lịch hẹn và đơn hàng.</p>
                 </div>
                 <a class="btn btn-primary align-self-start" th:href="@{/booking}">
-                    <i class="bi bi-calendar-plus me-2"></i>New Booking
+                    <i class="bi bi-calendar-plus me-2"></i>Đặt lịch dịch vụ
                 </a>
             </div>
+
             <div class="row g-4">
+                <!-- Cột trái: Thông tin cá nhân -->
                 <div class="col-lg-4">
                     <div class="surface-card gs-stripe-top p-4 h-100">
                         <div class="d-flex align-items-center gap-3 mb-4">
                             <div class="icon-box fs-4"><i class="bi bi-person"></i></div>
                             <div>
-                                <h5 class="fw-bold mb-0" th:text="${user.fullName}"> Khách hàng </h5>
-                                <span class="text-secondary" th:text="${user.role}"> Vai trò </span>
+                                <h5 class="fw-bold mb-0" th:text="${user.fullName}">Khách hàng</h5>
+                                <span class="text-secondary small"
+                                      th:text="${user.role == 'CUSTOMER' ? 'Khách hàng' :
+                                       (user.role == 'STAFF' ? 'Nhân viên' :
+                                  (user.role == 'ADMIN' ? 'Quản trị viên' : user.role))}">
+                                </span>
                             </div>
                         </div>
-                        <p><i class="bi bi-envelope me-2 text-primary"></i><span th:text="${user.email}">email@example.com</span></p>
-                        <p><i class="bi bi-telephone me-2 text-primary"></i><span class="gs-mono" th:text="${user.phone ?: 'Chưa có số điện thoại'}"> Số điện thoại </span></p>
-                        <p class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i><span th:text="${user.address ?: 'No address'}"> Địa chỉ </span></p>
+                        <hr class="text-secondary opacity-25">
+                        <div class="d-flex flex-column gap-2">
+                            <p class="mb-2"><i class="bi bi-envelope me-2 text-primary"></i><span th:text="${user.email}">email@example.com</span></p>
+                            <p class="mb-2"><i class="bi bi-telephone me-2 text-primary"></i><span class="gs-mono" th:text="${user.phone ?: 'Chưa có số điện thoại'}">Số điện thoại</span></p>
+                            <p class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i><span th:text="${user.address ?: 'Chưa có địa chỉ'}">Địa chỉ</span></p>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Cột phải: Thống kê & Phím tắt chức năng -->
                 <div class="col-lg-8">
-                    <div class="row g-4">
+                    <div class="row g-4 mb-4">
                         <div class="col-md-4">
-                            <div class="metric-card d-flex justify-content-between gap-3">
+                            <div class="metric-card surface-card p-3 d-flex justify-content-between align-items-center h-100">
                                 <div>
-                                    <div class="text-secondary small"> Đơn hàng </div>
-                                    <div class="metric-value" th:text="${ordersCount}">0</div>
+                                    <div class="text-secondary small">Đơn hàng</div>
+                                    <div class="metric-value fw-bold fs-4" th:text="${ordersCount}">0</div>
                                 </div>
-                                <div class="metric-icon"><i class="bi bi-receipt"></i></div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="metric-card d-flex justify-content-between gap-3">
-                                <div>
-                                    <div class="text-secondary small"> Lịch hẹn </div>
-                                    <div class="metric-value" th:text="${bookingsCount}">0</div>
-                                </div>
-                                <div class="metric-icon"><i class="bi bi-calendar-check"></i></div>
+                                <div class="metric-icon fs-3 text-primary"><i class="bi bi-receipt"></i></div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="metric-card d-flex justify-content-between gap-3">
+                            <div class="metric-card surface-card p-3 d-flex justify-content-between align-items-center h-100">
                                 <div>
-                                    <div class="text-secondary small">Xe</div>
-                                    <div class="metric-value" th:text="${vehiclesCount}">0</div>
+                                    <div class="text-secondary small">Lịch hẹn</div>
+                                    <div class="metric-value fw-bold fs-4" th:text="${bookingsCount}">0</div>
                                 </div>
-                                <div class="metric-icon"><i class="bi bi-car-front"></i></div>
+                                <div class="metric-icon fs-3 text-primary"><i class="bi bi-calendar-check"></i></div>
                             </div>
                         </div>
-                        <div class="col-12">
-                            <div class="surface-card p-4 d-flex flex-wrap gap-2">
-                                <a class="btn btn-outline-primary" th:href="@{/orders}"><i class="bi bi-receipt me-2"></i> Lịch sử đơn hàng </a>
-                                <a class="btn btn-outline-primary" th:href="@{/booking/my-bookings}"><i class="bi bi-calendar-check me-2"></i>Lịch sử lịch hẹn</a>
-                                <a class="btn btn-outline-primary" th:href="@{/vehicles}"><i class="bi bi-car-front me-2"></i> Xe của tôi </a>
-                                <a class="btn btn-outline-primary" th:href="@{/cart}"><i class="bi bi-cart3 me-2"></i>Giỏ hàng</a>
+                        <div class="col-md-4">
+                            <div class="metric-card surface-card p-3 d-flex justify-content-between align-items-center h-100">
+                                <div>
+                                    <div class="text-secondary small">Xe của tôi</div>
+                                    <div class="metric-value fw-bold fs-4" th:text="${vehiclesCount}">0</div>
+                                </div>
+                                <div class="metric-icon fs-3 text-primary"><i class="bi bi-car-front"></i></div>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="surface-card p-4 d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-primary" th:href="@{/orders}"><i class="bi bi-receipt me-2"></i>Lịch sử đơn hàng</a>
+                        <a class="btn btn-outline-primary" th:href="@{/booking/my-bookings}"><i class="bi bi-calendar-check me-2"></i>Lịch sử đặt lịch</a>
+                        <a class="btn btn-outline-primary" th:href="@{/vehicles}"><i class="bi bi-car-front me-2"></i>Xe của tôi</a>
+                        <a class="btn btn-outline-primary" th:href="@{/cart}"><i class="bi bi-cart3 me-2"></i>Giỏ hàng</a>
                     </div>
                 </div>
             </div>
-            <div class="row g-4 mt-1">
+
+            <!-- Form cập nhật thông tin & đổi mật khẩu -->
+            <div class="row g-4 mt-2">
                 <div class="col-lg-7">
-                    <form class="surface-card p-4" th:action="@{/account/profile}" method="post">
+                    <form class="surface-card p-4 h-100" th:action="@{/account/profile}" method="post">
                         <h2 class="gs-h4 fw-bold mb-3">Chỉnh sửa hồ sơ</h2>
-                        <label class="form-label">Họ và tên</label><input class="form-control mb-3" name="fullName" required th:value="${user.fullName}">
-                        <label class="form-label">Số điện thoại</label><input class="form-control mb-3" name="phone" th:value="${user.phone}">
-                        <label class="form-label">Địa chỉ</label><textarea class="form-control mb-3" name="address" rows="3" th:text="${user.address}"></textarea>
+                        <label class="form-label">Họ và tên</label>
+                        <input class="form-control mb-3" name="fullName" required th:value="${user.fullName}">
+                        <label class="form-label">Số điện thoại</label>
+                        <input class="form-control mb-3" name="phone" th:value="${user.phone}">
+                        <label class="form-label">Địa chỉ</label>
+                        <textarea class="form-control mb-3" name="address" rows="3" th:text="${user.address}"></textarea>
                         <button class="btn btn-primary" type="submit">Lưu hồ sơ</button>
                     </form>
                 </div>
                 <div class="col-lg-5">
-                    <form class="surface-card p-4" th:action="@{/account/password}" method="post">
+                    <form class="surface-card p-4 h-100" th:action="@{/account/password}" method="post">
                         <h2 class="gs-h4 fw-bold mb-3">Đổi mật khẩu</h2>
-                        <label class="form-label">Mật khẩu hiện tại</label><input class="form-control mb-3" type="password" name="currentPassword" required>
-                        <label class="form-label">Mật khẩu mới</label><input class="form-control mb-3" type="password" name="newPassword" minlength="6" required>
-                        <label class="form-label">Xác nhận mật khẩu mới</label><input class="form-control mb-3" type="password" name="confirmPassword" minlength="6" required>
+                        <label class="form-label">Mật khẩu hiện tại</label>
+                        <input class="form-control mb-3" type="password" name="currentPassword" required>
+                        <label class="form-label">Mật khẩu mới</label>
+                        <input class="form-control mb-3" type="password" name="newPassword" minlength="6" required>
+                        <label class="form-label">Xác nhận mật khẩu mới</label>
+                        <input class="form-control mb-3" type="password" name="confirmPassword" minlength="6" required>
                         <button class="btn btn-outline-primary" type="submit">Đổi mật khẩu</button>
                     </form>
                 </div>

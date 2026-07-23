@@ -13,7 +13,7 @@
                 <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
                 <div class="d-flex justify-content-between border rounded p-3 mb-4">
                     <span>Tổng đơn hàng</span>
-                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong>
                 </div>
                 <form th:action="@{/orders/{id}/payment(id=${order.id})}" method="post">
                     <div class="border rounded p-3 mb-3">

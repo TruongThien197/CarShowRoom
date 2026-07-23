@@ -28,7 +28,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">SKU</label>
-                                <input type="text" class="form-control form-control-lg" name="sku" placeholder="Auto-generated if left blank">
+                                <input type="text" class="form-control form-control-lg" name="sku" placeholder="Tự động tạo nếu để trống">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">Danh mục *</label>
@@ -61,9 +61,9 @@
                             <label class="form-label fw-semibold">Dòng xe tương thích</label>
                             <div class="car-model-select-card">
                                 <div class="car-model-select-head">
-                                    <span class="gs-badge gs-badge--info">Multi-select</span>
+                                    <span class="gs-badge gs-badge--info">Chọn nhiều</span>
                                     <span class="text-secondary small">Nhấn vào dòng xe để bật hoặc tắt tương thích.</span>
-                                    <span class="ms-auto text-secondary small car-model-count" data-car-model-count>0 selected</span>
+                                    <span class="ms-auto text-secondary small car-model-count" data-car-model-count>0 đã chọn</span>
                                 </div>
                                 <div class="car-model-grid">
                                     <label class="car-model-chip" th:each="model : ${carModels}">
@@ -86,7 +86,7 @@
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold">URL ảnh (không bắt buộc)</label>
-                            <input type="text" class="form-control" name="imageUrl" placeholder="/images/turbocharger.jpg or https://...">
+                            <input type="text" class="form-control" name="imageUrl" placeholder="/images/turbocharger.jpg hoặc https://...">
                             <div class="form-text">Dùng mục này khi không tải tệp lên Firebase.</div>
                         </div>
 

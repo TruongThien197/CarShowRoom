@@ -74,19 +74,19 @@ public class Booking {
     @Column(name = "refund_status")
     private RefundStatus refundStatus = RefundStatus.NONE;
 
-    @Column(name = "refund_note", length = 500)
+    @Column(name = "refund_note",columnDefinition = "NVARCHAR(MAX)")
     private String refundNote;
 
-    @Column(name = "refund_bank_name", length = 100)
+    @Column(name = "refund_bank_name", columnDefinition = "NVARCHAR(100)")
     private String refundBankName;
 
-    @Column(name = "refund_bank_bin", length = 20)
+    @Column(name = "refund_bank_bin",  columnDefinition = "NVARCHAR(20)")
     private String refundBankBin;
 
-    @Column(name = "refund_account_holder", length = 150)
+    @Column(name = "refund_account_holder",columnDefinition = "NVARCHAR(150)")
     private String refundAccountHolder;
 
-    @Column(name = "refund_account_number", length = 50)
+    @Column(name = "refund_account_number", columnDefinition = "NVARCHAR(50)")
     private String refundAccountNumber;
 
     @Column(name = "refunded_at")
@@ -118,6 +118,7 @@ public class Booking {
     private LocalDateTime noShowAt;
 
     @Lob
+    @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
 
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -51,8 +51,8 @@
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold"> Trạng thái </label>
                                 <select class="form-select form-select-lg" name="status">
-                                    <option value="ACTIVE" th:selected="${product.status.name() == 'ACTIVE'}">Đang hoạt động</option>
-                                    <option value="INACTIVE" th:selected="${product.status.name() == 'INACTIVE'}">Ngừng hoạt động</option>
+                                    <option value="ACTIVE" th:selected="${product.status != null and product.status.name() == 'ACTIVE'}">Đang hoạt động</option>
+                                    <option value="INACTIVE" th:selected="${product.status != null and product.status.name() == 'INACTIVE'}">Ngừng hoạt động</option>
                                 </select>
                             </div>
                         </div>
@@ -61,9 +61,9 @@
                             <label class="form-label fw-semibold">Dòng xe tương thích</label>
                             <div class="car-model-select-card">
                                 <div class="car-model-select-head">
-                                    <span class="gs-badge gs-badge--info">Multi-select</span>
+                                    <span class="gs-badge gs-badge--info">Chọn nhiều</span>
                                     <span class="text-secondary small">Nhấn vào dòng xe để bật hoặc tắt tương thích.</span>
-                                    <span class="ms-auto text-secondary small car-model-count" data-car-model-count>0 selected</span>
+                                    <span class="ms-auto text-secondary small car-model-count" data-car-model-count>0 đã chọn</span>
                                 </div>
                                 <div class="car-model-grid">
                                     <label class="car-model-chip" th:each="model : ${carModels}">
@@ -77,7 +77,7 @@
 
                         <div class="mb-3" th:if="${product.imageUrl}">
                             <label class="form-label fw-semibold d-block">Ảnh hiện tại</label>
-                            <img th:src="${product.imageUrl}" alt="Product image" class="img-thumbnail" style="max-height: 180px">
+                            <img th:src="${product.imageUrl}" alt="Ảnh sản phẩm" class="img-thumbnail" style="max-height: 180px">
                         </div>
 
                         <div class="mb-3">
@@ -92,7 +92,7 @@
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold">URL ảnh (không bắt buộc)</label>
-                            <input type="text" class="form-control" name="imageUrl" th:value="${product.imageUrl}" placeholder="/images/turbocharger.jpg or https://...">
+                            <input type="text" class="form-control" name="imageUrl" th:value="${product.imageUrl}" placeholder="/images/turbocharger.jpg hoặc https://...">
                             <div class="form-text">Tệp mới tải lên (nếu có) sẽ được ưu tiên hơn URL này.</div>
                         </div>
 

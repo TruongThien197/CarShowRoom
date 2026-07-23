@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('User Management | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Quản lý người dùng  | GearShift Pro')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments :: navbar('admin')}"></div>
 
@@ -11,7 +11,7 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div>
-                    <h1 class="admin-page-title mb-1">User Management</h1>
+                    <h1 class="admin-page-title mb-1">Quản lý người dùng </h1>
                     <p class="text-secondary mb-0">Tìm kiếm, lọc theo vai trò, phân trang và quản lý trạng thái tài khoản.</p>
                 </div>
                 <a class="btn btn-primary align-self-start" th:href="@{/admin/users/create}">
@@ -40,14 +40,14 @@
                             <option value="">Tất cả trạng thái</option>
                             <option value="ACTIVE" th:selected="${selectedStatus == 'ACTIVE'}">Đang hoạt động</option>
                             <option value="INACTIVE" th:selected="${selectedStatus == 'INACTIVE'}">Ngừng hoạt động</option>
-                            <option value="LOCK" th:selected="${selectedStatus == 'LOCK'}">LOCK</option>
+                            <option value="LOCK" th:selected="${selectedStatus == 'LOCK'}">Đã khóa</option>
                         </select>
                     </div>
                     <div class="col-sm-6 col-lg-4 d-flex gap-2">
                         <button class="btn btn-primary flex-grow-1" type="submit">
                             <i class="bi bi-search me-2"></i>Lọc
                         </button>
-                        <a class="btn btn-outline-secondary" th:href="@{/admin/users}" aria-label="Clear filters">
+                        <a class="btn btn-outline-secondary" th:href="@{/admin/users}" aria-label="Xóa bộ lọc">
                             <i class="bi bi-x-lg"></i>
                         </a>
                     </div>
@@ -85,12 +85,14 @@
                             <td>
                                 <span class="gs-badge"
                                       th:classappend="${user.role == 'ADMIN'} ? 'gs-badge--danger' : (${user.role == 'STAFF'} ? 'gs-badge--info' : 'gs-badge--neutral')"
-                                      th:text="${user.role}">Khách hàng</span>
+                                      th:text="${user.role == 'ADMIN' ? 'Quản trị viên' : (user.role == 'STAFF' ? 'Nhân viên' : 'Khách hàng')}">
+                                </span>
                             </td>
                             <td>
                                 <span class="gs-badge"
                                       th:classappend="${user.status == 'ACTIVE'} ? 'gs-badge--success' : (${user.status == 'INACTIVE'} ? 'gs-badge--neutral' : 'gs-badge--danger')"
-                                      th:text="${user.status}">Đang hoạt động</span>
+                                      th:text="${user.status == 'ACTIVE' ? 'Đang hoạt động' : (user.status == 'INACTIVE' ? 'Ngừng hoạt động' : 'Đã khóa')}">
+                                </span>
                             </td>
                             <td class="text-end table-action">
                                 <a class="btn btn-outline-secondary btn-sm" th:href="@{/admin/users/{id}(id=${user.id})}">

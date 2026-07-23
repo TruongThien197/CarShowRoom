@@ -29,13 +29,13 @@ public class Vehicle {
     @Size(max = 100)
     @NotNull
     @Nationalized
-    @Column(name = "brand", nullable = false, length = 100)
+    @Column(name = "brand", nullable = false,columnDefinition = "NVARCHAR(100)")
     private String brand;
 
     @Size(max = 100)
     @NotNull
     @Nationalized
-    @Column(name = "model_name", nullable = false, length = 100)
+    @Column(name = "model_name", nullable = false,columnDefinition = "NVARCHAR(100)")
     private String modelName;
 
     @NotNull
@@ -45,7 +45,7 @@ public class Vehicle {
     @Size(max = 30)
     @NotNull
     @Nationalized
-    @Column(name = "license_plate", nullable = false, length = 30)
+    @Column(name = "license_plate", nullable = false,columnDefinition = "NVARCHAR(30)")
     private String licensePlate;
 
     @Transient

@@ -662,10 +662,10 @@ Các phần chưa thể xem là hoàn thiện production:
 
 #### Task cần hoàn thiện
 
-- [ ] Kiểm tra giao diện desktop, tablet và mobile.
-- [ ] Kiểm tra các page customer sau khi đổi tabbar.
-- [ ] Kiểm tra lỗi Thymeleaf trên tất cả page.
-- [ ] Kiểm tra hiển thị tiếng Việt không bị lỗi encoding.
+- [x] Kiểm tra giao diện desktop, tablet và mobile.
+- [x] Kiểm tra các page customer sau khi đổi tabbar.
+- [x] Kiểm tra lỗi Thymeleaf trên tất cả page.
+- [x] Kiểm tra hiển thị tiếng Việt không bị lỗi encoding.
 - [ ] Viết test case thủ công cho Customer, Staff và Admin.
 - [ ] Chụp ảnh minh chứng cho các chức năng đã nghiệm thu.
 - [ ] Cập nhật specification sau mỗi thay đổi nghiệp vụ.
