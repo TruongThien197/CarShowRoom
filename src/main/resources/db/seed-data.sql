@@ -56,6 +56,7 @@ BEGIN
         stock_quantity INT NOT NULL DEFAULT 0,
         reserved_stock INT NOT NULL DEFAULT 0,
         image_url NVARCHAR(500) NULL,
+        installation_supported BIT NOT NULL DEFAULT 0,
         status NVARCHAR(50) NOT NULL DEFAULT N'ACTIVE',
         version BIGINT NULL DEFAULT 0,
         created_at DATETIME2 NULL DEFAULT SYSDATETIME(),
@@ -120,6 +121,10 @@ BEGIN
         payment_status NVARCHAR(50) NOT NULL,
         payment_method NVARCHAR(20) NULL,
         product_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+        shipping_fee DECIMAL(18,2) NOT NULL DEFAULT 0,
+        shipping_province NVARCHAR(100) NULL,
+        shipping_district NVARCHAR(100) NULL,
+        shipping_ward NVARCHAR(100) NULL,
         shipping_address NVARCHAR(255) NULL,
         receiver_phone NVARCHAR(30) NULL,
         cancellation_reason NVARCHAR(500) NULL,
@@ -166,15 +171,34 @@ BEGIN
         estimated_min_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
         estimated_max_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
         final_amount DECIMAL(18,2) NULL,
+        booking_type NVARCHAR(30) NOT NULL DEFAULT N'REPAIR_SERVICE',
         booking_status NVARCHAR(50) NOT NULL,
         payment_status NVARCHAR(50) NOT NULL,
         payment_deadline DATETIME2 NULL,
+        labor_fee DECIMAL(18,2) NULL,
+        labor_collected BIT NOT NULL DEFAULT 0,
+        labor_collected_at DATETIME2 NULL,
+        labor_collected_by_id INT NULL,
         notes NVARCHAR(MAX) NULL,
         created_at DATETIME2 NULL DEFAULT SYSDATETIME(),
         updated_at DATETIME2 NULL DEFAULT SYSDATETIME(),
         CONSTRAINT FK_bookings_user FOREIGN KEY (user_id) REFERENCES users(user_id),
         CONSTRAINT FK_bookings_vehicle FOREIGN KEY (vehicle_id) REFERENCES vehicle(vehicle_id),
         CONSTRAINT FK_bookings_related_order FOREIGN KEY (related_order_id) REFERENCES orders(order_id)
+        ,CONSTRAINT FK_bookings_labor_collected_by FOREIGN KEY (labor_collected_by_id) REFERENCES users(user_id)
+    );
+END
+GO
+
+IF OBJECT_ID(N'shipping_fee_rule', N'U') IS NULL
+BEGIN
+    CREATE TABLE shipping_fee_rule (
+        shipping_fee_rule_id INT IDENTITY(1,1) PRIMARY KEY,
+        province NVARCHAR(100) NOT NULL,
+        district NVARCHAR(100) NOT NULL,
+        fee DECIMAL(18,2) NOT NULL DEFAULT 0,
+        active BIT NOT NULL DEFAULT 1,
+        CONSTRAINT UX_shipping_fee_rule_region UNIQUE (province, district)
     );
 END
 GO

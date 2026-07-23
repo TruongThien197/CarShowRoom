@@ -137,7 +137,7 @@ class CriticalWorkflowTests {
     }
 
     @Test
-    void expiredUnpaidOrderCanChoosePaymentAgain() {
+    void expiredUnpaidOrderRejectsCodPaymentMethod() {
         User user = new User();
         user.setId(1);
         Order order = new Order();
@@ -149,11 +149,11 @@ class CriticalWorkflowTests {
         order.setProductTotal(BigDecimal.valueOf(5000));
         when(orderRepository.findById(44)).thenReturn(Optional.of(order));
 
-        CheckoutResult result = orderService.choosePaymentMethod(44, user, "COD");
+        assertThrows(IllegalArgumentException.class,
+                () -> orderService.choosePaymentMethod(44, user, "COD"));
 
-        assertNull(result.checkoutUrl());
-        verify(inventoryReservationService).reserveStock(List.of(order));
-        verify(orderWorkflowService).processOrder(order);
+        verify(inventoryReservationService, never()).reserveStock(List.of(order));
+        verify(orderWorkflowService, never()).processOrder(order);
     }
 
     private Order orderWithSingleItem(Product product, int quantity, int orderId) {

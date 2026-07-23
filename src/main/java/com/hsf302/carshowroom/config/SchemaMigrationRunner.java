@@ -18,6 +18,7 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         migrateProductTable();
         migrateOrders();
         migrateBookings();
+        migrateOrderFulfillment();
         migrateServices();
         migrateCartAndOrderItems();
         migrateRefundTransactions();
@@ -171,6 +172,38 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_amount') IS NOT NULL AND COL_LENGTH('bookings', 'final_amount') IS NOT NULL " +
                         "EXEC sp_executesql N'UPDATE bookings SET final_amount = COALESCE(final_amount, estimated_min_amount) WHERE final_amount IS NULL'",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_amount') IS NOT NULL ALTER TABLE bookings DROP COLUMN remaining_amount"
+        );
+        statements.forEach(jdbcTemplate::execute);
+    }
+
+    private void migrateOrderFulfillment() {
+        List<String> statements = List.of(
+                "IF COL_LENGTH('product', 'installation_supported') IS NULL ALTER TABLE product ADD installation_supported BIT NULL",
+                "UPDATE product SET installation_supported = 0 WHERE installation_supported IS NULL",
+                "IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'product' AND COLUMN_NAME = 'installation_supported' AND IS_NULLABLE = 'YES') ALTER TABLE product ALTER COLUMN installation_supported BIT NOT NULL",
+
+                "IF COL_LENGTH('orders', 'shipping_fee') IS NULL ALTER TABLE orders ADD shipping_fee NUMERIC(18, 2) NULL",
+                "IF COL_LENGTH('orders', 'shipping_province') IS NULL ALTER TABLE orders ADD shipping_province NVARCHAR(100) NULL",
+                "IF COL_LENGTH('orders', 'shipping_district') IS NULL ALTER TABLE orders ADD shipping_district NVARCHAR(100) NULL",
+                "IF COL_LENGTH('orders', 'shipping_ward') IS NULL ALTER TABLE orders ADD shipping_ward NVARCHAR(100) NULL",
+                "UPDATE orders SET shipping_fee = 0 WHERE shipping_fee IS NULL",
+                "IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'orders' AND COLUMN_NAME = 'shipping_fee' AND IS_NULLABLE = 'YES') ALTER TABLE orders ALTER COLUMN shipping_fee NUMERIC(18, 2) NOT NULL",
+                "IF COL_LENGTH('orders', 'shipping_address') IS NOT NULL ALTER TABLE orders ALTER COLUMN shipping_address NVARCHAR(MAX) NULL",
+                "UPDATE orders SET payment_method = 'PAYOS' WHERE payment_method = 'COD'",
+
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'booking_type') IS NULL ALTER TABLE bookings ADD booking_type VARCHAR(30) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL UPDATE bookings SET booking_type = 'REPAIR_SERVICE' WHERE booking_type IS NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'bookings' AND COLUMN_NAME = 'booking_type' AND IS_NULLABLE = 'YES') ALTER TABLE bookings ALTER COLUMN booking_type VARCHAR(30) NOT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'labor_fee') IS NULL ALTER TABLE bookings ADD labor_fee NUMERIC(18, 2) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'labor_collected') IS NULL ALTER TABLE bookings ADD labor_collected BIT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'labor_collected_at') IS NULL ALTER TABLE bookings ADD labor_collected_at DATETIME2 NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'labor_collected_by_id') IS NULL ALTER TABLE bookings ADD labor_collected_by_id INT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL UPDATE bookings SET labor_collected = 0 WHERE labor_collected IS NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'bookings' AND COLUMN_NAME = 'labor_collected' AND IS_NULLABLE = 'YES') ALTER TABLE bookings ALTER COLUMN labor_collected BIT NOT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_bookings_labor_collected_by') ALTER TABLE bookings ADD CONSTRAINT FK_bookings_labor_collected_by FOREIGN KEY (labor_collected_by_id) REFERENCES users(user_id)",
+
+                "IF OBJECT_ID('shipping_fee_rule', 'U') IS NULL CREATE TABLE shipping_fee_rule (shipping_fee_rule_id INT IDENTITY(1,1) PRIMARY KEY, province NVARCHAR(100) NOT NULL, district NVARCHAR(100) NOT NULL, fee NUMERIC(18, 2) NOT NULL DEFAULT 0, active BIT NOT NULL DEFAULT 1)",
+                "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('shipping_fee_rule') AND name = 'UX_shipping_fee_rule_region') CREATE UNIQUE INDEX UX_shipping_fee_rule_region ON shipping_fee_rule(province, district)"
         );
         statements.forEach(jdbcTemplate::execute);
     }

@@ -60,6 +60,18 @@ public class Order {
 
     @Column(name = "product_total", nullable = false)
     private BigDecimal productTotal = BigDecimal.ZERO;
+
+    @Column(name = "shipping_fee", nullable = false)
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+
+    @Column(name = "shipping_province", columnDefinition = "NVARCHAR(100)")
+    private String shippingProvince;
+
+    @Column(name = "shipping_district", columnDefinition = "NVARCHAR(100)")
+    private String shippingDistrict;
+
+    @Column(name = "shipping_ward", columnDefinition = "NVARCHAR(100)")
+    private String shippingWard;
     
     @Column(name = "shipping_address",columnDefinition = "NVARCHAR(MAX)")
     private String shippingAddress;

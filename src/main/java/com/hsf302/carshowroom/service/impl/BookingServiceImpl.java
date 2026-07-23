@@ -1,6 +1,7 @@
 package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.BookingType;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.common.Enums.RefundPayoutStatus;
 import com.hsf302.carshowroom.common.Enums.RefundStatus;
@@ -75,6 +76,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         booking.setFinalAmount(null);
         booking.setDepositAmount(calculateDeposit(selectedService.getMinPrice()));
         booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
+        booking.setBookingType(BookingType.REPAIR_SERVICE);
         booking.setPaymentStatus(PaymentStatus.PENDING);
         booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
         booking.setNotes(form.getNotes());

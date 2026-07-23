@@ -83,9 +83,6 @@ public class OrderServiceImpl implements OrderService {
         List<CartItem> workshopItems = groupedItems.getOrDefault(FulfillmentType.AT_WORKSHOP, List.of());
         boolean mixed = !shippingItems.isEmpty() && !workshopItems.isEmpty();
         PaymentMethod paymentMethod = parsePaymentMethod(form.getPaymentMethod());
-        if (paymentMethod == PaymentMethod.COD && !workshopItems.isEmpty()) {
-            throw new IllegalArgumentException("Đơn có dịch vụ lắp đặt tại xưởng cần thanh toán trực tuyến qua PayOS.");
-        }
 
         Order parentOrder = mixed ? createOrder(user, OrderType.PARENT, null, form.getShippingAddress(), form.getPhone(), List.of()) : null;
         List<Order> stockOrders = new ArrayList<>();
@@ -121,16 +118,6 @@ public class OrderServiceImpl implements OrderService {
         inventoryReservationService.reserveStock(stockOrders);
         cartItemRepository.deleteByUser(user);
         Integer confirmationOrderId = parentOrder != null ? parentOrder.getId() : stockOrders.get(0).getId();
-        if (paymentMethod == PaymentMethod.COD) {
-            stockOrders.forEach(orderWorkflowService::processOrder);
-            if (parentOrder != null) {
-                parentOrder.setOrderStatus(OrderStatus.PROCESSING);
-                parentOrder.setPaymentStatus(PaymentStatus.PENDING);
-                orderRepository.save(parentOrder);
-            }
-            return new CheckoutResult(confirmationOrderId, null);
-        }
-
         PaymentTransaction transaction = createPayOSPayment(user, parentOrder, stockOrders, booking);
         return new CheckoutResult(confirmationOrderId, transaction.getCheckoutUrl());
     }
@@ -253,9 +240,6 @@ public class OrderServiceImpl implements OrderService {
                 ? List.of(rootOrder)
                 : rootOrder.getSubOrders();
         PaymentMethod paymentMethod = parsePaymentMethod(paymentMethodValue);
-        if (paymentMethod == PaymentMethod.COD && stockOrders.stream().anyMatch(order -> order.getOrderType() == OrderType.AT_WORKSHOP)) {
-            throw new IllegalArgumentException("Đơn có dịch vụ lắp đặt tại xưởng cần thanh toán trực tuyến qua PayOS.");
-        }
         stockOrders.forEach(order -> {
             order.setPaymentMethod(paymentMethod);
             order.setPaymentStatus(PaymentStatus.PENDING);
@@ -264,14 +248,6 @@ public class OrderServiceImpl implements OrderService {
         rootOrder.setPaymentMethod(paymentMethod);
         rootOrder.setPaymentStatus(PaymentStatus.PENDING);
         inventoryReservationService.reserveStock(stockOrders);
-        if (paymentMethod == PaymentMethod.COD) {
-            stockOrders.forEach(orderWorkflowService::processOrder);
-            if (rootOrder.getOrderType() == OrderType.PARENT) {
-                rootOrder.setOrderStatus(OrderStatus.PROCESSING);
-                orderRepository.save(rootOrder);
-            }
-            return new CheckoutResult(rootOrder.getId(), null);
-        }
         Booking booking = stockOrders.stream()
                 .filter(order -> order.getOrderType() == OrderType.AT_WORKSHOP)
                 .map(order -> bookingRepository.findByRelatedOrder(order).orElse(null))
@@ -421,11 +397,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private PaymentMethod parsePaymentMethod(String value) {
-        try {
-            return PaymentMethod.valueOf(value == null ? "" : value.trim().toUpperCase());
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ.");
+        if (value == null || !PaymentMethod.PAYOS.name().equalsIgnoreCase(value.trim())) {
+            throw new IllegalArgumentException("Chỉ hỗ trợ thanh toán trực tuyến qua PayOS.");
         }
+        return PaymentMethod.PAYOS;
     }
 
     private void validateOrderTransition(Order order, OrderStatus nextStatus) {
@@ -449,7 +424,7 @@ public class OrderServiceImpl implements OrderService {
             if (currentStatus != OrderStatus.PENDING_PAYMENT && currentStatus != OrderStatus.CREATED) {
                 throw new IllegalStateException("Chỉ đơn mới hoặc đang chờ thanh toán mới có thể chuyển sang đang xử lý.");
             }
-            if (order.getPaymentStatus() != PaymentStatus.PAID && order.getPaymentMethod() != PaymentMethod.COD) {
+            if (order.getPaymentStatus() != PaymentStatus.PAID) {
                 throw new IllegalStateException("Đơn PayOS chưa được xác nhận thanh toán.");
             }
             return;
