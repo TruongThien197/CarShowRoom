@@ -252,6 +252,34 @@ public class StaffController {
         return "redirect:/staff/orders/" + orderId;
     }
 
+    @PostMapping("/orders/{id}/cancellation/approve")
+    public String approveOrderCancellation(@PathVariable Integer id, RedirectAttributes attributes) {
+        try { orderService.approveCancellation(id, authService.getCurrentUser()); attributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu hủy đơn."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/orders/" + id;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/reject")
+    public String rejectOrderCancellation(@PathVariable Integer id, @RequestParam String reason, RedirectAttributes attributes) {
+        try { orderService.rejectCancellation(id, authService.getCurrentUser(), reason); attributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu hủy đơn."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/orders/" + id;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/approve")
+    public String approveBookingCancellation(@PathVariable Integer id, @RequestParam(required = false) String assessmentNote, RedirectAttributes attributes) {
+        try { bookingService.approveCancellation(id, authService.getCurrentUser(), assessmentNote); attributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu hủy lịch."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/bookings/" + id;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/reject")
+    public String rejectBookingCancellation(@PathVariable Integer id, @RequestParam String reason, RedirectAttributes attributes) {
+        try { bookingService.rejectCancellation(id, authService.getCurrentUser(), reason); attributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu hủy lịch."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/bookings/" + id;
+    }
+
     @PostMapping("/refunds/{id}/sync")
     public String syncRefund(@PathVariable Long id,
                              @RequestParam String returnUrl,

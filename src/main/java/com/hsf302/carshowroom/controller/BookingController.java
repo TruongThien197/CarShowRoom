@@ -119,12 +119,13 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/cancel")
-    public String cancel(@PathVariable Integer id) {
+    public String cancel(@PathVariable Integer id, org.springframework.web.servlet.mvc.support.RedirectAttributes attributes) {
         User user = currentUserOrNull();
         if (user == null) {
             return "redirect:/auth/login";
         }
         bookingService.cancelBooking(user, id);
+        attributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu hủy lịch. Nếu hủy sát giờ, nhân viên sẽ đánh giá thủ công.");
         return "redirect:/booking/my-bookings";
     }
 

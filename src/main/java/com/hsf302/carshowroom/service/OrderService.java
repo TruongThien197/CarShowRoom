@@ -20,6 +20,8 @@ public interface OrderService {
     Order getOrderForUser(Integer id, User user);
 
     void cancelOrderForUser(Integer id, User user, String reason);
+    void approveCancellation(Integer id, User processedBy);
+    void rejectCancellation(Integer id, User processedBy, String reason);
 
     void updateShippingAddressForUser(Integer id, User user, String shippingAddress, String receiverPhone);
 

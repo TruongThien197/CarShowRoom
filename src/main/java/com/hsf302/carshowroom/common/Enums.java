@@ -145,15 +145,17 @@ public class Enums {
     public enum RefundStatus {
         NONE,
         REQUESTED,
+        APPROVED,
+        REJECTED,
         PROCESSING,
         COMPLETED,
-        FAILED,
-        REJECTED;
+        FAILED;
 
         @Override public String toString() {
             return switch (this) {
                 case NONE -> "Không có";
                 case REQUESTED -> "Chờ hoàn tiền";
+                case APPROVED -> "Đã duyệt hoàn tiền";
                 case PROCESSING -> "Đang chuyển tiền";
                 case COMPLETED -> "Đã hoàn tiền";
                 case FAILED -> "Hoàn tiền lỗi";

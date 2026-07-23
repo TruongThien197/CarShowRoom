@@ -18,6 +18,8 @@ public interface BookingService {
     Booking getBookingDetail(Integer bookingId);
 
     void cancelBooking(User user, Integer bookingId);
+    void approveCancellation(Integer bookingId, User processedBy, String assessmentNote);
+    void rejectCancellation(Integer bookingId, User processedBy, String reason);
 
     void updateStatus(Integer bookingId, String status);
 

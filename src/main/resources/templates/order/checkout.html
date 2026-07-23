@@ -163,13 +163,13 @@
         date?.addEventListener('change', async () => {
             slot.innerHTML = '<option value="">Đang tải khung giờ...</option>';
             try {
-                const response = await fetch(`/bookings/available-installation-slots?date=${encodeURIComponent(date.value)}`);
+                const response = await fetch(`/booking/available-installation-slots?date=${encodeURIComponent(date.value)}`);
                 const slots = await response.json();
                 if (!response.ok) throw new Error(slots.message || 'Không thể tải khung giờ.');
                 slot.innerHTML = '<option value="">Chọn khung giờ</option>' + slots.map(item =>
                     `<option value="${item.startTime}">${item.startTime} - ${item.endTime}</option>`).join('');
             } catch (error) {
-                slot.innerHTML = '<option value="">Không có khung giờ khả dụng</option>';
+                slot.innerHTML = `<option value="">${error.message || 'Không thể tải khung giờ'}</option>`;
             }
         });
     })();

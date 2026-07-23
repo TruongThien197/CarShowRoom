@@ -82,6 +82,19 @@ public class Order {
     @Column(name = "cancellation_reason",columnDefinition = "NVARCHAR(MAX)")
     private String cancellationReason;
 
+    @Column(name = "cancellation_requested_at")
+    private LocalDateTime cancellationRequestedAt;
+
+    @Column(name = "cancellation_processed_at")
+    private LocalDateTime cancellationProcessedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancellation_processed_by_id")
+    private User cancellationProcessedBy;
+
+    @Column(name = "cancellation_decision_note", columnDefinition = "NVARCHAR(MAX)")
+    private String cancellationDecisionNote;
+
     @Column(name = "shipping_carrier",columnDefinition = "NVARCHAR(MAX)")
     private String shippingCarrier;
 

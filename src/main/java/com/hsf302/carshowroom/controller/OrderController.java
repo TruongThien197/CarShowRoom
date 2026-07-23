@@ -164,7 +164,7 @@ public class OrderController {
         }
         try {
             orderService.cancelOrderForUser(id, user, reason);
-            attributes.addFlashAttribute("successMessage", "Đã hủy đơn hàng và hoàn lại số lượng hàng đã giữ. Nếu đơn đã thanh toán, nhân viên sẽ liên hệ hỗ trợ hoàn tiền.");
+            attributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu hủy đơn. Nhân viên sẽ duyệt trước khi hủy đơn và xử lý hoàn tiền.");
         } catch (Exception exception) {
             attributes.addFlashAttribute("errorMessage", exception.getMessage());
         }

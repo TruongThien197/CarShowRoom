@@ -154,10 +154,42 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Không thể hủy đơn khi đơn đã được giao, hoàn tất hoặc đã hủy.");
         }
         order.setCancellationReason(requireText(reason, "Vui lòng nhập lý do hủy đơn."));
-        if (order.getPaymentStatus() == PaymentStatus.PAID) {
-            order.setRefundStatus(RefundStatus.REQUESTED);
+        if (order.getRefundStatus() == RefundStatus.REQUESTED) {
+            throw new IllegalStateException("Cancellation request is already pending.");
+        }
+        order.setRefundStatus(RefundStatus.REQUESTED);
+        order.setCancellationRequestedAt(LocalDateTime.now());
+        orderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
+    public void approveCancellation(Integer id, User processedBy) {
+        Order order = getOrderById(id);
+        if (order.getRefundStatus() != RefundStatus.REQUESTED) {
+            throw new IllegalStateException("Đơn hàng không có yêu cầu hủy đang chờ duyệt.");
         }
         cancelOrderAndChildren(order);
+        order.setRefundStatus(order.getPaymentStatus() == PaymentStatus.PAID ? RefundStatus.APPROVED : RefundStatus.NONE);
+        order.setCancellationProcessedBy(processedBy);
+        order.setCancellationProcessedAt(LocalDateTime.now());
+        order.setCancellationDecisionNote("Approved cancellation request.");
+        orderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
+    public void rejectCancellation(Integer id, User processedBy, String reason) {
+        Order order = getOrderById(id);
+        if (order.getRefundStatus() != RefundStatus.REQUESTED) {
+            throw new IllegalStateException("Đơn hàng không có yêu cầu hủy đang chờ duyệt.");
+        }
+        order.setRefundStatus(RefundStatus.REJECTED);
+        order.setCancellationProcessedBy(processedBy);
+        order.setCancellationProcessedAt(LocalDateTime.now());
+        order.setCancellationDecisionNote(reason == null ? null : reason.trim());
+        order.setRefundNote(requireText(reason, "Vui lòng nhập lý do từ chối."));
+        orderRepository.save(order);
     }
 
     @Override
@@ -202,7 +234,7 @@ public class OrderServiceImpl implements OrderService {
                                String accountHolder, String accountNumber, String note) {
         Order order = getOrderById(id);
         if (order.getOrderStatus() != OrderStatus.CANCELED
-                || (order.getRefundStatus() != RefundStatus.REQUESTED && order.getRefundStatus() != RefundStatus.FAILED)
+                || (order.getRefundStatus() != RefundStatus.APPROVED && order.getRefundStatus() != RefundStatus.FAILED)
                 || order.getPaymentStatus() != PaymentStatus.PAID) {
             throw new IllegalStateException("Đơn hàng không có yêu cầu hoàn tiền đang chờ xử lý.");
         }

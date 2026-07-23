@@ -64,7 +64,7 @@
                             <button class="btn btn-outline-danger" type="submit"><i class="bi bi-x-circle me-2"></i>Từ chối / hủy lịch</button>
                         </form>
                     </div>
-                    <div class="surface-card p-4 border border-warning-subtle" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}">
+                    <div class="surface-card p-4 border border-warning-subtle" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'APPROVED'}">
                         <h5 class="fw-bold mb-3"><i class="bi bi-arrow-counterclockwise me-2 text-warning"></i>Yêu cầu hoàn tiền cọc</h5>
                         <p class="mb-3">Khách đã hủy lịch sau khi thanh toán. Vui lòng hoàn lại tiền cọc trên cổng thanh toán và lưu mã giao dịch.</p>
                         <form th:action="@{/admin/bookings/refund}" method="post">
@@ -130,6 +130,7 @@
     </div>
 </main>
 
+<div class="container pb-4" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}"><div class="surface-card p-4 border border-warning-subtle"><h5 class="fw-bold text-warning">Yêu cầu hủy lịch</h5><p class="small">Lịch trong vòng 24 giờ phải có ghi chú đánh giá thủ công.</p><form th:action="@{/admin/bookings/{id}/cancellation/approve(id=${booking.id})}" method="post" class="mb-2"><textarea class="form-control mb-2" name="assessmentNote" rows="2" placeholder="Bắt buộc với lịch trong vòng 24 giờ"></textarea><button class="btn btn-success" type="submit">Duyệt hủy</button></form><form th:action="@{/admin/bookings/{id}/cancellation/reject(id=${booking.id})}" method="post"><textarea class="form-control mb-2" name="reason" rows="2" required placeholder="Lý do từ chối"></textarea><button class="btn btn-outline-danger" type="submit">Từ chối</button></form></div></div>
 <div th:replace="~{fragments/footer :: footer}"></div>
 <div th:replace="~{fragments/footer :: scripts}"></div>
 </body>

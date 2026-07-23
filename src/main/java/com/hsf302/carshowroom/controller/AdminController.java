@@ -355,6 +355,7 @@ public class AdminController {
                                       @RequestParam(required = false) MultipartFile imageFile,
                                        @RequestParam(required = false) List<Integer> carModelIds,
                                        @RequestParam(defaultValue = "ACTIVE") String status,
+                                       @RequestParam(defaultValue = "false") boolean installationSupported,
                                        RedirectAttributes redirectAttributes) {
         try {
             Category category = categoryRepository.findById(categoryId)
@@ -371,6 +372,7 @@ public class AdminController {
             product.setPhysicalStock(physicalStock);
             product.setImageUrl(resolveImageUrl(imageFile, imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
+            product.setInstallationSupported(installationSupported);
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productService.createProduct(product);
@@ -402,6 +404,7 @@ public class AdminController {
                                     @RequestParam(required = false) MultipartFile imageFile,
                                      @RequestParam(required = false) List<Integer> carModelIds,
                                      @RequestParam(defaultValue = "ACTIVE") String status,
+                                     @RequestParam(defaultValue = "false") boolean installationSupported,
                                      RedirectAttributes redirectAttributes) {
         try {
             Product product = productRepository.findById(id)
@@ -419,6 +422,7 @@ public class AdminController {
             product.setPhysicalStock(physicalStock);
             product.setImageUrl(resolveImageUrl(imageFile, imageUrl, product.getImageUrl()));
             product.setStatus(Enums.ProductStatus.valueOf(status));
+            product.setInstallationSupported(installationSupported);
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
             productService.updateProduct(id, product);
@@ -654,6 +658,31 @@ public class AdminController {
         return "redirect:/admin/bookings/" + bookingId;
     }
 
+    @PostMapping("/bookings/{id}/cancellation/approve")
+    public String approveBookingCancellation(@PathVariable Integer id,
+                                             @RequestParam(required = false) String assessmentNote,
+                                             RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.approveCancellation(id, authService.getCurrentUser(), assessmentNote);
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request approved.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/bookings/" + id;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/reject")
+    public String rejectBookingCancellation(@PathVariable Integer id, @RequestParam String reason,
+                                            RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.rejectCancellation(id, authService.getCurrentUser(), reason);
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request rejected.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/bookings/" + id;
+    }
+
     @GetMapping("/users")
     public String listUsers(@RequestParam(value = "keyword", required = false) String keyword,
                             @RequestParam(value = "role", required = false) String role,
@@ -881,6 +910,29 @@ public class AdminController {
         try {
             orderService.completeRefund(id, authService.getCurrentUser(), bankName, bankBin, accountHolder, accountNumber, note);
             redirectAttributes.addFlashAttribute("successMessage", "Đã tạo lệnh chi PayOS cho hoàn tiền.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/approve")
+    public String approveOrderCancellation(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            orderService.approveCancellation(id, authService.getCurrentUser());
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request approved.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/reject")
+    public String rejectOrderCancellation(@PathVariable Integer id, @RequestParam String reason,
+                                          RedirectAttributes redirectAttributes) {
+        try {
+            orderService.rejectCancellation(id, authService.getCurrentUser(), reason);
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request rejected.");
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }

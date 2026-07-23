@@ -53,6 +53,18 @@
                     <div class="surface-card gs-stripe-top p-4 mb-4">
                         <h5 class="fw-bold mb-3"><i class="bi bi-list-check me-2 text-primary"></i>Thao tác vận hành</h5>
                         <div class="alert alert-info" th:if="${booking.bookingStatus.name() == 'WAITING_FOR_VEHICLE' or booking.bookingStatus.name() == 'CONFIRMED'}">Booking đã thanh toán cọc. Chờ khách mang xe đến xưởng.</div>
+                        <div class="surface-card p-3 mb-3 border border-warning-subtle" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}">
+                            <h6 class="fw-bold text-warning">Yêu cầu hủy đang chờ duyệt</h6>
+                            <p class="small mb-2">Lịch trong vòng 24 giờ phải có ghi chú đánh giá thủ công trước khi duyệt.</p>
+                            <form th:action="@{/staff/bookings/{id}/cancellation/approve(id=${booking.id})}" method="post" class="mb-2">
+                                <textarea class="form-control mb-2" name="assessmentNote" rows="2" placeholder="Bắt buộc với lịch trong vòng 24 giờ"></textarea>
+                                <button class="btn btn-success w-100" type="submit">Duyệt hủy lịch</button>
+                            </form>
+                            <form th:action="@{/staff/bookings/{id}/cancellation/reject(id=${booking.id})}" method="post">
+                                <textarea class="form-control mb-2" name="reason" rows="2" required placeholder="Lý do từ chối"></textarea>
+                                <button class="btn btn-outline-danger w-100" type="submit">Từ chối yêu cầu hủy</button>
+                            </form>
+                        </div>
                         <form th:if="${booking.bookingStatus.name() == 'WAITING_FOR_VEHICLE' or booking.bookingStatus.name() == 'CONFIRMED'}" th:action="@{/staff/bookings/check-in}" method="post" class="mb-3">
                             <input type="hidden" name="bookingId" th:value="${booking.id}">
                             <button class="btn btn-primary w-100" type="submit"><i class="bi bi-car-front me-2"></i>Tiếp nhận xe</button>
@@ -105,7 +117,7 @@
                         <div class="d-flex justify-content-between"><span>Khách còn phải thanh toán</span><strong class="gs-mono text-warning" th:text="${#numbers.formatDecimal((booking.finalAmount - (booking.depositAmount ?: 0)), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">24.000 VNĐ</strong></div>
                     </div>
 
-                    <div class="surface-card p-4" th:if="${booking.refundStatus != null and (booking.refundStatus.name() == 'REQUESTED' or booking.refundStatus.name() == 'FAILED')}">
+                    <div class="surface-card p-4" th:if="${booking.refundStatus != null and (booking.refundStatus.name() == 'APPROVED' or booking.refundStatus.name() == 'FAILED')}">
                         <h5 class="fw-bold mb-3 text-warning">Yêu cầu hoàn tiền cọc</h5>
                         <form th:action="@{/staff/bookings/refund}" method="post">
                             <input type="hidden" name="bookingId" th:value="${booking.id}">
