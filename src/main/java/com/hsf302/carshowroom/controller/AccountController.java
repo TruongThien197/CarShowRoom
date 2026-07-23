@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 @Controller
 @RequestMapping("/account")
@@ -43,7 +46,10 @@ public class AccountController {
                                 RedirectAttributes attributes) {
         try {
             User user = authService.getCurrentUser();
-            authService.updateProfile(user.getId(), fullName, phone, address);
+            User updatedUser = authService.updateProfile(user.getId(), fullName, phone, address);
+            Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
+            Authentication newAuth = new UsernamePasswordAuthenticationToken(updatedUser, currentAuth.getCredentials(), currentAuth.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(newAuth);
             attributes.addFlashAttribute("successMessage", "Đã cập nhật hồ sơ.");
         } catch (Exception exception) {
             attributes.addFlashAttribute("errorMessage", exception.getMessage());
