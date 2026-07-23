@@ -20,13 +20,13 @@ public class CarModel {
     @Size(max = 100)
     @NotNull
     @Nationalized
-    @Column(name = "brand", nullable = false, length = 100)
+    @Column(name = "brand", nullable = false,columnDefinition = "NVARCHAR(100)")
     private String brand;
 
     @Size(max = 100)
     @NotNull
     @Nationalized
-    @Column(name = "model_name", nullable = false, length = 100)
+    @Column(name = "model_name", nullable = false,columnDefinition = "NVARCHAR(100)")
     private String modelName;
 
     @NotNull

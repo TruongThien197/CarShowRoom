@@ -13,6 +13,8 @@ import java.util.Optional;
 public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Long> {
     Optional<PaymentTransaction> findByPayosOrderCode(String payosOrderCode);
 
+    boolean existsByPayosOrderCode(String payosOrderCode);
+
     List<PaymentTransaction> findByStatusAndPaymentDeadlineBefore(PaymentStatus status, LocalDateTime deadline);
 
     List<PaymentTransaction> findByOrderOrParentOrder(Order order, Order parentOrder);

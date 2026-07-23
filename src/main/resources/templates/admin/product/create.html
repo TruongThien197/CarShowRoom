@@ -28,7 +28,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">SKU</label>
-                                <input type="text" class="form-control form-control-lg" name="sku" placeholder="Auto-generated if left blank">
+                                <input type="text" class="form-control form-control-lg" name="sku" placeholder="Tự động tạo nếu để trống">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-semibold">Danh mục *</label>
@@ -56,14 +56,15 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="form-check form-switch mb-4"><input class="form-check-input" type="checkbox" id="installationSupported" name="installationSupported" value="true"><label class="form-check-label fw-semibold" for="installationSupported">Hỗ trợ lắp đặt tại xưởng</label><div class="form-text">Khách có thể chọn mang xe đến xưởng để lắp phụ tùng này.</div></div>
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold">Dòng xe tương thích</label>
                             <div class="car-model-select-card">
                                 <div class="car-model-select-head">
-                                    <span class="gs-badge gs-badge--info">Multi-select</span>
+                                    <span class="gs-badge gs-badge--info">Chọn nhiều</span>
                                     <span class="text-secondary small">Nhấn vào dòng xe để bật hoặc tắt tương thích.</span>
-                                    <span class="ms-auto text-secondary small car-model-count" data-car-model-count>0 selected</span>
+                                    <span class="ms-auto text-secondary small car-model-count" data-car-model-count>0 đã chọn</span>
                                 </div>
                                 <div class="car-model-grid">
                                     <label class="car-model-chip" th:each="model : ${carModels}">

@@ -3,6 +3,8 @@ package com.hsf302.carshowroom.service.impl;
 import com.hsf302.carshowroom.dto.CarModelForm;
 import com.hsf302.carshowroom.entity.CarModel;
 import com.hsf302.carshowroom.repository.CarModelRepository;
+import com.hsf302.carshowroom.repository.ProductRepository;
+import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.CarModelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CarModelServiceImpl implements CarModelService {
     private final CarModelRepository carModelRepository;
+    private final ProductRepository productRepository;
+    private final VehicleRepository vehicleRepository;
 
     /** Lấy danh sách dòng xe theo thứ tự hãng, tên mẫu và năm sản xuất. */
     @Override
@@ -60,13 +64,38 @@ public class CarModelServiceImpl implements CarModelService {
     @Override
     @Transactional
     public void deleteCarModel(Integer id) {
+        long productCount = productRepository.countByCompatibleCarModels_Id(id);
+        long vehicleCount = vehicleRepository.countByCarModel_Id(id);
+        if (productCount > 0 || vehicleCount > 0) {
+            throw new IllegalStateException(
+                    "Không thể xóa dòng xe này vì nó đang được sử dụng bởi các sản phẩm hoặc phương tiện của khách hàng."
+            );
+        }
         carModelRepository.deleteById(id);
     }
 
     /** Sao chép các trường hãng, tên mẫu và năm từ biểu mẫu vào thực thể dòng xe. */
     private void fillCarModel(CarModel carModel, CarModelForm form) {
+        validateCarModel(form);
         carModel.setBrand(form.getBrand());
         carModel.setModelName(form.getModelName());
         carModel.setYear(form.getYear());
+    }
+
+    private void validateCarModel(CarModelForm form) {
+        if (form == null || form.getBrand() == null || form.getBrand().isBlank()
+                || form.getModelName() == null || form.getModelName().isBlank()) {
+            throw new IllegalArgumentException("Tên hãng và tên dòng xe không được để trống.");
+        }
+        if (form.getBrand().trim().length() > 100
+                || form.getModelName().trim().length() > 100) {
+            throw new IllegalArgumentException("Tên hãng và tên dòng xe không được vượt quá 100 ký tự.");
+        }
+        if (form.getYear() == null || form.getYear() < 1900
+                || form.getYear() > java.time.LocalDate.now().getYear() + 1) {
+            throw new IllegalArgumentException("Năm sản xuất dòng xe không hợp lệ.");
+        }
+        form.setBrand(form.getBrand().trim());
+        form.setModelName(form.getModelName().trim());
     }
 }

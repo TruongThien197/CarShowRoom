@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ServiceRepository extends JpaRepository<Service, Integer> {
+    Service findByServiceNameIgnoreCase(String serviceName);
     List<Service> findAllByOrderByServiceNameAsc();
     List<Service> findByStatusOrderByServiceNameAsc(ServiceStatus status);
     Optional<Service> findFirstByServiceNameIgnoreCase(String serviceName);

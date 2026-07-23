@@ -1,12 +1,16 @@
 package com.hsf302.carshowroom.controller;
 
 import com.hsf302.carshowroom.common.Enums;
+import com.hsf302.carshowroom.dto.CarModelForm;
 import com.hsf302.carshowroom.dto.ServiceForm;
 import com.hsf302.carshowroom.entity.*;
 import com.hsf302.carshowroom.repository.*;
 import com.hsf302.carshowroom.service.BookingService;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.ProductService;
+import com.hsf302.carshowroom.service.CategoryService;
+import com.hsf302.carshowroom.service.CarModelService;
+import com.hsf302.carshowroom.service.ServiceCatalogService;
 import com.hsf302.carshowroom.service.UserService;
 import com.hsf302.carshowroom.service.AuthService;
 import com.hsf302.carshowroom.service.SystemSettingService;
@@ -182,6 +186,40 @@ public class AdminController {
         return "admin/dashboard";
     }
 
+    @GetMapping("/shipping-fees")
+    public String shippingFees(Model model) {
+        model.addAttribute("shippingFeeRules", shippingFeeRuleManagementService.getAll());
+        return "admin/shipping-fee/list";
+    }
+
+    @PostMapping("/shipping-fees")
+    public String createShippingFee(@RequestParam String province,
+                                    @RequestParam String district,
+                                    @RequestParam BigDecimal fee,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            shippingFeeRuleManagementService.create(province, district, fee);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã thêm rule phí ship.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/shipping-fees";
+    }
+
+    @PostMapping("/shipping-fees/{id}")
+    public String updateShippingFee(@PathVariable Integer id,
+                                    @RequestParam BigDecimal fee,
+                                    @RequestParam(defaultValue = "false") boolean active,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            shippingFeeRuleManagementService.update(id, fee, active);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật rule phí ship.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/shipping-fees";
+    }
+
     private long countTodayVehicles(List<Booking> bookings) {
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         return bookings.stream()
@@ -262,14 +300,14 @@ public class AdminController {
                                  @RequestParam Integer year,
                                  RedirectAttributes redirectAttributes) {
         try {
-            CarModel carModel = new CarModel();
-            carModel.setBrand(brand.trim());
-            carModel.setModelName(modelName.trim());
-            carModel.setYear(year);
-            carModelRepository.save(carModel);
-            redirectAttributes.addFlashAttribute("successMessage", "Car model added successfully!");
+            CarModelForm form = new CarModelForm();
+            form.setBrand(brand);
+            form.setModelName(modelName);
+            form.setYear(year);
+            carModelService.createCarModel(form);
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm mẫu xe thành công!!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding car model: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm mẫu xe: " + e.getMessage());
         }
         return "redirect:/admin/car-models";
     }
@@ -277,10 +315,10 @@ public class AdminController {
     @PostMapping("/car-models/delete")
     public String deleteCarModel(@RequestParam Integer id, RedirectAttributes redirectAttributes) {
         try {
-            carModelRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Car model deleted successfully!");
+            carModelService.deleteCarModel(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xoá mẫu xe thành công:!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting car model: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa mẫu xe: " + e.getMessage());
         }
         return "redirect:/admin/car-models";
     }
@@ -298,10 +336,10 @@ public class AdminController {
             Category category = new Category();
             category.setCategoryName(categoryName);
             category.setDescription(description);
-            categoryRepository.save(category);
-            redirectAttributes.addFlashAttribute("successMessage", "Category added successfully!");
+            categoryService.createCategory(category);
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm danh mục thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding category: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm danh mục: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -314,10 +352,10 @@ public class AdminController {
             Category category = new Category();
             category.setCategoryName(categoryName);
             category.setDescription(description);
-            categoryRepository.save(category);
-            redirectAttributes.addFlashAttribute("successMessage", "Category added successfully!");
+            categoryService.createCategory(category);
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm danh mục thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding category: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm danh mục: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -339,10 +377,10 @@ public class AdminController {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             category.setCategoryName(categoryName);
             category.setDescription(description);
-            categoryRepository.save(category);
-            redirectAttributes.addFlashAttribute("successMessage", "Category updated successfully!");
+            categoryService.updateCategory(id, category);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật danh mục thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating category: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật danh mục: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -350,10 +388,10 @@ public class AdminController {
     @PostMapping("/categories/delete/{id}")
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
-            categoryRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Category deleted successfully!");
+            categoryService.deleteCategory(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa danh mục thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting category: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa danh mục: " + e.getMessage());
         }
         return "redirect:/admin/categories";
     }
@@ -405,18 +443,22 @@ public class AdminController {
             Product product = new Product();
             product.setCategory(category);
             product.setName(name);
-            product.setSku((sku == null || sku.isBlank()) ? generateSku(name) : sku.trim());
+            String normalizedSku = (sku == null || sku.isBlank())
+                    ? generateSku(name)
+                    : sku.trim();
+            product.setSku(normalizedSku);
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
             product.setImageUrl(resolveImageUrl(imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
+            product.setInstallationSupported(installationSupported);
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
-            productRepository.save(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Product added successfully!");
+            productService.createProduct(product);
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding product: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -449,18 +491,22 @@ public class AdminController {
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
             product.setCategory(category);
             product.setName(name);
-            product.setSku((sku == null || sku.isBlank()) ? product.getSku() : sku.trim());
+            String normalizedSku = (sku == null || sku.isBlank())
+                    ? product.getSku()
+                    : sku.trim();
+            product.setSku(normalizedSku);
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
             product.setImageUrl(resolveImageUrl(imageUrl, product.getImageUrl()));
             product.setStatus(Enums.ProductStatus.valueOf(status));
+            product.setInstallationSupported(installationSupported);
             product.getCompatibleCarModels().clear();
             product.getCompatibleCarModels().addAll(resolveCarModels(carModelIds));
-            productRepository.save(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Product updated successfully!");
+            productService.updateProduct(id, product);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật sản phẩm thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating product: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -468,10 +514,10 @@ public class AdminController {
     @PostMapping("/products/delete/{id}")
     public String deleteProduct(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
-            productRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Product deleted successfully!");
+            productService.deleteProduct(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa sản phẩm thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting product: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -492,16 +538,16 @@ public class AdminController {
             Product product = new Product();
             product.setCategory(category);
             product.setName(name);
-            product.setSku(sku);
+            product.setSku(sku.trim());
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
             product.setImageUrl(resolveImageUrl(imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
-            productRepository.save(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Product added successfully!");
+            productService.createProduct(product);
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding product: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -511,20 +557,19 @@ public class AdminController {
                                 @RequestParam(required = false) String description,
                                 @RequestParam BigDecimal minPrice,
                                 @RequestParam BigDecimal maxPrice,
-                                @RequestParam int duration,
-                                RedirectAttributes redirectAttributes) {
+                                 @RequestParam int duration,
+                                 RedirectAttributes redirectAttributes) {
         try {
-            com.hsf302.carshowroom.entity.Service service = new com.hsf302.carshowroom.entity.Service();
-            service.setServiceName(name);
-            service.setDescription(description);
-            service.setMinPrice(minPrice);
-            service.setMaxPrice(maxPrice);
-            service.setDurationMinutes(duration);
-            service.setStatus(Enums.ServiceStatus.ACTIVE);
-            serviceRepository.save(service);
-            redirectAttributes.addFlashAttribute("successMessage", "Service added successfully!");
+            ServiceForm form = new ServiceForm();
+            form.setServiceName(name);
+            form.setDescription(description);
+            form.setMinPrice(minPrice);
+            form.setMaxPrice(maxPrice);
+            form.setDurationMinutes(duration);
+            serviceCatalogService.create(form);
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm dịch vụ thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding service: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm dịch vụ: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -549,12 +594,10 @@ public class AdminController {
             return "admin/service/create";
         }
         try {
-            com.hsf302.carshowroom.entity.Service service = new com.hsf302.carshowroom.entity.Service();
-            fillService(service, form);
-            serviceRepository.save(service);
-            redirectAttributes.addFlashAttribute("successMessage", "Service added successfully!");
+            serviceCatalogService.create(form);
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm dịch vụ thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding service: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm dịch vụ: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -587,11 +630,10 @@ public class AdminController {
             return "admin/service/edit";
         }
         try {
-            fillService(service, form);
-            serviceRepository.save(service);
-            redirectAttributes.addFlashAttribute("successMessage", "Service updated successfully!");
+            serviceCatalogService.update(id, form);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật dịch vụ thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating service: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật dịch vụ: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -599,10 +641,10 @@ public class AdminController {
     @PostMapping("/services/delete/{id}")
     public String deleteService(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
-            serviceRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Service deleted successfully!");
+            serviceCatalogService.delete(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa dịch vụ thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error deleting service: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi xóa dịch vụ:: " + e.getMessage());
         }
         return "redirect:/admin/services";
     }
@@ -630,13 +672,10 @@ public class AdminController {
     public String updateProductStatus(@RequestParam Integer productId, @RequestParam String status,
                                       RedirectAttributes redirectAttributes) {
         try {
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-            product.setStatus(Enums.ProductStatus.valueOf(status));
-            productRepository.save(product);
-            redirectAttributes.addFlashAttribute("successMessage", "Product status updated successfully!");
+            productService.changeStatus(productId, status);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái sản phẩm thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật trạng thái sản phẩm: " + e.getMessage());
         }
         return "redirect:/admin/products";
     }
@@ -646,9 +685,9 @@ public class AdminController {
                                     RedirectAttributes redirectAttributes) {
         try {
             orderService.updateOrderStatus(orderId, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Order status updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật trạng thái đơn hàng: " + e.getMessage());
         }
         return "redirect:/admin/orders";
     }
@@ -658,16 +697,30 @@ public class AdminController {
                                       RedirectAttributes redirectAttributes) {
         try {
             bookingService.updateStatus(bookingId, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Booking status updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái lịch hẹn thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật trạng thái lịch hẹn: " + e.getMessage());
         }
         return "redirect:/admin/bookings";
+    }
+
+    @PostMapping("/bookings/labor-collection")
+    public String recordBookingLaborCollection(@RequestParam Integer bookingId,
+                                               @RequestParam BigDecimal laborFee,
+                                               RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.recordLaborCollection(bookingId, authService.getCurrentUser(), laborFee);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã ghi nhận tiền công lắp đặt đã thu tại xưởng.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/bookings/" + bookingId;
     }
 
     @PostMapping("/bookings/refund")
     public String completeBookingRefund(@RequestParam Integer bookingId,
                                         @RequestParam String bankName,
+                                        @RequestParam String bankBin,
                                         @RequestParam String accountHolder,
                                         @RequestParam String accountNumber,
                                         @RequestParam String note,
@@ -685,6 +738,31 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/admin/bookings/" + bookingId;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/approve")
+    public String approveBookingCancellation(@PathVariable Integer id,
+                                             @RequestParam(required = false) String assessmentNote,
+                                             RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.approveCancellation(id, authService.getCurrentUser(), assessmentNote);
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request approved.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/bookings/" + id;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/reject")
+    public String rejectBookingCancellation(@PathVariable Integer id, @RequestParam String reason,
+                                            RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.rejectCancellation(id, authService.getCurrentUser(), reason);
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request rejected.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/bookings/" + id;
     }
 
     @GetMapping("/users")
@@ -727,9 +805,9 @@ public class AdminController {
                              RedirectAttributes redirectAttributes) {
         try {
             userService.createUser(email, password, fullName, phone, address, role);
-            redirectAttributes.addFlashAttribute("successMessage", "User added successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thêm người dùng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error adding user: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm người dùng:: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
@@ -747,11 +825,12 @@ public class AdminController {
                            @RequestParam(value = "txtAddress", required = false) String address,
                            @RequestParam(defaultValue = "CUSTOMER") String role,
                            RedirectAttributes redirectAttributes) {
+        
         try {
             userService.updateUser(id, fullName, phone, address, role);
-            redirectAttributes.addFlashAttribute("successMessage", "User updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật người dùng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating user: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi thêm người dùng: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
@@ -760,9 +839,9 @@ public class AdminController {
     public String changeStatus(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
             userService.changeStatus(id);
-            redirectAttributes.addFlashAttribute("successMessage", "User status updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái người dùng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật thông tin người dùng: " + e.getMessage());
         }
         return "redirect:/admin/users";
     }
@@ -850,13 +929,6 @@ public class AdminController {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private void fillService(com.hsf302.carshowroom.entity.Service service, ServiceForm form) {
-        service.setServiceName(form.getServiceName());
-        service.setDescription(form.getDescription());
-        service.setMinPrice(form.getMinPrice());
-        service.setMaxPrice(form.getMaxPrice());
-        service.setDurationMinutes(form.getDurationMinutes());
-    }
     @GetMapping("/orders")
     public String listOrders(@RequestParam(value = "status", required = false) String status, Model model) {
         List<Order> orders = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -873,7 +945,8 @@ public class AdminController {
 
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Integer id, Model model) {
-        model.addAttribute("order", orderService.getOrderById(id));
+        Order order = orderService.getOrderById(id);
+        model.addAttribute("order", order);
         model.addAttribute("orderDetails", orderItemRepository.findByOrderId(id));
         model.addAttribute("refundTransactions", refundService.getOrderRefunds(orderService.getOrderById(id)));
         return "admin/order/detail";
@@ -884,9 +957,9 @@ public class AdminController {
                                           RedirectAttributes redirectAttributes) {
         try {
             orderService.updateOrderStatus(id, status);
-            redirectAttributes.addFlashAttribute("successMessage", "Order status updated successfully!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error updating status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật trạng thái đơn hàng: " + e.getMessage());
         }
         return "redirect:/admin/orders/" + id;
     }
@@ -907,6 +980,10 @@ public class AdminController {
 
     @PostMapping("/orders/{id}/refund")
     public String completeOrderRefund(@PathVariable Integer id,
+                                      @RequestParam String bankName,
+                                      @RequestParam String bankBin,
+                                      @RequestParam String accountHolder,
+                                      @RequestParam String accountNumber,
                                       @RequestParam String note,
                                       RedirectAttributes redirectAttributes) {
         try {
@@ -921,5 +998,34 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
         return "redirect:/admin/orders/" + id;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/reject")
+    public String rejectOrderCancellation(@PathVariable Integer id, @RequestParam String reason,
+                                          RedirectAttributes redirectAttributes) {
+        try {
+            orderService.rejectCancellation(id, authService.getCurrentUser(), reason);
+            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request rejected.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
+
+    @PostMapping("/refunds/{id}/sync")
+    public String syncRefund(@PathVariable Long id,
+                             @RequestParam String returnUrl,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            refundPayoutService.syncRefundTransaction(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã đồng bộ trạng thái lệnh chi PayOS.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:" + safeLocalReturnUrl(returnUrl);
+    }
+
+    private String safeLocalReturnUrl(String returnUrl) {
+        return returnUrl != null && returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : "/admin";
     }
 }

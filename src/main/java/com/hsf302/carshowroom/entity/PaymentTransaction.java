@@ -40,8 +40,11 @@ public class PaymentTransaction {
     @JoinColumn(name = "booking_id")
     private Booking booking;
 
-    @Column(name = "payos_order_code", unique = true, nullable = false)
+    @Column(name = "payos_order_code", unique = true, nullable = false,columnDefinition = "NVARCHAR(MAX)")
     private String payosOrderCode;
+
+    @Column(name = "payment_purpose",columnDefinition = "NVARCHAR(30)")
+    private String paymentPurpose = "DEPOSIT";
 
     @Column(nullable = false)
     private BigDecimal amount;
@@ -50,7 +53,7 @@ public class PaymentTransaction {
     @Column(nullable = false)
     private PaymentStatus status;
 
-    @Column(name = "checkout_url")
+    @Column(name = "checkout_url",columnDefinition = "NVARCHAR(MAX)")
     private String checkoutUrl;
 
     @Column(name = "payment_deadline", nullable = false)
@@ -60,7 +63,7 @@ public class PaymentTransaction {
     private LocalDateTime paidAt;
 
     @Lob
-    @Column(name = "raw_webhook_payload")
+    @Column(name = "raw_webhook_payload",columnDefinition = "NVARCHAR(MAX)")
     private String rawWebhookPayload;
 
     @CreationTimestamp

@@ -18,12 +18,23 @@ public interface BookingService {
     Booking getBookingDetail(Integer bookingId);
 
     void cancelBooking(User user, Integer bookingId);
+    void approveCancellation(Integer bookingId, User processedBy, String assessmentNote);
+    void rejectCancellation(Integer bookingId, User processedBy, String reason);
 
     void updateStatus(Integer bookingId, String status);
 
     void completeRefund(Integer bookingId, User processedBy, String bankName,
-                        String accountHolder, String accountNumber, String note);
+                        String bankBin, String accountHolder, String accountNumber, String note);
 
-    void submitRefundAccount(User user, Integer bookingId, String bankName,
+    void submitRefundAccount(User user, Integer bookingId, String bankName, String bankBin,
                              String accountHolder, String accountNumber);
+
+    void checkIn(Integer bookingId);
+
+    void setFinalAmount(Integer bookingId, java.math.BigDecimal finalAmount);
+
+    void recordLaborCollection(Integer bookingId, User staff, java.math.BigDecimal laborFee);
+
+    void markNoShow(Integer bookingId);
+    void reopenDepositPayment(Integer bookingId);
 }

@@ -60,9 +60,9 @@
                                 <div class="col-md-5">
                                     <div class="small text-secondary">Khoảng giá dịch vụ</div>
                                     <div class="fs-5 fw-bold text-primary gs-mono">
-                                        <span id="serviceMinGiá">0 VND</span>
+                                        <span id="serviceMinGiá">0 VNĐ</span>
                                         <span class="text-secondary fw-normal"> - </span>
-                                        <span id="serviceMaxGiá">0 VND</span>
+                                        <span id="serviceMaxGiá">0 VNĐ</span>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
@@ -138,7 +138,7 @@
         dateInput.min = new Date().toLocaleDateString('en-CA');
 
         const toNumber = (value) => Number(String(value || '0').replace(/,/g, ''));
-        const money = (value) => `${formatter.format(Math.round(value))} VND`;
+        const money = (value) => `${formatter.format(Math.round(value))} VNĐ`;
 
         const updateSummary = () => {
             const option = select.options[select.selectedIndex];

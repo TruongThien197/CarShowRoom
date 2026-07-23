@@ -7,6 +7,7 @@ import lombok.Data;
 public class PayOSWebhookRequest {
     private String code;
     private String desc;
+    private Boolean success;
     private JsonNode data;
     private String signature;
 }

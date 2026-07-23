@@ -1,6 +1,7 @@
 package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.BookingType;
 import com.hsf302.carshowroom.common.Enums.OrderStatus;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.config.PayOSProperties;
@@ -16,6 +17,7 @@ import com.hsf302.carshowroom.service.OrderWorkflowService;
 import com.hsf302.carshowroom.service.PaymentService;
 import com.hsf302.carshowroom.service.SystemSettingService;
 import com.hsf302.carshowroom.service.InventoryReservationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,11 +66,11 @@ public class PaymentServiceImpl implements PaymentService {
         CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder paymentBuilder = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
                 .amount(amount)
-                .description("Order " + orderCode)
+                .description("Đơn hàng " + orderCode)
                 .returnUrl(properties.returnUrl())
                 .cancelUrl(properties.cancelUrl())
                 .item(PaymentLinkItem.builder()
-                        .name("GearShift payment")
+                        .name("Thanh toán GearShift")
                         .quantity(1)
                         .price(amount)
                         .unit("VND")
@@ -83,10 +85,10 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             response = payOS.paymentRequests().create(paymentRequest);
         } catch (RuntimeException exception) {
-            throw new IllegalStateException("PayOS declined to create the payment link. Please check the API key, checksum key, and return/cancel URL configuration.", exception);
+            throw new IllegalStateException("PayOS từ chối tạo link thanh toán. Vui lòng kiểm tra lại cấu hình API key, checksum key và return/cancel URL.", exception);
         }
         if (response == null || !hasText(response.getCheckoutUrl())) {
-            throw new IllegalStateException("PayOS did not return a checkout URL.");
+            throw new IllegalStateException("PayOS không trả về đường dẫn thanh toán.");
         }
 
         PaymentTransaction transaction = new PaymentTransaction();
@@ -94,6 +96,7 @@ public class PaymentServiceImpl implements PaymentService {
         transaction.setParentOrder(request.getParentOrder());
         transaction.setOrder(resolveMainOrder(request));
         transaction.setBooking(request.getBooking());
+        transaction.setPaymentPurpose(request.getPaymentPurpose() == null ? "DEPOSIT" : request.getPaymentPurpose());
         transaction.setAmount(paymentAmount);
         transaction.setStatus(PaymentStatus.PENDING);
         transaction.setPayosOrderCode(String.valueOf(orderCode));
@@ -109,7 +112,7 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentTransaction syncPaymentStatus(String orderCode) {
         requireConfigured();
         PaymentTransaction transaction = paymentTransactionRepository.findByPayosOrderCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("PayOS transaction not found: " + orderCode));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch PayOS: " + orderCode));
         PaymentLink paymentLink = payOS.paymentRequests().get(Long.valueOf(orderCode));
         validateAmount(transaction, paymentLink.getAmount());
         applyStatus(transaction, paymentLink.getStatus());
@@ -122,11 +125,15 @@ public class PaymentServiceImpl implements PaymentService {
     public void handlePayOSWebhook(PayOSWebhookRequest request) {
         requireConfigured();
         WebhookData data = payOS.webhooks().verify(request);
+        if (!isSuccessfulWebhook(request)) {
+            throw new IllegalArgumentException("Webhook PayOS không phải sự kiện thanh toán thành công.");
+        }
         PaymentTransaction transaction = paymentTransactionRepository
                 .findByPayosOrderCode(String.valueOf(data.getOrderCode()))
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "PayOS transaction not found: " + data.getOrderCode()));
+                        "Không tìm thấy giao dịch PayOS: " + data.getOrderCode()));
         validateAmount(transaction, data.getAmount());
+        transaction.setRawWebhookPayload(writeWebhookPayload(request));
         markPaid(transaction);
         paymentTransactionRepository.save(transaction);
     }
@@ -209,8 +216,14 @@ public class PaymentServiceImpl implements PaymentService {
 
         Booking booking = transaction.getBooking();
         if (booking != null) {
-            booking.setPaymentStatus(PaymentStatus.PAID);
-            booking.setBookingStatus(BookingStatus.CONFIRMED);
+            if ("REMAINING".equalsIgnoreCase(transaction.getPaymentPurpose())) {
+                booking.setRemainingPaymentStatus(PaymentStatus.PAID);
+            } else {
+                booking.setPaymentStatus(PaymentStatus.PAID);
+                booking.setBookingStatus(booking.getBookingType() == BookingType.PART_INSTALLATION
+                        ? BookingStatus.CONFIRMED
+                        : BookingStatus.WAITING_FOR_VEHICLE);
+            }
             bookingRepository.save(booking);
         }
     }
@@ -240,8 +253,12 @@ public class PaymentServiceImpl implements PaymentService {
         }
         Booking booking = transaction.getBooking();
         if (booking != null) {
-            booking.setPaymentStatus(paymentStatus);
-            booking.setBookingStatus(bookingStatus);
+            if ("REMAINING".equalsIgnoreCase(transaction.getPaymentPurpose())) {
+                booking.setRemainingPaymentStatus(paymentStatus);
+            } else {
+                booking.setPaymentStatus(paymentStatus);
+                booking.setBookingStatus(bookingStatus);
+            }
             bookingRepository.save(booking);
         }
     }
@@ -272,12 +289,13 @@ public class PaymentServiceImpl implements PaymentService {
         }
         if (transaction.getBooking() != null) {
             Booking booking = transaction.getBooking();
-            booking.setPaymentStatus(PaymentStatus.PENDING);
-            booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
+            if ("REMAINING".equalsIgnoreCase(transaction.getPaymentPurpose())) {
+                booking.setRemainingPaymentStatus(PaymentStatus.PENDING);
+            } else {
+                booking.setPaymentStatus(PaymentStatus.PENDING);
+                booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
+            }
             bookingRepository.save(booking);
-        }
-        if (transaction.getOrder() != null) {
-        } else if (parent != null) {
         }
     }
 
@@ -349,13 +367,17 @@ public class PaymentServiceImpl implements PaymentService {
         }
         BigDecimal amount = request.getSubOrders() == null ? BigDecimal.ZERO
                 : request.getSubOrders().stream()
-                .map(Order::getProductTotal)
+                .map(order -> order.getProductTotal().add(order.getShippingFee() == null
+                        ? BigDecimal.ZERO : order.getShippingFee()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return amount;
     }
 
     /** Tính lại tiền cọc từ giá tối thiểu khi bản ghi lịch hẹn chưa có tiền cọc. */
     private BigDecimal resolveBookingDeposit(Booking booking) {
+        if (booking.getBookingType() == BookingType.PART_INSTALLATION) {
+            return BigDecimal.ZERO;
+        }
         if (booking.getDepositAmount() != null && booking.getDepositAmount().compareTo(BigDecimal.ZERO) > 0) {
             return booking.getDepositAmount();
         }

@@ -12,7 +12,7 @@ import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.exception.InsufficientStockException;
 import com.hsf302.carshowroom.exception.MixedFulfillmentException;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
-import com.hsf302.carshowroom.repository.ServiceRepository;
+import com.hsf302.carshowroom.repository.ShippingFeeRuleRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.AuthService;
 import com.hsf302.carshowroom.service.CartService;
@@ -37,6 +37,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalTime;
 import java.util.stream.Collectors;
 
 @Controller
@@ -137,6 +138,7 @@ public class OrderController {
                 && order.getOrderStatus() != OrderStatus.EXPIRED_PAYMENT);
         model.addAttribute("canEditAddress", order.getOrderType() == com.hsf302.carshowroom.common.Enums.OrderType.SHIPPING
                 && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT || order.getOrderStatus() == OrderStatus.PROCESSING));
+        model.addAttribute("canRetryPayment", canRetryPayment(order));
         return "order/detail";
     }
 
@@ -147,7 +149,7 @@ public class OrderController {
             return "redirect:/auth/login";
         }
         Order order = orderService.getOrderForUser(id, user);
-        if (order.getOrderStatus() != OrderStatus.PENDING_PAYMENT || order.getPaymentStatus() == PaymentStatus.PAID) {
+        if (!canRetryPayment(order)) {
             return "redirect:/orders/" + id;
         }
         model.addAttribute("order", order);
@@ -183,7 +185,7 @@ public class OrderController {
         }
         try {
             orderService.cancelOrderForUser(id, user, reason);
-            attributes.addFlashAttribute("successMessage", "Đã hủy đơn hàng và hoàn lại số lượng hàng đã giữ. Nếu đơn đã thanh toán, nhân viên sẽ liên hệ hỗ trợ hoàn tiền.");
+            attributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu hủy đơn. Nhân viên sẽ duyệt trước khi hủy đơn và xử lý hoàn tiền.");
         } catch (Exception exception) {
             attributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -216,7 +218,10 @@ public class OrderController {
         model.addAttribute("checkoutForm", form);
         boolean needsWorkshop = cartItems.stream()
                 .anyMatch(item -> FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
+        boolean hasShipping = cartItems.stream()
+                .anyMatch(item -> !FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
         model.addAttribute("needsWorkshop", needsWorkshop);
+        model.addAttribute("hasShipping", hasShipping);
         model.addAttribute("vehicles", vehicleRepository.findByUser(user));
         if (needsWorkshop) {
             com.hsf302.carshowroom.entity.Service workshopService = getWorkshopInstallationService();
@@ -275,5 +280,11 @@ public class OrderController {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private boolean canRetryPayment(Order order) {
+        return order.getPaymentStatus() != PaymentStatus.PAID
+                && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT
+                || order.getOrderStatus() == OrderStatus.EXPIRED_PAYMENT);
     }
 }

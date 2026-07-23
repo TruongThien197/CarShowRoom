@@ -56,6 +56,23 @@ public class SchedulingServiceImpl implements SchedulingService {
 
     /** Kiểm tra lịch hẹn hợp lệ trước khi lưu: thời gian, giờ làm, giờ nghỉ và sức chứa. */
     @Override
+    public List<AvailableSlotDTO> findAvailableInstallationSlots(LocalDate date) {
+        if (date == null || date.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Ngày đặt lịch không được nằm trong quá khứ.");
+        }
+        return INSTALLATION_SLOT_STARTS.stream()
+                .map(start -> new AvailableSlotDTO(start, start.plusMinutes(INSTALLATION_DURATION_MINUTES)))
+                .filter(slot -> {
+                    Booking probe = new Booking();
+                    probe.setBookingDate(date);
+                    probe.setStartTime(slot.getStartTime());
+                    probe.setEndTime(slot.getEndTime());
+                    return !hasCapacityConflict(probe);
+                })
+                .toList();
+    }
+
+    @Override
     public void validateSlot(Booking booking) {
         if (booking.getBookingDate() == null || booking.getStartTime() == null || booking.getEndTime() == null) {
             throw new RuntimeException("Vui lòng chọn đầy đủ ngày và giờ hẹn.");
@@ -119,6 +136,8 @@ public class SchedulingServiceImpl implements SchedulingService {
         List<BookingStatus> blockingStatuses = List.of(
                 BookingStatus.PENDING_PAYMENT,
                 BookingStatus.CONFIRMED,
+                BookingStatus.WAITING_FOR_VEHICLE,
+                BookingStatus.RECEIVING_VEHICLE,
                 BookingStatus.IN_PROGRESS,
                 BookingStatus.PENDING_APPROVAL
         );

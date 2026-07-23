@@ -16,7 +16,7 @@
 <body>
 <nav th:fragment="navbar(active)" class="navbar navbar-expand-lg navbar-dark sticky-top gs-navbar"
      th:with="role=${currentUser != null ? currentUser.role : 'GUEST'}">
-    <div class="container">
+    <div class="container-fluid px-4 px-lg-5">
         <a class="navbar-brand fw-bold d-flex align-items-center gap-2 gs-mono" th:href="@{/}">
             <i class="bi bi-speedometer2 fs-4"></i>
             <span>GearShift Pro</span>
@@ -48,16 +48,20 @@
                 </li>
             </ul>
             <div class="d-flex align-items-center gap-2">
-                <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-primary btn-sm" th:href="@{/cart}" title="Cart">
+                <a th:if="${role == 'CUSTOMER'}" class="btn btn-primary btn-sm" th:href="@{/cart}" title="Giỏ hàng"  aria-label="Giỏ hàng"  data-bs-toggle="tooltip">
                     <i class="bi bi-cart3"></i>
                 </a>
-                <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-secondary btn-sm" th:href="@{/account}" title="Tài khoản">
+                <a th:if="${role == 'CUSTOMER'}" class="btn btn-outline-light btn-sm" th:href="@{/account}" title="Tài khoản">
                     <i class="bi bi-person-circle"></i>
-                    <span class="ms-1 d-none d-md-inline" th:text="${currentUser.fullName}">User</span>
+                    <span class="ms-1 d-none d-md-inline" th:text="${currentUser.fullName}">Tài khoản</span>
                 </a>
+                <a th:if="${currentUser == null}" class="btn btn-outline-light btn-sm px-3 me-2" th:href="@{/auth/register}">Đăng ký</a>
                 <a th:if="${currentUser == null}" class="btn btn-primary btn-sm px-3" th:href="@{/auth/login}">Đăng nhập</a>
                 <form th:if="${currentUser != null}" th:action="@{/auth/logout}" method="post" class="d-inline">
-                    <button class="btn btn-outline-danger btn-sm" type="submit" title="Đăng xuất"><i class="bi bi-box-arrow-right"></i></button>
+                    <button class="btn btn-outline-danger btn-sm" type="submit" title="Đăng xuất"><i class="bi bi-box-arrow-right"></i>
+                        <span class="d-none d-lg-inline ms-1">Đăng xuất</span>
+
+                    </button>
                 </form>
             </div>
         </div>

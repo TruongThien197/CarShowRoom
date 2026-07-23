@@ -21,13 +21,13 @@
 
             <div class="row g-4">
                 <div class="col-lg-5">
-                    <div class="surface-card gs-stripe-top p-4 h-100">
+                    <div class="surface-card gs-stripe-top p-4 border border-warning-subtle">
                         <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>Thông tin lịch hẹn</h5>
-                        <p><span class="text-secondary">Khách hàng:</span> <strong th:text="${booking.user.fullName}"> Khách hàng </strong></p>
+                        <p><span class="text-secondary">Khách hàng:</span> <span th:text="${booking.user != null ? booking.user.fullName : 'Không xác định'}">Khách hàng</span>
                         <p><span class="text-secondary">Email:</span> <span th:text="${booking.user.email}">email</span></p>
                         <p><span class="text-secondary">Xe:</span> <span th:text="${booking.vehicle != null ? booking.vehicle.brand + ' ' + booking.vehicle.modelName + ' ' + booking.vehicle.year + ' - ' + booking.vehicle.licensePlate : 'Chưa chọn xe'}"> Xe </span></p>
                         <p><span class="text-secondary">Ngày và giờ:</span> <strong class="gs-mono" th:text="${booking.bookingDate + ' - ' + booking.timeSlot}"> Ngày </strong></p>
-                        <p><span class="text-secondary">Tiền cọc:</span> <strong class="gs-mono text-primary" th:text="${#numbers.formatDecimal(booking.depositAmount ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">2.000 VNĐ</strong></p>
+                        <p><span class="text-secondary">Tiền cọc:</span><strong class="gs-mono text-primary" th:text="${booking.depositAmount != null  ? #numbers.formatDecimal(booking.depositAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : '0 VNĐ'}">0 VNĐ</strong></p>
                         <p>
                             <span class="text-secondary">Trạng thái:</span>
                             <span class="gs-badge"
@@ -64,7 +64,7 @@
                             <button class="btn btn-outline-danger" type="submit"><i class="bi bi-x-circle me-2"></i>Từ chối / hủy lịch</button>
                         </form>
                     </div>
-                    <div class="surface-card p-4 border border-warning-subtle" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}">
+                    <div class="surface-card p-4 border border-warning-subtle" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'APPROVED'}">
                         <h5 class="fw-bold mb-3"><i class="bi bi-arrow-counterclockwise me-2 text-warning"></i>Yêu cầu hoàn tiền cọc</h5>
                         <p class="mb-3">Khách đã hủy lịch sau khi thanh toán. Vui lòng hoàn lại tiền cọc trên cổng thanh toán và lưu mã giao dịch.</p>
                         <form th:action="@{/admin/bookings/refund}" method="post">
@@ -82,6 +82,15 @@
                         <h5 class="fw-bold mb-2 text-success"><i class="bi bi-check-circle me-2"></i>Đã hoàn tiền cọc</h5>
                         <div class="small text-secondary mb-1" th:text="${booking.refundBankName + ' - ' + booking.refundAccountNumber + ' - ' + booking.refundAccountHolder}">Thông tin tài khoản</div>
                         <div th:text="${booking.refundNote}">Ghi chú hoàn tiền</div>
+                    </div>
+                    <div class="surface-card p-4 mb-4" th:if="${booking.bookingType.name() == 'PART_INSTALLATION' and booking.bookingStatus.name() == 'IN_PROGRESS'}">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-cash-coin me-2 text-primary"></i>Tiền công lắp đặt</h5>
+                        <form th:if="${!booking.laborCollected}" th:action="@{/admin/bookings/labor-collection}" method="post">
+                            <input type="hidden" name="bookingId" th:value="${booking.id}">
+                            <label class="form-label">Tiền công đã thu tại xưởng (VNĐ)</label>
+                            <div class="input-group"><input class="form-control" type="number" min="0" step="1000" name="laborFee" required><button class="btn btn-success" type="submit">Xác nhận đã thu</button></div>
+                        </form>
+                        <div class="alert alert-success mb-0" th:if="${booking.laborCollected}">Đã thu: <strong th:text="${#numbers.formatDecimal(booking.laborFee, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong></div>
                     </div>
                     <div class="surface-card gs-stripe-top p-4" th:if="${booking.bookingStatus.name() != 'PENDING_PAYMENT' and booking.bookingStatus.name() != 'CANCELED' and booking.bookingStatus.name() != 'COMPLETED' and booking.bookingStatus.name() != 'EXPIRED_PAYMENT' and booking.bookingStatus.name() != 'EXPIRED_NO_SHOW'}">
                         <h5 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2 text-primary"></i>Cập nhật trạng thái</h5>
@@ -110,7 +119,7 @@
                         <tr th:each="transaction : ${paymentTransactions}">
                             <td class="gs-mono" th:text="${transaction.payosOrderCode}">Mã</td>
                             <td class="gs-mono" th:text="${#numbers.formatDecimal(transaction.amount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
-                            <td th:text="${transaction.status}">Đang chờ thanh toán</td>
+                            <td th:text="${transaction.status.name() == 'PAID' ? 'Đã thanh toán' : (transaction.status.name() == 'FAILED' ? 'Thất bại' : 'Chờ thanh toán')}">Đang chờ thanh toán</td>
                             <td class="gs-mono" th:text="${transaction.paidAt != null ? #temporals.format(transaction.paidAt, 'dd-MM-yyyy HH:mm') : #temporals.format(transaction.createdAt, 'dd-MM-yyyy HH:mm')}">Thời gian</td>
                         </tr>
                         </tbody>

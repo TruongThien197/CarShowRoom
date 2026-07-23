@@ -18,8 +18,10 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         migrateProductTable();
         migrateOrders();
         migrateBookings();
+        migrateOrderFulfillment();
         migrateServices();
         migrateCartAndOrderItems();
+        migrateRefundTransactions();
         migrateProductCarModels();
         migrateCustomerVehicles();
         removeProductsTable();
@@ -111,12 +113,21 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF COL_LENGTH('orders', 'product_total') IS NULL ALTER TABLE orders ADD product_total NUMERIC(18, 2) NULL",
                 "IF COL_LENGTH('orders', 'receiver_phone') IS NULL ALTER TABLE orders ADD receiver_phone NVARCHAR(30) NULL",
                 "IF COL_LENGTH('orders', 'cancellation_reason') IS NULL ALTER TABLE orders ADD cancellation_reason NVARCHAR(500) NULL",
+                "IF COL_LENGTH('orders', 'cancellation_requested_at') IS NULL ALTER TABLE orders ADD cancellation_requested_at DATETIME2 NULL",
+                "IF COL_LENGTH('orders', 'cancellation_processed_at') IS NULL ALTER TABLE orders ADD cancellation_processed_at DATETIME2 NULL",
+                "IF COL_LENGTH('orders', 'cancellation_processed_by_id') IS NULL ALTER TABLE orders ADD cancellation_processed_by_id INT NULL",
+                "IF COL_LENGTH('orders', 'cancellation_decision_note') IS NULL ALTER TABLE orders ADD cancellation_decision_note NVARCHAR(500) NULL",
                 "IF COL_LENGTH('orders', 'shipping_carrier') IS NULL ALTER TABLE orders ADD shipping_carrier NVARCHAR(100) NULL",
                 "IF COL_LENGTH('orders', 'tracking_code') IS NULL ALTER TABLE orders ADD tracking_code NVARCHAR(100) NULL",
                 "IF COL_LENGTH('orders', 'refund_status') IS NULL ALTER TABLE orders ADD refund_status VARCHAR(30) NULL",
                 "IF COL_LENGTH('orders', 'refund_note') IS NULL ALTER TABLE orders ADD refund_note NVARCHAR(500) NULL",
+                "IF COL_LENGTH('orders', 'refund_bank_name') IS NULL ALTER TABLE orders ADD refund_bank_name NVARCHAR(100) NULL",
+                "IF COL_LENGTH('orders', 'refund_bank_bin') IS NULL ALTER TABLE orders ADD refund_bank_bin NVARCHAR(20) NULL",
+                "IF COL_LENGTH('orders', 'refund_account_holder') IS NULL ALTER TABLE orders ADD refund_account_holder NVARCHAR(150) NULL",
+                "IF COL_LENGTH('orders', 'refund_account_number') IS NULL ALTER TABLE orders ADD refund_account_number NVARCHAR(50) NULL",
                 "IF COL_LENGTH('orders', 'refunded_at') IS NULL ALTER TABLE orders ADD refunded_at DATETIME2 NULL",
                 "IF COL_LENGTH('orders', 'refunded_by_id') IS NULL ALTER TABLE orders ADD refunded_by_id INT NULL",
+                "IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_orders_cancellation_processed_by') ALTER TABLE orders ADD CONSTRAINT FK_orders_cancellation_processed_by FOREIGN KEY (cancellation_processed_by_id) REFERENCES users(user_id)",
                 "UPDATE orders SET refund_status = 'NONE' WHERE refund_status IS NULL",
                 "IF COL_LENGTH('orders', 'order_date') IS NOT NULL EXEC sp_executesql N'UPDATE orders SET created_at = CAST(order_date AS DATETIME2) WHERE created_at IS NULL AND order_date IS NOT NULL'",
                 "UPDATE orders SET updated_at = created_at WHERE updated_at IS NULL",
@@ -142,13 +153,23 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         List<String> statements = List.of(
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NULL ALTER TABLE bookings ADD deposit_amount NUMERIC(18, 2) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_status') IS NULL ALTER TABLE bookings ADD refund_status VARCHAR(30) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_payment_status') IS NULL ALTER TABLE bookings ADD remaining_payment_status VARCHAR(30) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'checked_in_at') IS NULL ALTER TABLE bookings ADD checked_in_at DATETIME2 NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'no_show_at') IS NULL ALTER TABLE bookings ADD no_show_at DATETIME2 NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_note') IS NULL ALTER TABLE bookings ADD refund_note NVARCHAR(500) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'cancellation_requested_at') IS NULL ALTER TABLE bookings ADD cancellation_requested_at DATETIME2 NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'cancellation_processed_at') IS NULL ALTER TABLE bookings ADD cancellation_processed_at DATETIME2 NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'cancellation_processed_by_id') IS NULL ALTER TABLE bookings ADD cancellation_processed_by_id INT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'cancellation_decision_note') IS NULL ALTER TABLE bookings ADD cancellation_decision_note NVARCHAR(500) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_bank_name') IS NULL ALTER TABLE bookings ADD refund_bank_name NVARCHAR(100) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_bank_bin') IS NULL ALTER TABLE bookings ADD refund_bank_bin NVARCHAR(20) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_account_holder') IS NULL ALTER TABLE bookings ADD refund_account_holder NVARCHAR(150) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_account_number') IS NULL ALTER TABLE bookings ADD refund_account_number NVARCHAR(50) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refunded_at') IS NULL ALTER TABLE bookings ADD refunded_at DATETIME2 NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refunded_by_id') IS NULL ALTER TABLE bookings ADD refunded_by_id INT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_bookings_cancellation_processed_by') ALTER TABLE bookings ADD CONSTRAINT FK_bookings_cancellation_processed_by FOREIGN KEY (cancellation_processed_by_id) REFERENCES users(user_id)",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_status') IS NOT NULL UPDATE bookings SET refund_status = 'NONE' WHERE refund_status IS NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_payment_status') IS NOT NULL UPDATE bookings SET remaining_payment_status = 'PENDING' WHERE remaining_payment_status IS NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'booking_status') IS NOT NULL UPDATE bookings SET booking_status = 'PENDING_PAYMENT' WHERE booking_status = 'PENDING_DEPOSIT'",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NOT NULL " +
                         "EXEC sp_executesql N'UPDATE bookings SET final_amount = COALESCE(final_amount, estimated_min_amount, deposit_amount)'",
@@ -161,6 +182,38 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_amount') IS NOT NULL AND COL_LENGTH('bookings', 'final_amount') IS NOT NULL " +
                         "EXEC sp_executesql N'UPDATE bookings SET final_amount = COALESCE(final_amount, estimated_min_amount) WHERE final_amount IS NULL'",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_amount') IS NOT NULL ALTER TABLE bookings DROP COLUMN remaining_amount"
+        );
+        statements.forEach(jdbcTemplate::execute);
+    }
+
+    private void migrateOrderFulfillment() {
+        List<String> statements = List.of(
+                "IF COL_LENGTH('product', 'installation_supported') IS NULL ALTER TABLE product ADD installation_supported BIT NULL",
+                "UPDATE product SET installation_supported = 0 WHERE installation_supported IS NULL",
+                "IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'product' AND COLUMN_NAME = 'installation_supported' AND IS_NULLABLE = 'YES') ALTER TABLE product ALTER COLUMN installation_supported BIT NOT NULL",
+
+                "IF COL_LENGTH('orders', 'shipping_fee') IS NULL ALTER TABLE orders ADD shipping_fee NUMERIC(18, 2) NULL",
+                "IF COL_LENGTH('orders', 'shipping_province') IS NULL ALTER TABLE orders ADD shipping_province NVARCHAR(100) NULL",
+                "IF COL_LENGTH('orders', 'shipping_district') IS NULL ALTER TABLE orders ADD shipping_district NVARCHAR(100) NULL",
+                "IF COL_LENGTH('orders', 'shipping_ward') IS NULL ALTER TABLE orders ADD shipping_ward NVARCHAR(100) NULL",
+                "UPDATE orders SET shipping_fee = 0 WHERE shipping_fee IS NULL",
+                "IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'orders' AND COLUMN_NAME = 'shipping_fee' AND IS_NULLABLE = 'YES') ALTER TABLE orders ALTER COLUMN shipping_fee NUMERIC(18, 2) NOT NULL",
+                "IF COL_LENGTH('orders', 'shipping_address') IS NOT NULL ALTER TABLE orders ALTER COLUMN shipping_address NVARCHAR(MAX) NULL",
+                "UPDATE orders SET payment_method = 'PAYOS' WHERE payment_method = 'COD'",
+
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'booking_type') IS NULL ALTER TABLE bookings ADD booking_type VARCHAR(30) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL UPDATE bookings SET booking_type = 'REPAIR_SERVICE' WHERE booking_type IS NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'bookings' AND COLUMN_NAME = 'booking_type' AND IS_NULLABLE = 'YES') ALTER TABLE bookings ALTER COLUMN booking_type VARCHAR(30) NOT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'labor_fee') IS NULL ALTER TABLE bookings ADD labor_fee NUMERIC(18, 2) NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'labor_collected') IS NULL ALTER TABLE bookings ADD labor_collected BIT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'labor_collected_at') IS NULL ALTER TABLE bookings ADD labor_collected_at DATETIME2 NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'labor_collected_by_id') IS NULL ALTER TABLE bookings ADD labor_collected_by_id INT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL UPDATE bookings SET labor_collected = 0 WHERE labor_collected IS NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'bookings' AND COLUMN_NAME = 'labor_collected' AND IS_NULLABLE = 'YES') ALTER TABLE bookings ALTER COLUMN labor_collected BIT NOT NULL",
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_bookings_labor_collected_by') ALTER TABLE bookings ADD CONSTRAINT FK_bookings_labor_collected_by FOREIGN KEY (labor_collected_by_id) REFERENCES users(user_id)",
+
+                "IF OBJECT_ID('shipping_fee_rule', 'U') IS NULL CREATE TABLE shipping_fee_rule (shipping_fee_rule_id INT IDENTITY(1,1) PRIMARY KEY, province NVARCHAR(100) NOT NULL, district NVARCHAR(100) NOT NULL, fee NUMERIC(18, 2) NOT NULL DEFAULT 0, active BIT NOT NULL DEFAULT 1)",
+                "IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('shipping_fee_rule') AND name = 'UX_shipping_fee_rule_region') CREATE UNIQUE INDEX UX_shipping_fee_rule_region ON shipping_fee_rule(province, district)"
         );
         statements.forEach(jdbcTemplate::execute);
     }
@@ -202,6 +255,8 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF OBJECT_ID('order_items', 'U') IS NOT NULL UPDATE oi SET product_name_snapshot = p.product_name FROM order_items oi JOIN product p ON oi.product_id = p.product_id WHERE oi.product_name_snapshot IS NULL",
                 "IF COL_LENGTH('orders', 'parent_order_id') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'orders' AND COLUMN_NAME = 'parent_order_id' AND DATA_TYPE = 'bigint') ALTER TABLE orders ALTER COLUMN parent_order_id INT NULL",
                 "IF OBJECT_ID('order_items', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'order_items' AND COLUMN_NAME = 'order_id' AND DATA_TYPE = 'bigint') ALTER TABLE order_items ALTER COLUMN order_id INT NOT NULL",
+                "IF OBJECT_ID('payment_transactions', 'U') IS NOT NULL AND COL_LENGTH('payment_transactions', 'payment_purpose') IS NULL ALTER TABLE payment_transactions ADD payment_purpose VARCHAR(30) NULL",
+                "IF OBJECT_ID('payment_transactions', 'U') IS NOT NULL AND COL_LENGTH('payment_transactions', 'payment_purpose') IS NOT NULL UPDATE payment_transactions SET payment_purpose = 'DEPOSIT' WHERE payment_purpose IS NULL",
                 "IF OBJECT_ID('payment_transactions', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'payment_transactions' AND COLUMN_NAME = 'order_id' AND DATA_TYPE = 'bigint') ALTER TABLE payment_transactions ALTER COLUMN order_id INT NULL",
                 "IF OBJECT_ID('payment_transactions', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'payment_transactions' AND COLUMN_NAME = 'parent_order_id' AND DATA_TYPE = 'bigint') ALTER TABLE payment_transactions ALTER COLUMN parent_order_id INT NULL",
                 "IF OBJECT_ID('inventory_reservations', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'inventory_reservations' AND COLUMN_NAME = 'order_id' AND DATA_TYPE = 'bigint') ALTER TABLE inventory_reservations ALTER COLUMN order_id INT NULL",
@@ -213,6 +268,49 @@ public class SchemaMigrationRunner implements CommandLineRunner {
             } catch (RuntimeException ignored) {
                 // Existing demo databases may have incompatible foreign keys from earlier scaffolds.
                 // Hibernate can still run with nullable integer ids; avoid blocking startup.
+            }
+        });
+    }
+
+    private void migrateRefundTransactions() {
+        List<String> statements = List.of(
+                "IF OBJECT_ID('refund_transactions', 'U') IS NULL " +
+                        "CREATE TABLE refund_transactions (" +
+                        "id BIGINT IDENTITY(1,1) PRIMARY KEY, " +
+                        "payment_transaction_id BIGINT NULL, " +
+                        "order_id INT NULL, " +
+                        "booking_id INT NULL, " +
+                        "processed_by_id INT NULL, " +
+                        "reference_id VARCHAR(80) NOT NULL, " +
+                        "provider_payout_id VARCHAR(100) NULL, " +
+                        "provider_transaction_id VARCHAR(100) NULL, " +
+                        "provider VARCHAR(30) NOT NULL, " +
+                        "amount NUMERIC(18, 2) NOT NULL, " +
+                        "bank_name NVARCHAR(100) NULL, " +
+                        "bank_bin NVARCHAR(20) NULL, " +
+                        "account_holder NVARCHAR(150) NULL, " +
+                        "account_number NVARCHAR(50) NULL, " +
+                        "status VARCHAR(30) NOT NULL, " +
+                        "note NVARCHAR(500) NULL, " +
+                        "raw_response NVARCHAR(1000) NULL, " +
+                        "error_message NVARCHAR(500) NULL, " +
+                        "refunded_at DATETIME2 NULL, " +
+                        "created_at DATETIME2 NULL, " +
+                        "updated_at DATETIME2 NULL)",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'raw_response') IS NULL ALTER TABLE refund_transactions ADD raw_response NVARCHAR(1000) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'provider_payout_id') IS NULL ALTER TABLE refund_transactions ADD provider_payout_id VARCHAR(100) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'provider_transaction_id') IS NULL ALTER TABLE refund_transactions ADD provider_transaction_id VARCHAR(100) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'bank_bin') IS NULL ALTER TABLE refund_transactions ADD bank_bin NVARCHAR(20) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'error_message') IS NULL ALTER TABLE refund_transactions ADD error_message NVARCHAR(500) NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'created_at') IS NOT NULL UPDATE refund_transactions SET created_at = SYSDATETIME() WHERE created_at IS NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'updated_at') IS NOT NULL UPDATE refund_transactions SET updated_at = created_at WHERE updated_at IS NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('refund_transactions') AND name = 'UX_refund_transactions_reference_id') CREATE UNIQUE INDEX UX_refund_transactions_reference_id ON refund_transactions(reference_id)"
+        );
+        statements.forEach(statement -> {
+            try {
+                jdbcTemplate.execute(statement);
+            } catch (RuntimeException ignored) {
+                // Demo databases may differ across teammates; Hibernate update can still reconcile entities.
             }
         });
     }

@@ -32,6 +32,8 @@
             <i class="bi bi-speedometer2"></i> Bảng điều khiển </a>
         <a th:classappend="${activeMenu == 'orders'} ? 'active'" th:href="@{/admin/orders}">
             <i class="bi bi-cart-check"></i> Đơn hàng </a>
+        <a th:classappend="${activeMenu == 'shipping-fees'} ? 'active'" th:href="@{/admin/shipping-fees}">
+            <i class="bi bi-truck"></i> Phí giao hàng </a>
         <a th:classappend="${activeMenu == 'bookings'} ? 'active'" th:href="@{/admin/bookings}">
             <i class="bi bi-calendar-check"></i> Lịch hẹn </a>
         <a th:classappend="${activeMenu == 'refunds'} ? 'active'" th:href="@{/admin/refunds}">

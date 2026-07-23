@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Order Detail | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Chi tiết đơn hàng | GearShift Pro')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments :: navbar('admin')}"></div>
 
@@ -12,7 +12,7 @@
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div>
                     <a class="btn btn-link p-0 text-secondary text-decoration-none mb-2" th:href="@{/admin/orders}">
-                        <i class="bi bi-arrow-left"></i> Back to Orders
+                        <i class="bi bi-arrow-left"></i> Quay lại danh sách đơn hàng
                     </a>
                     <h1 class="admin-page-title mb-1 gs-mono" th:text="${'Đơn hàng ORD-' + order.id}">Đơn hàng ORD-1</h1>
                     <p class="text-secondary mb-0">Xem thông tin giao hàng, sản phẩm và trạng thái xử lý.</p>
@@ -24,18 +24,18 @@
                     <div class="surface-card gs-stripe-top p-4 mb-4">
                         <h4 class="fw-bold mb-3"><i class="bi bi-truck me-2 text-primary"></i>Thông tin giao hàng</h4>
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="small text-secondary"> Khách hàng </div>
-                                <div class="fw-bold" th:text="${order.user.fullName}">Tên</div>
-                                <div class="small text-secondary" th:text="${order.user.email}">email</div>
-                            </div>
+                            <div class="small text-secondary"> Khách hàng </div>
+                            <div class="fw-bold" th:text="${order.user != null ? order.user.fullName : 'Không xác định'}">Tên</div>
+                            <div class="small text-secondary" th:text="${order.user != null ? order.user.email : 'Không có email'}">email</div>
+                        </div>
                             <div class="col-md-6">
                                 <div class="small text-secondary"> Số điện thoại </div>
                                 <div class="fw-bold gs-mono" th:text="${order.user.phone ?: 'Chưa có số điện thoại'}"> Số điện thoại </div>
                             </div>
                             <div class="col-12">
                                 <div class="small text-secondary">Địa chỉ giao hàng</div>
-                                <div class="fw-bold" th:text="${order.shippingAddress}"> Địa chỉ </div>
+                                <div class="fw-bold" th:text="${order.shippingAddress ?: 'Không áp dụng cho đơn tại xưởng'}"> Địa chỉ </div>
+                                <div class="small text-secondary" th:if="${order.shippingProvince != null}" th:text="${order.shippingWard + ', ' + order.shippingDistrict + ', ' + order.shippingProvince}">Phường/xã, quận/huyện, tỉnh/thành phố</div>
                             </div>
                         </div>
                     </div>
@@ -64,12 +64,12 @@
                                 </tr>
                                 <tr th:each="item : ${orderDetails}">
                                     <td>
-                                        <div class="fw-bold" th:text="${item.product.productName}"> Sản phẩm </div>
-                                        <div class="small text-secondary" th:text="${item.product.category.categoryName}"> Danh mục </div>
+                                        <div class="fw-bold" th:text="${item.product != null ? item.product.productName : 'Sản phẩm không tồn tại'}"> Sản phẩm </div>
+                                        <div class="small text-secondary" th:text="${item.product != null and item.product.category != null ? item.product.category.categoryName : 'Không có danh mục'}"> Danh mục </div>
                                     </td>
                                     <td class="text-center gs-mono" th:text="${item.quantity}">1</td>
-                                    <td class="text-end gs-mono" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 2, 'POINT')} + ' VND'">0 VND</td>
-                                    <td class="text-end fw-bold text-primary gs-mono" th:text="${#numbers.formatDecimal(item.unitPrice.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')} + ' VND'">0 VND</td>
+                                    <td class="text-end gs-mono" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
+                                    <td class="text-end fw-bold text-primary gs-mono" th:text="${#numbers.formatDecimal(item.unitPrice.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -97,7 +97,7 @@
                         </form>
                     </div>
 
-                    <div class="surface-card p-4 mb-4" th:if="${order.orderType.name() == 'SHIPPING'}">
+                    <div class="surface-card p-4 mb-4" th:if="${order.orderType != null and order.orderType.name() == 'SHIPPING'}">
                         <h4 class="fw-bold mb-3"><i class="bi bi-truck me-2 text-primary"></i>Thông tin vận chuyển</h4>
                         <form th:action="@{/admin/orders/{id}/shipment(id=${order.id})}" method="post">
                             <div class="mb-3">
@@ -108,27 +108,55 @@
                                 <label class="form-label" for="trackingCode">Mã vận đơn</label>
                                 <input id="trackingCode" class="form-control gs-mono" name="trackingCode" required th:value="${order.trackingCode}" placeholder="Mã vận đơn">
                             </div>
-                            <div class="form-text mb-3">Chỉ cập nhật được sau khi đơn chuyển sang trạng thái Đang giao hàng.</div>
+                            <div class="form-text mb-3">Nhập đơn vị và mã vận đơn sẽ chuyển đơn từ Đang xử lý sang Đang giao hàng.</div>
                             <button class="btn btn-outline-primary w-100" type="submit">Lưu thông tin vận chuyển</button>
                         </form>
                     </div>
 
-                    <div class="surface-card p-4 mb-4 border border-warning-subtle" th:if="${order.refundStatus.name() != 'NONE'}">
+                    <div class="surface-card p-4 mb-4 border border-warning-subtle" th:if="${order.refundStatus != null and order.refundStatus.name() != 'NONE'}">
                         <h4 class="fw-bold mb-2"><i class="bi bi-arrow-counterclockwise me-2 text-warning"></i>Hoàn tiền</h4>
                         <p class="mb-2"><strong th:text="${order.refundStatus}">Trạng thái hoàn tiền</strong></p>
                         <p class="small text-secondary" th:if="${order.cancellationReason != null}" th:text="'Lý do hủy: ' + ${order.cancellationReason}"></p>
-                        <form th:if="${order.refundStatus.name() == 'REQUESTED'}" th:action="@{/admin/orders/{id}/refund(id=${order.id})}" method="post">
-                            <textarea class="form-control mb-2" name="note" rows="2" required placeholder="Ghi chú/mã giao dịch hoàn tiền"></textarea>
-                            <button class="btn btn-success w-100" type="submit">Xác nhận đã hoàn tiền</button>
+                        <form th:if="${order.refundStatus.name() == 'APPROVED' or order.refundStatus.name() == 'FAILED'}" th:action="@{/admin/orders/{id}/refund(id=${order.id})}" method="post">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-6"><input class="form-control" name="bankName" required placeholder="Ngân hàng nhận hoàn" th:value="${order.refundBankName}"></div>
+                                <div class="col-md-6"><input class="form-control" name="bankBin" required placeholder="Mã BIN ngân hàng" th:value="${order.refundBankBin}"></div>
+                                <div class="col-md-6"><input class="form-control" name="accountHolder" required placeholder="Tên chủ tài khoản" th:value="${order.refundAccountHolder ?: order.user.fullName}"></div>
+                                <div class="col-md-6"><input class="form-control" name="accountNumber" required placeholder="Số tài khoản" th:value="${order.refundAccountNumber}"></div>
+                            </div>
+                            <textarea class="form-control mb-2" name="note" rows="2" required placeholder="Ghi chú hoàn tiền"></textarea>
+                            <button class="btn btn-success w-100" type="submit">Tạo lệnh chi PayOS</button>
                         </form>
+                        <div class="alert alert-warning mb-0" th:if="${order.refundStatus.name() == 'PROCESSING'}">Lệnh chi PayOS đang xử lý. Vui lòng đồng bộ trạng thái ở bảng đối soát.</div>
+                        <div class="alert alert-danger" th:if="${order.refundStatus.name() == 'FAILED'}" th:text="${order.refundNote}">Lệnh chi lỗi</div>
                         <div class="small" th:if="${order.refundStatus.name() == 'COMPLETED'}">
                             <div th:text="${order.refundNote}">Ghi chú</div>
                             <div class="text-secondary" th:if="${order.refundedAt != null}" th:text="${#temporals.format(order.refundedAt, 'dd-MM-yyyy HH:mm')}">Thời gian</div>
                         </div>
                     </div>
 
+                    <div class="surface-card p-4 mb-4" th:if="${refundTransactions != null}">
+                        <h4 class="fw-bold mb-3"><i class="bi bi-bank me-2 text-primary"></i>Lệnh chi PayOS</h4>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead><tr><th>Reference</th><th>Payout</th><th>Số tiền</th><th>Trạng thái</th><th>Lỗi</th><th></th></tr></thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(refundTransactions)}"><td colspan="6" class="text-secondary">Chưa có lệnh chi.</td></tr>
+                                <tr th:each="refund : ${refundTransactions}">
+                                    <td class="gs-mono" th:text="${refund.referenceId}">REFUND</td>
+                                    <td class="gs-mono" th:text="${refund.providerPayoutId ?: '-'}">Payout</td>
+                                    <td class="gs-mono" th:text="${#numbers.formatDecimal(refund.amount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
+                                    <td th:text="${refund.status}">Trạng thái</td>
+                                    <td class="small text-danger" th:text="${refund.errorMessage ?: ''}">Lỗi</td>
+                                    <td class="text-end"><form th:if="${refund.status.name() == 'PROCESSING'}" th:action="@{/admin/refunds/{id}/sync(id=${refund.id})}" method="post"><input type="hidden" name="returnUrl" th:value="@{/admin/orders/{id}(id=${order.id})}"><button class="btn btn-sm btn-outline-primary" type="submit">Đồng bộ</button></form></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <div class="surface-card p-4">
-                        <h4 class="fw-bold mb-3"><i class="bi bi-receipt me-2 text-primary"></i>Summary</h4>
+                        <h4 class="fw-bold mb-3"><i class="bi bi-receipt me-2 text-primary"></i>Tổng quan</h4>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-secondary">Ngày đặt hàng</span>
                             <span class="fw-bold gs-mono" th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"> Ngày </span>
@@ -141,9 +169,11 @@
                         </div>
                         <hr>
                         <div class="d-flex justify-content-between fs-5 fw-bold text-success">
-                            <span> Tổng cộng </span>
-                            <span class="gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 2, 'POINT')} + ' VND'">0 VND</span>
+                            <span>Tiền phụ tùng</span>
+                            <span class="gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span>
                         </div>
+                        <div class="d-flex justify-content-between mt-2" th:if="${order.orderType.name() == 'SHIPPING'}"><span>Phí ship đã chốt</span><span class="gs-mono" th:text="${#numbers.formatDecimal(order.shippingFee ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span></div>
+                        <div class="d-flex justify-content-between fs-5 fw-bold text-success mt-2" th:if="${order.orderType.name() == 'SHIPPING'}"><span>Khách đã thanh toán</span><span class="gs-mono" th:text="${#numbers.formatDecimal(order.productTotal.add(order.shippingFee ?: T(java.math.BigDecimal).ZERO), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span></div>
                     </div>
                 </div>
             </div>
@@ -151,6 +181,7 @@
     </div>
 </main>
 
+<div class="container pb-4" th:if="${order.refundStatus != null and order.refundStatus.name() == 'REQUESTED'}"><div class="surface-card p-4 border border-warning-subtle"><h5 class="fw-bold text-warning">Yêu cầu hủy đơn</h5><p class="small" th:text="${order.cancellationReason}">Lý do hủy</p><form th:action="@{/admin/orders/{id}/cancellation/approve(id=${order.id})}" method="post" class="mb-2"><button class="btn btn-success" type="submit">Duyệt hủy</button></form><form th:action="@{/admin/orders/{id}/cancellation/reject(id=${order.id})}" method="post"><textarea class="form-control mb-2" name="reason" rows="2" required placeholder="Lý do từ chối"></textarea><button class="btn btn-outline-danger" type="submit">Từ chối</button></form></div></div>
 <div th:replace="~{fragments :: scripts}"></div>
 </body>
 </html>

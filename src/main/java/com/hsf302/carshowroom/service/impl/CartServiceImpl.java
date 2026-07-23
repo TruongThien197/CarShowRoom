@@ -10,6 +10,7 @@ import com.hsf302.carshowroom.exception.InsufficientStockException;
 import com.hsf302.carshowroom.exception.MixedFulfillmentException;
 import com.hsf302.carshowroom.repository.CartItemRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
+import com.hsf302.carshowroom.service.CartInventoryValidationService;
 import com.hsf302.carshowroom.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.List;
 public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final CartInventoryValidationService cartInventoryValidationService;
 
     /** Tạo dữ liệu giỏ hàng gồm danh sách sản phẩm và tổng tạm tính của khách. */
     @Override
@@ -71,8 +73,9 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
         if (product.getStatus() != ProductStatus.ACTIVE) {
-            throw new RuntimeException("This product is currently unavailable.");
+            throw new RuntimeException("Sản phẩm này hiện không khả dụng.");
         }
+        validateWorkshopEligibility(product, resolvedFulfillmentType);
 
         CartItem cartItem = cartItemRepository.findByUserAndProductAndFulfillmentType(user, product, resolvedFulfillmentType).orElseGet(() -> {
             CartItem item = new CartItem();
@@ -90,6 +93,30 @@ public class CartServiceImpl implements CartService {
     }
 
     /** Sửa số lượng sản phẩm trong giỏ; xóa dòng giỏ khi số lượng bằng hoặc nhỏ hơn không. */
+    @Override
+    @Transactional
+    public void updateFulfillmentType(User user, Integer cartItemId, String fulfillmentType) {
+        CartItem cartItem = getOwnedCartItem(user, cartItemId);
+        FulfillmentType targetType = resolveFulfillmentType(fulfillmentType);
+        Product product = cartItem.getProduct();
+        validateWorkshopEligibility(product, targetType);
+        if (cartItem.getFulfillmentType() == targetType) {
+            return;
+        }
+
+        CartItem existing = cartItemRepository.findByUserAndProductAndFulfillmentType(user, product, targetType)
+                .orElse(null);
+        if (existing != null && !existing.getId().equals(cartItem.getId())) {
+            cartInventoryValidationService.validateCartItemStock(user, product, existing.getId(), existing.getQuantity() + cartItem.getQuantity());
+            existing.setQuantity(existing.getQuantity() + cartItem.getQuantity());
+            cartItemRepository.save(existing);
+            cartItemRepository.delete(cartItem);
+            return;
+        }
+        cartItem.setFulfillmentType(targetType);
+        cartItemRepository.save(cartItem);
+    }
+
     @Override
     @Transactional
     public void updateQuantity(User user, Integer cartItemId, Integer quantity) {
@@ -184,6 +211,12 @@ public class CartServiceImpl implements CartService {
             return FulfillmentType.valueOf((fulfillmentType == null ? "" : fulfillmentType).trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw new RuntimeException("Vui lòng chọn hình thức nhận hàng hợp lệ.");
+        }
+    }
+
+    private void validateWorkshopEligibility(Product product, FulfillmentType fulfillmentType) {
+        if (fulfillmentType == FulfillmentType.AT_WORKSHOP && !product.isInstallationSupported()) {
+            throw new RuntimeException("Sản phẩm này không hỗ trợ lắp đặt tại xưởng.");
         }
     }
 }

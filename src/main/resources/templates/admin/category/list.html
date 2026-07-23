@@ -12,9 +12,9 @@
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
                 <div>
                     <h1 class="admin-page-title mb-1"><i class="bi bi-tags me-2 text-primary"></i>Quản lý danh mục</h1>
-                    <p class="text-secondary small mb-0">Danh mục dùng để nhóm các sản phẩm phụ tùng, không phải xe riêng của khách hàng.</p>
-                </div>
-                <a th:href="@{/admin/categories/create}" class="btn btn-primary shadow-sm d-flex align-items-center gap-2">
+                    <p class="text-secondary small mb-0">Quản lý nhóm sản phẩm phụ tùng trong hệ thống.</p></div>
+                <a th:href="@{/admin/categories/create}"
+                   class="btn btn-primary shadow-sm d-flex align-items-center gap-2">
                     <i class="bi bi-plus-lg"></i><span>Thêm danh mục</span>
                 </a>
             </div>
@@ -28,8 +28,8 @@
                         <tr>
                             <th class="ps-4" style="width: 80px;">STT</th>
                             <th style="width: 260px;">Tên danh mục</th>
-                            <th> Mô tả </th>
-                            <th class="text-end pe-4" style="width: 180px;"> Thao tác </th>
+                            <th> Mô tả</th>
+                            <th class="text-end pe-4" style="width: 180px;"> Thao tác</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -43,16 +43,19 @@
                         <tr th:each="cat, stat : ${categories}">
                             <td class="ps-4 fw-bold gs-mono text-secondary" th:text="${stat.count}">1</td>
                             <td>
-                                <span class="fw-semibold text-dark" th:text="${cat.categoryName}">Phụ tùng hiệu suất</span>
+                                <span class="fw-semibold text-dark" th:text="${cat.categoryName}">Tên danh mục</span>
                             </td>
-                            <td class="text-secondary small" th:text="${cat.description ?: 'Chưa có mô tả'}">Mô tả danh mục</td>
+                            <td class="text-secondary small" th:text="${cat.description ?: 'Chưa có mô tả'}">Mô tả danh
+                                mục
+                            </td>
                             <td class="text-end pe-4 table-action">
-                                <a th:href="@{/admin/categories/edit/{id}(id=${cat.id})}" class="btn btn-outline-primary btn-sm me-1" title="Edit">
+                                <a th:href="@{/admin/categories/edit/{id}(id=${cat.id})}"
+                                   class="btn btn-outline-primary btn-sm me-1" title="Chỉnh sửa">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <form class="d-inline" th:action="@{/admin/categories/delete/{id}(id=${cat.id})}" method="post">
-                                    <button class="btn btn-outline-danger btn-sm" type="submit" title="Xóa"><i class="bi bi-trash"></i></button>
-                                </form>
+                                    <form class="d-inline" th:action="@{/admin/categories/delete/{id}(id=${cat.id})}"
+                                          method="post" data-confirm="Bạn có chắc chắn muốn xóa danh mục này?">
+                                    </form>
                             </td>
                         </tr>
                         </tbody>

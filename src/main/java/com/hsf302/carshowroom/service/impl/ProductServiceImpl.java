@@ -91,6 +91,7 @@ public class ProductServiceImpl implements ProductService {
     /** Tạo sản phẩm mới và đặt trạng thái hoạt động nếu chưa được chỉ định. */
     @Override
     public Product createProduct(Product product) {
+        validateProduct(product, null);
         if (product.getStatus() == null) {
             product.setStatus(ProductStatus.ACTIVE);
         }
@@ -101,11 +102,15 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Product updateProduct(Integer id, Product updatedProduct) {
         Product existing = getProduct(id);
+        validateProduct(updatedProduct, id);
         existing.setName(updatedProduct.getName());
         existing.setCategory(updatedProduct.getCategory());
+        existing.setSku(updatedProduct.getSku());
         existing.setPrice(updatedProduct.getPrice());
         existing.setPhysicalStock(updatedProduct.getPhysicalStock());
         existing.setDescription(updatedProduct.getDescription());
+        existing.getCompatibleCarModels().clear();
+        existing.getCompatibleCarModels().addAll(updatedProduct.getCompatibleCarModels());
         if (updatedProduct.getImageUrl() != null) {
             existing.setImageUrl(updatedProduct.getImageUrl());
         }
@@ -134,5 +139,44 @@ public class ProductServiceImpl implements ProductService {
     /** Chuẩn hóa giá trị lọc: bỏ khoảng trắng và đổi giá trị rỗng thành null. */
     private String normalize(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private void validateProduct(Product product, Integer productId) {
+        if (product == null || !StringUtils.hasText(product.getName())) {
+            throw new IllegalArgumentException("Tên sản phẩm không được để trống.");
+        }
+        if (product.getName().trim().length() > 150) {
+            throw new IllegalArgumentException("Tên sản phẩm không được vượt quá 150 ký tự.");
+        }
+        if (!StringUtils.hasText(product.getSku())) {
+            throw new IllegalArgumentException("SKU không được để trống.");
+        }
+        String normalizedSku = product.getSku().trim();
+        boolean skuUsed = productId == null
+                ? productRepository.existsBySkuIgnoreCase(normalizedSku)
+                : productRepository.existsBySkuIgnoreCaseAndIdNot(normalizedSku, productId);
+        if (skuUsed) {
+            throw new IllegalArgumentException("SKU này đã thuộc về một sản phẩm khác.");
+        }
+        if (product.getCategory() == null) {
+            throw new IllegalArgumentException("Danh mục sản phẩm không được để trống.");
+        }
+        if (product.getPrice() == null || product.getPrice().signum() < 0) {
+            throw new IllegalArgumentException("Giá sản phẩm không được là số âm.");
+        }
+        if (product.getPhysicalStock() == null || product.getPhysicalStock() < 0) {
+            throw new IllegalArgumentException("Số lượng tồn kho không được là số âm.");
+        }
+        if (productId != null) {
+            Product existing = productRepository.findById(productId).orElseThrow();
+            int reservedStock = existing.getReservedStock() == null ? 0 : existing.getReservedStock();
+            if (product.getPhysicalStock() < reservedStock) {
+                throw new IllegalArgumentException(
+                        "Số lượng tồn kho không thể thấp hơn số lượng đã được đặt trước."
+                );
+            }
+        }
+        product.setName(product.getName().trim());
+        product.setSku(normalizedSku);
     }
 }

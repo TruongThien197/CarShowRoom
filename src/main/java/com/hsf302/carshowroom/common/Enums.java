@@ -77,6 +77,8 @@ public class Enums {
         CREATED,
         PENDING_PAYMENT,
         CONFIRMED,
+        WAITING_FOR_VEHICLE,
+        RECEIVING_VEHICLE,
         IN_PROGRESS,
         PENDING_APPROVAL,
         COMPLETED,
@@ -89,6 +91,8 @@ public class Enums {
                 case CREATED -> "Đã tạo";
                 case PENDING_PAYMENT -> "Chờ thanh toán";
                 case CONFIRMED -> "Đã xác nhận";
+                case WAITING_FOR_VEHICLE -> "Đang đợi xe";
+                case RECEIVING_VEHICLE -> "Đang tiếp nhận";
                 case IN_PROGRESS -> "Đang thực hiện";
                 case PENDING_APPROVAL -> "Chờ duyệt";
                 case COMPLETED -> "Hoàn tất";
@@ -96,6 +100,15 @@ public class Enums {
                 case EXPIRED_PAYMENT -> "Hết hạn thanh toán";
                 case EXPIRED_NO_SHOW -> "Không đến hẹn";
             };
+        }
+    }
+
+    public enum BookingType {
+        REPAIR_SERVICE,
+        PART_INSTALLATION;
+
+        @Override public String toString() {
+            return this == PART_INSTALLATION ? "Lắp đặt phụ tùng" : "Sửa chữa / bảo dưỡng";
         }
     }
 
@@ -122,26 +135,45 @@ public class Enums {
     }
 
     public enum PaymentMethod {
-        PAYOS,
-        COD;
+        PAYOS;
 
         @Override public String toString() {
-            return this == COD ? "Thanh toán khi nhận hàng" : "Thanh toán trực tuyến qua PayOS";
+            return "Thanh toán trực tuyến qua PayOS";
         }
     }
 
     public enum RefundStatus {
         NONE,
         REQUESTED,
+        APPROVED,
+        REJECTED,
+        PROCESSING,
         COMPLETED,
-        REJECTED;
+        FAILED;
 
         @Override public String toString() {
             return switch (this) {
                 case NONE -> "Không có";
                 case REQUESTED -> "Chờ hoàn tiền";
+                case APPROVED -> "Đã duyệt hoàn tiền";
+                case PROCESSING -> "Đang chuyển tiền";
                 case COMPLETED -> "Đã hoàn tiền";
+                case FAILED -> "Hoàn tiền lỗi";
                 case REJECTED -> "Từ chối hoàn tiền";
+            };
+        }
+    }
+
+    public enum RefundPayoutStatus {
+        PROCESSING,
+        SUCCEEDED,
+        FAILED;
+
+        @Override public String toString() {
+            return switch (this) {
+                case PROCESSING -> "Đang xử lý";
+                case SUCCEEDED -> "Đã chuyển tiền";
+                case FAILED -> "Hoàn tiền thất bại";
             };
         }
     }

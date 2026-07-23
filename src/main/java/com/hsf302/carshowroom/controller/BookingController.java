@@ -3,6 +3,8 @@ package com.hsf302.carshowroom.controller;
 import com.hsf302.carshowroom.dto.BookingForm;
 import com.hsf302.carshowroom.dto.PayOS.PayOSCreatePaymentLinkRequest;
 import com.hsf302.carshowroom.common.Enums.ServiceStatus;
+import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.entity.Booking;
 import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.User;
@@ -31,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -121,18 +124,20 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/cancel")
-    public String cancel(@PathVariable Integer id) {
+    public String cancel(@PathVariable Integer id, org.springframework.web.servlet.mvc.support.RedirectAttributes attributes) {
         User user = currentUserOrNull();
         if (user == null) {
             return "redirect:/auth/login";
         }
         bookingService.cancelBooking(user, id);
+        attributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu hủy lịch. Nếu hủy sát giờ, nhân viên sẽ đánh giá thủ công.");
         return "redirect:/booking/my-bookings";
     }
 
     @PostMapping("/{id}/refund-account")
     public String submitRefundAccount(@PathVariable Integer id,
                                       @RequestParam String bankName,
+                                      @RequestParam String bankBin,
                                       @RequestParam String accountHolder,
                                       @RequestParam String accountNumber,
                                       RedirectAttributes attributes) {
@@ -141,7 +146,7 @@ public class BookingController {
             return "redirect:/auth/login";
         }
         try {
-            bookingService.submitRefundAccount(user, id, bankName, accountHolder, accountNumber);
+            bookingService.submitRefundAccount(user, id, bankName, bankBin, accountHolder, accountNumber);
             attributes.addFlashAttribute("successMessage", "Đã lưu thông tin tài khoản nhận tiền hoàn.");
         } catch (RuntimeException exception) {
             attributes.addFlashAttribute("errorMessage", exception.getMessage());
@@ -155,6 +160,15 @@ public class BookingController {
                                             @RequestParam Integer serviceId) {
         try {
             return ResponseEntity.ok(schedulingService.findAvailableSlots(date, List.of(serviceId)));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        }
+    }
+
+    @GetMapping("/available-installation-slots")
+    public ResponseEntity<?> availableInstallationSlots(@RequestParam LocalDate date) {
+        try {
+            return ResponseEntity.ok(schedulingService.findAvailableInstallationSlots(date));
         } catch (IllegalArgumentException exception) {
             return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
         }
@@ -190,6 +204,33 @@ public class BookingController {
         }
     }
 
+    @PostMapping("/{id}/remaining-payment")
+    public String remainingPayment(@PathVariable Integer id, RedirectAttributes attributes) {
+        User user = currentUserOrNull();
+        if (user == null) return "redirect:/auth/login";
+        try {
+            Booking booking = bookingService.getBookingDetail(user, id);
+            BigDecimal finalAmount = booking.getFinalAmount();
+            BigDecimal deposit = booking.getDepositAmount() == null ? BigDecimal.ZERO : booking.getDepositAmount();
+            if (booking.getBookingStatus() != BookingStatus.IN_PROGRESS
+                    && booking.getBookingStatus() != BookingStatus.COMPLETED) {
+                throw new IllegalStateException("Chỉ có thể thanh toán phần còn lại sau khi xe đã được tiếp nhận.");
+            }
+            if (finalAmount == null || finalAmount.compareTo(deposit) <= 0) {
+                throw new IllegalStateException("Nhân viên chưa nhập giá cuối hoặc lịch này không còn khoản phải thanh toán.");
+            }
+            if (booking.getRemainingPaymentStatus() == PaymentStatus.PAID) {
+                throw new IllegalStateException("Khoản thanh toán còn lại đã được thanh toán.");
+            }
+            PaymentTransaction transaction = paymentService.createPaymentLink(PayOSCreatePaymentLinkRequest.builder()
+                    .user(user).booking(booking).paymentPurpose("REMAINING").subOrders(List.of()).build());
+            return "redirect:" + transaction.getCheckoutUrl();
+        } catch (RuntimeException exception) {
+            attributes.addFlashAttribute("errorMessage", exception.getMessage());
+            return "redirect:/booking/" + id;
+        }
+    }
+
     private void populateModel(Model model, User user, BookingForm form) {
         List<Booking> bookings = bookingService.getBookings(user);
         model.addAttribute("bookingForm", form);
@@ -219,6 +260,10 @@ public class BookingController {
     }
 
     private PaymentTransaction createBookingPayment(User user, Booking booking) {
+        if (booking.getBookingStatus() == BookingStatus.EXPIRED_PAYMENT) {
+            bookingService.reopenDepositPayment(booking.getId());
+            booking = bookingService.getBookingDetail(user, booking.getId());
+        }
         if (booking.getPaymentStatus() == com.hsf302.carshowroom.common.Enums.PaymentStatus.PAID) {
             throw new IllegalStateException("Lịch hẹn này đã được thanh toán.");
         }

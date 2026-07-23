@@ -17,7 +17,7 @@ public class RegisterRequest {
 
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Định dạng email không hợp lệ")
-    @Size(max = 255, message = "Email must be at most 255 characters")
+    @Size(max = 255, message = "Email không được vượt quá 255 ký tự")
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")
@@ -25,10 +25,10 @@ public class RegisterRequest {
     private String password;
 
     @NotBlank(message = "Họ và tên không được để trống")
-    @Size(max = 150, message = "Full name must be at most 150 characters")
+    @Size(max = 150, message = "Họ và tên không được vượt quá 150 ký tự")
     private String fullName;
 
-    @Pattern(regexp = "^$|^[0-9]{9,15}$", message = "Số điện thoại chỉ được gồm 9 đến 15 chữ số")
+    @Pattern(regexp = "^$|^0[0-9]{9}$", message = "Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số")
     private String phone;
 
     @Size(max = 255, message = "Địa chỉ không được quá 255 ký tự")

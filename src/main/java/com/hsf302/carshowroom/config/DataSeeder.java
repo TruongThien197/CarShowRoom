@@ -59,17 +59,21 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private List<Category> seedCategories() {
-        if (categoryRepository.count() == 0) {
-            categoryRepository.save(createCategory("Engine", "Turbochargers, air filters, spark plugs, exhausts, and engine performance parts."));
-            categoryRepository.save(createCategory("Brakes", "Brake pads, rotors, calipers, and brake upgrade kits."));
-            categoryRepository.save(createCategory("Tires & Wheels", "Performance tires, forged rims, and alignment accessories."));
-            categoryRepository.save(createCategory("Suspension", "Coilovers, springs, sway bars, and parts to improve handling stability."));
-            categoryRepository.save(createCategory("Oil & Fluids", "Engine oil, coolant, brake fluid, and maintenance fluids."));
-            categoryRepository.save(createCategory("Electrical & Sensors", "Sensors, batteries, lights, and vehicle electrical accessories."));
-            categoryRepository.save(createCategory("Interior", "Cabin accessories, floor mats, seats, and trim details."));
-            categoryRepository.save(createCategory("Car Care", "Wash solutions, protective coatings, towels, and detailing tools."));
-        }
+        createCategoryIfMissing("Engine", "Turbochargers, air filters, spark plugs, exhausts, and engine performance parts.");
+        createCategoryIfMissing("Brakes", "Brake pads, rotors, calipers, and brake upgrade kits.");
+        createCategoryIfMissing("Tires & Wheels", "Performance tires, forged rims, and alignment accessories.");
+        createCategoryIfMissing("Suspension", "Coilovers, springs, sway bars, and parts to improve handling stability.");
+        createCategoryIfMissing("Oil & Fluids", "Engine oil, coolant, brake fluid, and maintenance fluids.");
+        createCategoryIfMissing("Electrical & Sensors", "Sensors, batteries, lights, and vehicle electrical accessories.");
+        createCategoryIfMissing("Interior", "Cabin accessories, floor mats, seats, and trim details.");
+        createCategoryIfMissing("Car Care", "Wash solutions, protective coatings, towels, and detailing tools.");
         return categoryRepository.findAll();
+    }
+
+    private void createCategoryIfMissing(String name, String description) {
+        if (categoryRepository.findByCategoryNameIgnoreCase(name) == null) {
+            categoryRepository.save(createCategory(name, description));
+        }
     }
 
     private Category createCategory(String name, String description) {
@@ -80,7 +84,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedProducts(List<Category> categories) {
-        if (productRepository.count() > 0 || categories.isEmpty()) {
+        if (categories.isEmpty()) {
             return;
         }
         Category engine = findCategory(categories, "Engine");
@@ -89,24 +93,30 @@ public class DataSeeder implements CommandLineRunner {
         Category suspension = findCategory(categories, "Suspension");
         Category fluids = findCategory(categories, "Oil & Fluids");
 
-        productRepository.save(createProduct(engine, "Hybrid Series Turbocharger Kit","SKU001",
+        seedProductIfMissing(createProduct(engine, "Hybrid Series Turbocharger Kit","SKU001",
                 "A direct-fit upgrade turbo kit built for high-output engine setups.",
                 "10000", 8, "/images/turbocharger.jpg"));
-        productRepository.save(createProduct(brakes, "Stage 2 Performance Brake Kit","SKU002",
+        seedProductIfMissing(createProduct(brakes, "Stage 2 Performance Brake Kit","SKU002",
                 "A street and track brake kit featuring upgraded rotors and pads.",
                 "12000", 12, "/images/suspension-service.jpg"));
-        productRepository.save(createProduct(wheels, "Forged Alloy Rims","SKU003",
+        seedProductIfMissing(createProduct(wheels, "Forged Alloy Rims","SKU003",
                 "Lightweight forged rims finished in satin black.",
                 "14000", 6, "/images/forged-rims.jpg"));
-        productRepository.save(createProduct(wheels, "Track-Ready Tire Set","SKU004",
+        seedProductIfMissing(createProduct(wheels, "Track-Ready Tire Set","SKU004",
                 "High-grip tires built for daily-driven and weekend performance cars.",
                 "16000", 16, "/images/track-tire.jpg"));
-        productRepository.save(createProduct(suspension, "Track-Spec Coilover Kit","SKU005",
+        seedProductIfMissing(createProduct(suspension, "Track-Spec Coilover Kit","SKU005",
                 "An adjustable coilover kit that improves handling stability and driving feel.",
                 "18000", 10, "/images/suspension-service.jpg"));
-        productRepository.save(createProduct(fluids, "0W-30 Full Synthetic Oil","SKU006",
+        seedProductIfMissing(createProduct(fluids, "0W-30 Full Synthetic Oil","SKU006",
                 "Premium engine oil formulated for modern turbocharged engines.",
-                "20000", 50, "/images/turbocharger.jpg"));
+                "20000", 50, "/product-images/SKU006.svg"));
+    }
+
+    private void seedProductIfMissing(Product product) {
+        if (productRepository.findBySkuIgnoreCase(product.getSku()) == null) {
+            productRepository.save(product);
+        }
     }
 
     private Category findCategory(List<Category> categories, String name) {

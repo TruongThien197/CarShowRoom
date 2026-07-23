@@ -1,13 +1,15 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/header :: head('Add Vehicle | GearShift Pro')}"></head>
+<head th:replace="~{fragments/header :: head('Thêm xe | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments/header :: navbar('account')}"></div>
 
 <main class="container py-5">
+    <div class="mb-4">
+        <div th:replace="~{fragments/sidebar :: accountTabs('vehicles')}"></div>
+    </div>
     <div class="row g-4">
         <section class="col-12">
-            <div th:replace="~{fragments/sidebar :: accountTabs('vehicles')}"></div>
             <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
                     <h1 class="gs-h1 section-title mb-1"> Thêm xe </h1>

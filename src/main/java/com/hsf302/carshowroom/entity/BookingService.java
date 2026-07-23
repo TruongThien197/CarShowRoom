@@ -30,7 +30,7 @@ public class BookingService {
     @JoinColumn(name = "service_id", nullable = false)
     private Service service;
 
-    @Column(name = "service_name_snapshot", nullable = false)
+    @Column(name = "service_name_snapshot", nullable = false,columnDefinition = "NVARCHAR(MAX)")
     private String serviceNameSnapshot;
 
     @Column(name = "duration_minutes_snapshot", nullable = false)

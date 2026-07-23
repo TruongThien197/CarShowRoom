@@ -33,7 +33,7 @@ public class Product {
     private Category category;
 
     @Nationalized
-    @Column(name = "product_name", nullable = false, length = 150)
+    @Column(name = "product_name", nullable = false,columnDefinition = "NVARCHAR(150)")
     private String name;
 
     @Column(unique = true)
@@ -68,6 +68,9 @@ public class Product {
     @Nationalized
     @Column(nullable = false, length = 50)
     private ProductStatus status;
+
+    @Column(name = "installation_supported", nullable = false)
+    private boolean installationSupported = false;
 
     @Version
     @Column(nullable = true)

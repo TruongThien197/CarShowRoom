@@ -8,27 +8,16 @@
     <div class="row justify-content-center">
         <section class="col-lg-7">
             <div class="surface-card gs-stripe-top p-4 p-md-5">
-                <h1 class="gs-h2 section-title mb-2">Chọn lại phương thức thanh toán</h1>
-                <p class="text-secondary mb-4">Bạn đã hủy thanh toán PayOS. Đơn hàng vẫn được lưu, hãy chọn phương thức khác để tiếp tục.</p>
+                <h1 class="gs-h2 section-title mb-2">Thanh toán lại đơn hàng</h1>
+                <p class="text-secondary mb-4">Đơn hàng chưa hoàn tất thanh toán. Hệ thống sẽ tạo lại liên kết PayOS.</p>
                 <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
                 <div class="d-flex justify-content-between border rounded p-3 mb-4">
                     <span>Tổng đơn hàng</span>
-                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong>
                 </div>
                 <form th:action="@{/orders/{id}/payment(id=${order.id})}" method="post">
-                    <div class="border rounded p-3 mb-3">
-                        <div class="form-check">
-                            <input id="retryPayos" class="form-check-input" type="radio" name="paymentMethod" value="PAYOS" checked>
-                            <label class="form-check-label" for="retryPayos"><strong>Thanh toán trực tuyến qua PayOS</strong><span class="d-block small text-secondary">Tạo lại liên kết thanh toán PayOS.</span></label>
-                        </div>
-                    </div>
-                    <div class="border rounded p-3 mb-4" th:if="${order.orderType.name() == 'SHIPPING'}">
-                        <div class="form-check">
-                            <input id="retryCod" class="form-check-input" type="radio" name="paymentMethod" value="COD">
-                            <label class="form-check-label" for="retryCod"><strong>Thanh toán khi nhận hàng (COD)</strong><span class="d-block small text-secondary">Thanh toán khi nhận phụ tùng.</span></label>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary w-100" type="submit">Xác nhận phương thức thanh toán</button>
+                    <input type="hidden" name="paymentMethod" value="PAYOS">
+                    <button class="btn btn-primary w-100" type="submit">Tạo lại liên kết PayOS</button>
                 </form>
             </div>
         </section>
