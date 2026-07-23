@@ -14,6 +14,10 @@
 </div>
 
 <main class="container py-5">
+    <div class="alert alert-warning" th:each="refund : ${refundTransactions}" th:if="${refund.status.name() == 'REQUESTED'}">
+        Yêu cầu hoàn <strong th:text="${#numbers.formatDecimal(refund.refundAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></strong>
+        đang được xử lý trước <strong th:text="${#temporals.format(refund.refundDeadline, 'dd-MM-yyyy HH:mm')}"></strong>.
+    </div>
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div>
             <a class="text-decoration-none text-secondary" th:href="@{/orders}"><i class="bi bi-arrow-left me-1"></i>Quay lại lịch sử đơn hàng</a>

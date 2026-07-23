@@ -17,11 +17,13 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    /** Lấy thông tin tài khoản theo mã người dùng. */
     @Override
     public User getUserByid(Integer id) {
         return userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
     }
 
+    /** Đăng ký khách hàng mới, kiểm tra dữ liệu đầu vào và mã hóa mật khẩu. */
     @Override
     public User register(String email, String password, String fullname, String phone, String address) {
         email = email == null ? "" : email.trim().toLowerCase();
@@ -58,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
         return userRepository.save(user);
     }
 
+    /** Xác thực email, mật khẩu và trạng thái để đăng nhập. */
     @Override
     public User login(String email, String password) {
         User user = userRepository.findByEmail(email);
@@ -69,6 +72,7 @@ public class AuthServiceImpl implements AuthService {
         return user;
     }
 
+    /** Cập nhật thông tin hồ sơ cơ bản của người dùng hiện có. */
     @Override
     public User updateProfile(Integer id, String fullName, String phone, String address) {
         User user = getUserByid(id);
@@ -84,6 +88,7 @@ public class AuthServiceImpl implements AuthService {
         return userRepository.save(user);
     }
 
+    /** Đổi mật khẩu sau khi kiểm tra mật khẩu hiện tại và độ dài mật khẩu mới. */
     @Override
     public void changePassword(Integer id, String currentPassword, String newPassword) {
         User user = getUserByid(id);
@@ -102,6 +107,7 @@ public class AuthServiceImpl implements AuthService {
 //        SecurityContextHolder.clearContext();
 //    }
 
+    /** Trả về tài khoản đang đăng nhập từ ngữ cảnh bảo mật. */
     @Override
     public User getCurrentUser() {
         var auth = SecurityContextHolder.getContext().getAuthentication();

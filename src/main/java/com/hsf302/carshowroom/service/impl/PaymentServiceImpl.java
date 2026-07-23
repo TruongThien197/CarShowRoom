@@ -14,6 +14,7 @@ import com.hsf302.carshowroom.repository.OrderRepository;
 import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
 import com.hsf302.carshowroom.service.OrderWorkflowService;
 import com.hsf302.carshowroom.service.PaymentService;
+import com.hsf302.carshowroom.service.SystemSettingService;
 import com.hsf302.carshowroom.service.InventoryReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,9 @@ public class PaymentServiceImpl implements PaymentService {
     private final InventoryReservationService inventoryReservationService;
     private final PayOS payOS;
     private final PayOSProperties properties;
+    private final SystemSettingService settingService;
 
+    /** Tạo liên kết thanh toán trực tuyến và lưu giao dịch chờ thanh toán trong hệ thống. */
     @Override
     @Transactional
     public PaymentTransaction createPaymentLink(PayOSCreatePaymentLinkRequest request) {
@@ -55,7 +58,8 @@ public class PaymentServiceImpl implements PaymentService {
         BigDecimal paymentAmount = resolvePaymentAmount(request);
         long amount = toPayOSAmount(paymentAmount);
         long orderCode = generateOrderCode();
-        long expiredAt = Instant.now().plusSeconds(15 * 60).getEpochSecond();
+        long expiredAt = Instant.now().plusSeconds(
+                settingService.getInt(SystemSettingServiceImpl.PAYMENT_HOLD_MINUTES) * 60L).getEpochSecond();
 
         CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder paymentBuilder = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
@@ -99,6 +103,7 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentTransactionRepository.save(transaction);
     }
 
+    /** Đồng bộ trạng thái giao dịch từ cổng thanh toán theo mã giao dịch. */
     @Override
     @Transactional
     public PaymentTransaction syncPaymentStatus(String orderCode) {
@@ -111,6 +116,7 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentTransactionRepository.save(transaction);
     }
 
+    /** Xác thực webhook từ cổng thanh toán và đánh dấu giao dịch đã thanh toán. */
     @Override
     @Transactional
     public void handlePayOSWebhook(PayOSWebhookRequest request) {
@@ -125,6 +131,7 @@ public class PaymentServiceImpl implements PaymentService {
         paymentTransactionRepository.save(transaction);
     }
 
+    /** Đánh dấu các giao dịch quá hạn và giải phóng hàng, lịch hẹn đang được giữ. */
     @Override
     @Transactional
     public void expirePendingPayments() {
@@ -138,6 +145,7 @@ public class PaymentServiceImpl implements PaymentService {
         paymentTransactionRepository.saveAll(expiredTransactions);
     }
 
+    /** Trả về mã đơn hàng liên kết với giao dịch trực tuyến. */
     @Override
     @Transactional(readOnly = true)
     public Integer getOrderIdByPayOSCode(String orderCode) {
@@ -152,6 +160,7 @@ public class PaymentServiceImpl implements PaymentService {
         throw new IllegalArgumentException("Giao dịch PayOS không có đơn hàng liên kết.");
     }
 
+    /** Trả về mã lịch hẹn liên kết với giao dịch trực tuyến, nếu có. */
     @Override
     @Transactional(readOnly = true)
     public Integer getBookingIdByPayOSCode(String orderCode) {
@@ -160,6 +169,7 @@ public class PaymentServiceImpl implements PaymentService {
         return transaction.getBooking() == null ? null : transaction.getBooking().getId();
     }
 
+    /** Áp dụng trạng thái trả về từ cổng thanh toán vào giao dịch nội bộ. */
     private void applyStatus(PaymentTransaction transaction, PaymentLinkStatus status) {
         if (status == PaymentLinkStatus.PAID) {
             markPaid(transaction);
@@ -175,6 +185,11 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /**
+     * Đồng bộ trạng thái khi PayOS báo đã thanh toán: xác nhận đơn, giữ hàng
+     * và xác nhận lịch hẹn nếu giao dịch là tiền cọc lắp đặt.
+     */
+    /** Chuyển trạng thái thanh toán thành công sang đơn hàng, tồn kho và lịch hẹn liên quan. */
     private void markPaid(PaymentTransaction transaction) {
         if (transaction.getStatus() == PaymentStatus.PAID) {
             return;
@@ -200,11 +215,13 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /** Đánh dấu một đơn đã thanh toán và chuyển đơn sang trạng thái xử lý. */
     private void markOrderPaid(Order order) {
         order.setPaymentStatus(PaymentStatus.PAID);
         orderWorkflowService.processOrder(order);
     }
 
+    /** Xử lý trạng thái thanh toán kết thúc nhưng không thành công cho đơn và lịch hẹn liên quan. */
     private void markUnpaidTerminal(PaymentTransaction transaction, PaymentStatus paymentStatus,
                                     OrderStatus orderStatus, BookingStatus bookingStatus) {
         if (transaction.getStatus() == PaymentStatus.PAID) {
@@ -229,6 +246,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /** Trả hàng đang giữ và cập nhật một đơn sang trạng thái thanh toán không thành công. */
     private void markOrderUnpaidTerminal(Order order, PaymentStatus paymentStatus,
                                          OrderStatus orderStatus) {
         inventoryReservationService.releaseReservation(order);
@@ -237,6 +255,7 @@ public class PaymentServiceImpl implements PaymentService {
         orderRepository.save(order);
     }
 
+    /** Hủy giao dịch chưa thanh toán để khách có thể tạo một lần thanh toán mới. */
     private void markCancelledForRetry(PaymentTransaction transaction) {
         if (transaction.getStatus() == PaymentStatus.PAID) {
             return;
@@ -262,6 +281,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /** Đặt lại đơn về chờ thanh toán và giải phóng giữ hàng trước khi thanh toán lại. */
     private void resetOrderForPaymentRetry(Order order) {
         inventoryReservationService.releaseReservation(order);
         order.setPaymentStatus(PaymentStatus.PENDING);
@@ -269,12 +289,14 @@ public class PaymentServiceImpl implements PaymentService {
         orderRepository.save(order);
     }
 
+    /** Đối chiếu số tiền từ cổng thanh toán với số tiền giao dịch đã lưu. */
     private void validateAmount(PaymentTransaction transaction, Long remoteAmount) {
         if (remoteAmount == null || transaction.getAmount().compareTo(BigDecimal.valueOf(remoteAmount)) != 0) {
             throw new IllegalStateException("Số tiền PayOS không khớp với giao dịch trong hệ thống.");
         }
     }
 
+    /** Chuyển số tiền sang số nguyên VNĐ và kiểm tra ngưỡng thanh toán tối thiểu. */
     private long toPayOSAmount(BigDecimal amount) {
         if (amount == null || amount.stripTrailingZeros().scale() > 0) {
             throw new IllegalArgumentException("Số tiền PayOS phải là số nguyên VND.");
@@ -286,11 +308,13 @@ public class PaymentServiceImpl implements PaymentService {
         return value;
     }
 
+    /** Sinh mã giao dịch dạng số để gửi sang cổng thanh toán. */
     private long generateOrderCode() {
         return System.currentTimeMillis() * 100
                 + ThreadLocalRandom.current().nextInt(10, 100);
     }
 
+    /** Kiểm tra thông tin xác thực và URL trả về của cổng thanh toán đã được cấu hình. */
     private void requireConfigured() {
         if (!properties.hasCredentials()) {
             throw new IllegalStateException("Thiếu PAYOS_CLIENT_ID, PAYOS_API_KEY hoặc PAYOS_CHECKSUM_KEY.");
@@ -300,6 +324,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /** Xác định đơn chính cần gắn vào giao dịch khi đơn có hoặc không có đơn cha. */
     private Order resolveMainOrder(PayOSCreatePaymentLinkRequest request) {
         if (request.getParentOrder() != null) {
             return null;
@@ -308,24 +333,28 @@ public class PaymentServiceImpl implements PaymentService {
         return subOrders == null || subOrders.isEmpty() ? null : subOrders.get(0);
     }
 
+    /**
+     * Xác định số tiền gửi PayOS. Có lịch hẹn nghĩa là chỉ thu tiền cọc;
+     * đơn giao hàng thông thường mới thu toàn bộ tiền phụ tùng.
+     */
     private BigDecimal resolvePaymentAmount(PayOSCreatePaymentLinkRequest request) {
+        if (request.getBooking() != null) {
+            // Workshop orders collect only the booking deposit online.
+            // The parts and installation balance are settled at the workshop.
+            return resolveBookingDeposit(request.getBooking());
+        }
         if (request.getParentOrder() != null) {
             BigDecimal amount = request.getParentOrder().getProductTotal();
-            if (request.getBooking() != null) {
-                amount = amount.add(resolveBookingDeposit(request.getBooking()));
-            }
             return amount;
         }
         BigDecimal amount = request.getSubOrders() == null ? BigDecimal.ZERO
                 : request.getSubOrders().stream()
                 .map(Order::getProductTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (request.getBooking() != null) {
-            amount = amount.add(resolveBookingDeposit(request.getBooking()));
-        }
         return amount;
     }
 
+    /** Tính lại tiền cọc từ giá tối thiểu khi bản ghi lịch hẹn chưa có tiền cọc. */
     private BigDecimal resolveBookingDeposit(Booking booking) {
         if (booking.getDepositAmount() != null && booking.getDepositAmount().compareTo(BigDecimal.ZERO) > 0) {
             return booking.getDepositAmount();
@@ -338,6 +367,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .setScale(0, RoundingMode.UP);
     }
 
+    /** Chuẩn hóa và giới hạn độ dài dữ liệu văn bản trước khi gửi sang cổng thanh toán. */
     private String safePayOSText(String value, int maxLength) {
         if (!hasText(value)) {
             return null;
@@ -346,6 +376,7 @@ public class PaymentServiceImpl implements PaymentService {
         return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
     }
 
+    /** Kiểm tra chuỗi có nội dung sau khi loại bỏ khoảng trắng hay không. */
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }

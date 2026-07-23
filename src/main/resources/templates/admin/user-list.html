@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('User Management | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Quản lý người dùng | GearShift Pro')}"></head>
 <body class="ops-shell admin-fixed-shell">
 <div th:replace="~{fragments :: navbar('admin')}"></div>
 
@@ -11,7 +11,7 @@
         <section class="col-lg-9 col-xl-10 admin-content">
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div>
-                    <h1 class="admin-page-title mb-1">User Management</h1>
+                    <h1 class="admin-page-title mb-1">Quản lý người dùng</h1>
                     <p class="text-secondary mb-0">Tìm kiếm, lọc theo vai trò, phân trang và quản lý trạng thái tài khoản.</p>
                 </div>
                 <a class="btn btn-primary align-self-start" th:href="@{/admin/users/create}">
@@ -60,7 +60,7 @@
                         <thead class="table-light">
                         <tr>
                             <th>STT</th>
-                            <th>User</th>
+                            <th>Người dùng</th>
                             <th> Số điện thoại </th>
                             <th> Vai trò </th>
                             <th> Trạng thái </th>

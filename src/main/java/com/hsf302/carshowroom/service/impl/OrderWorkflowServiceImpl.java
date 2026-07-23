@@ -15,6 +15,7 @@ public class OrderWorkflowServiceImpl implements OrderWorkflowService {
     private final OrderRepository orderRepository;
     private final InventoryReservationService inventoryReservationService;
 
+    /** Chuyển đơn sang đang xử lý và xác nhận phần hàng đã được giữ. */
     @Override
     @Transactional
     public void processOrder(Order order) {
@@ -23,6 +24,7 @@ public class OrderWorkflowServiceImpl implements OrderWorkflowService {
         orderRepository.save(order);
     }
 
+    /** Chuyển đơn giao hàng sang trạng thái đang vận chuyển. */
     @Override
     @Transactional
     public void shipOrder(Order order) {
@@ -30,6 +32,7 @@ public class OrderWorkflowServiceImpl implements OrderWorkflowService {
         orderRepository.save(order);
     }
 
+    /** Hoàn tất đơn, trừ tồn kho thực tế và cập nhật trạng thái đơn. */
     @Override
     @Transactional
     public void completeOrder(Order order) {
@@ -38,6 +41,7 @@ public class OrderWorkflowServiceImpl implements OrderWorkflowService {
         orderRepository.save(order);
     }
 
+    /** Hủy đơn và trả lại hàng đang giữ nếu đơn chưa hoàn tất. */
     @Override
     @Transactional
     public void cancelOrder(Order order) {

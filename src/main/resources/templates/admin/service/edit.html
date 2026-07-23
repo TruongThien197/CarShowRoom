@@ -37,7 +37,7 @@
                                 <div class="gs-field-error" th:if="${#fields.hasErrors('serviceName')}" th:errors="*{serviceName}"></div>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold text-dark">Duration (minutes) <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold text-dark">Thời lượng (phút) <span class="text-danger">*</span></label>
                                 <input class="form-control" type="number" min="1" th:field="*{durationMinutes}" required>
                                 <div class="gs-field-error" th:if="${#fields.hasErrors('durationMinutes')}" th:errors="*{durationMinutes}"></div>
                             </div>
@@ -69,7 +69,6 @@
     </div>
 </main>
 
-<div th:replace="~{fragments/footer :: footer}"></div>
 <div th:replace="~{fragments/footer :: scripts}"></div>
 </body>
 </html>

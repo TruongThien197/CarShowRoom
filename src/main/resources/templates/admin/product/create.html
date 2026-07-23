@@ -20,7 +20,7 @@
 
             <div class="row justify-content-center">
                 <div class="col-lg-10">
-                    <form class="surface-card gs-stripe-top p-4 p-md-5" th:action="@{/admin/products/create}" method="post" enctype="multipart/form-data">
+                    <form class="surface-card gs-stripe-top p-4 p-md-5" th:action="@{/admin/products/create}" method="post">
                         <div class="row g-4 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Tên phụ tùng *</label>
@@ -74,20 +74,10 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Tải ảnh lên Firebase</label>
-                            <div class="gs-file-drop">
-                                <i class="bi bi-cloud-arrow-up gs-file-drop-icon"></i>
-                                <input type="file" class="form-control gs-file-drop-input" name="imageFile"
-                                       accept="image/jpeg,image/png,image/webp,image/gif">
-                            </div>
-                            <div class="form-text">JPG, PNG, WebP hoặc GIF; tối đa 5 MB. Tệp tải lên được ưu tiên.</div>
-                        </div>
-
                         <div class="mb-4">
                             <label class="form-label fw-semibold">URL ảnh (không bắt buộc)</label>
-                            <input type="text" class="form-control" name="imageUrl" placeholder="/images/turbocharger.jpg or https://...">
-                            <div class="form-text">Dùng mục này khi không tải tệp lên Firebase.</div>
+                            <input type="text" class="form-control" name="imageUrl" placeholder="https://... hoặc /images/turbocharger.jpg">
+                            <div class="form-text">Nhập đường dẫn ảnh hiển thị cho sản phẩm.</div>
                         </div>
 
                         <div class="mb-4">
@@ -106,7 +96,5 @@
     </div>
 </main>
 
-<div th:replace="~{fragments/footer :: footer}"></div>
-<div th:replace="~{fragments/footer :: scripts}"></div>
 </body>
 </html>

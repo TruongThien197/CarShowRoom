@@ -166,14 +166,28 @@ public class DataSeeder implements CommandLineRunner {
             orderItemRepository.save(detail);
         }
     }
+    /**
+     * Khởi tạo dữ liệu dịch vụ mẫu và luôn bảo đảm có dịch vụ cố định
+     * "Thay thế phụ tùng" cho luồng đặt hàng lắp tại xưởng.
+     */
     private void seedServices() {
-        if (serviceRepository.count() > 0) {
-            return;
+        if (serviceRepository.count() == 0) {
+            serviceRepository.save(createService("Chẩn đoán kỹ thuật số", "Quét lỗi toàn bộ xe và lập báo cáo tình trạng hệ thống.", "20000", "30000", 30));
+            serviceRepository.save(createService("Kiểm tra phanh và gầm xe", "Kiểm tra hệ thống phanh, giảm xóc và các chi tiết dưới gầm.", "35000", "45000", 60));
+            serviceRepository.save(createService("Tinh chỉnh hiệu suất động cơ", "Kiểm tra ECU, rà soát cấu hình và tinh chỉnh hiệu suất.", "40000", "60000", 90));
+            serviceRepository.save(createService("Bảo dưỡng định kỳ", "Thay dầu, kiểm tra dung dịch, thay lọc và bảo dưỡng cơ bản.", "30000", "45000", 45));
         }
-        serviceRepository.save(createService("Chẩn đoán kỹ thuật số", "Quét lỗi toàn bộ xe và lập báo cáo tình trạng hệ thống.", "20000", "30000", 30));
-        serviceRepository.save(createService("Kiểm tra phanh và gầm xe", "Kiểm tra hệ thống phanh, giảm xóc và các chi tiết dưới gầm.", "35000", "45000", 60));
-        serviceRepository.save(createService("Tinh chỉnh hiệu suất động cơ", "Kiểm tra ECU, rà soát cấu hình và tinh chỉnh hiệu suất.", "40000", "60000", 90));
-        serviceRepository.save(createService("Bảo dưỡng định kỳ", "Thay dầu, kiểm tra dung dịch, thay lọc và bảo dưỡng cơ bản.", "30000", "45000", 45));
+        serviceRepository.findFirstByServiceNameIgnoreCase("Thay thế phụ tùng")
+                .ifPresentOrElse(service -> {
+                    if (service.getMinPrice().compareTo(service.getMaxPrice()) == 0
+                            && "Lắp đặt phụ tùng khách đã đặt tại xưởng.".equals(service.getDescription())) {
+                        service.setMaxPrice(new BigDecimal("150000"));
+                        serviceRepository.save(service);
+                    }
+                }, () -> serviceRepository.save(createService(
+                        "Thay thế phụ tùng",
+                        "Lắp đặt phụ tùng khách đã đặt tại xưởng.",
+                        "50000", "150000", 45)));
     }
 
     private com.hsf302.carshowroom.entity.Service createService(String name, String description, String minPrice, String maxPrice, int duration) {

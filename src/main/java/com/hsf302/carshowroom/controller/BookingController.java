@@ -13,6 +13,8 @@ import com.hsf302.carshowroom.service.AuthService;
 import com.hsf302.carshowroom.service.BookingService;
 import com.hsf302.carshowroom.service.PaymentService;
 import com.hsf302.carshowroom.service.SchedulingService;
+import com.hsf302.carshowroom.service.SystemSettingService;
+import com.hsf302.carshowroom.service.RefundService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -44,6 +46,8 @@ public class BookingController {
     private final BookingServiceRepository bookingServiceRepository;
     private final PaymentService paymentService;
     private final SchedulingService schedulingService;
+    private final SystemSettingService settingService;
+    private final RefundService refundService;
 
     @GetMapping
     public String form(Model model) {
@@ -112,6 +116,7 @@ public class BookingController {
         Booking booking = bookingService.getBookingDetail(user, id);
         model.addAttribute("booking", booking);
         model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(booking.getId()));
+        model.addAttribute("refundTransactions", refundService.getBookingRefunds(booking));
         return "booking/detail";
     }
 
@@ -192,6 +197,14 @@ public class BookingController {
         model.addAttribute("vehicles", vehicleRepository.findByUser(user));
         model.addAttribute("bookings", bookings);
         model.addAttribute("bookingServices", buildBookingServices(bookings));
+        model.addAttribute("minBookingLeadMinutes", settingService.getInt(
+                com.hsf302.carshowroom.service.impl.SystemSettingServiceImpl.MIN_BOOKING_LEAD_MINUTES));
+        model.addAttribute("depositRatePercent", settingService.getInt(
+                com.hsf302.carshowroom.service.impl.SystemSettingServiceImpl.DEPOSIT_RATE_PERCENT));
+        model.addAttribute("minDepositAmount", settingService.getInt(
+                com.hsf302.carshowroom.service.impl.SystemSettingServiceImpl.MIN_DEPOSIT_AMOUNT));
+        model.addAttribute("maxDepositAmount", settingService.getInt(
+                com.hsf302.carshowroom.service.impl.SystemSettingServiceImpl.MAX_DEPOSIT_AMOUNT));
     }
 
     private Map<Integer, String> buildBookingServices(List<Booking> bookings) {

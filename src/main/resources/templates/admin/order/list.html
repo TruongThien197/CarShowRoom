@@ -46,7 +46,7 @@
             <div class="admin-table-card p-0 overflow-hidden">
                 <div class="p-3 border-bottom">
                     <input type="search" class="form-control" style="max-width: 320px"
-                           placeholder="Tìm kiếm by customer, product..."
+                           placeholder="Tìm theo khách hàng hoặc sản phẩm..."
                            data-table-filter="#ordersTable" aria-label="Tìm kiếm orders">
                 </div>
                 <div class="table-responsive">
@@ -98,8 +98,6 @@
     </div>
 </main>
 
-<div th:replace="~{fragments :: footer}"></div>
-<div th:replace="~{fragments :: scripts}"></div>
 <script th:src="@{/js/admin.js}"></script>
 </body>
 </html>
