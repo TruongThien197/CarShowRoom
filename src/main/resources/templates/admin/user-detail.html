@@ -48,13 +48,13 @@
                               th:text="${user.status == 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động'}">
                         </span>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="small text-secondary"> Số điện thoại </div>
                         <div class="fw-bold gs-mono" th:text="${user.phone != null and !user.phone.isEmpty() ? user.phone : 'Chưa có số điện thoại'}"> Số điện thoại </div>
                     </div>
                     <div class="col-md-6">
                         <div class="small text-secondary"> Địa chỉ </div>
-                        <div class="fw-bold" th:text="${user.address ?: 'No address'}"> Địa chỉ </div>
+                        <div class="fw-bold" th:text="${user.address ?: 'Chưa có địa chỉ'}"> Địa chỉ </div>
                     </div>
                 </div>
             </div>
