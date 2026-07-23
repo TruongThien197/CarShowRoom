@@ -69,6 +69,9 @@ public class Product {
     @Column(nullable = false, length = 50)
     private ProductStatus status;
 
+    @Column(name = "installation_supported", nullable = false)
+    private boolean installationSupported = false;
+
     @Version
     @Column(nullable = true)
     private Long version;

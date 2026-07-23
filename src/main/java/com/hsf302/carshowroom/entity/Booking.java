@@ -1,6 +1,7 @@
 package com.hsf302.carshowroom.entity;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.BookingType;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.common.Enums.RefundStatus;
 import jakarta.persistence.*;
@@ -77,6 +78,19 @@ public class Booking {
     @Column(name = "refund_note",columnDefinition = "NVARCHAR(MAX)")
     private String refundNote;
 
+    @Column(name = "cancellation_requested_at")
+    private LocalDateTime cancellationRequestedAt;
+
+    @Column(name = "cancellation_processed_at")
+    private LocalDateTime cancellationProcessedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancellation_processed_by_id")
+    private User cancellationProcessedBy;
+
+    @Column(name = "cancellation_decision_note", columnDefinition = "NVARCHAR(MAX)")
+    private String cancellationDecisionNote;
+
     @Column(name = "refund_bank_name", columnDefinition = "NVARCHAR(100)")
     private String refundBankName;
 
@@ -101,6 +115,10 @@ public class Booking {
     private BookingStatus bookingStatus;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "booking_type", nullable = false)
+    private BookingType bookingType = BookingType.REPAIR_SERVICE;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
 
@@ -116,6 +134,19 @@ public class Booking {
 
     @Column(name = "no_show_at")
     private LocalDateTime noShowAt;
+
+    @Column(name = "labor_fee")
+    private BigDecimal laborFee;
+
+    @Column(name = "labor_collected", nullable = false)
+    private boolean laborCollected = false;
+
+    @Column(name = "labor_collected_at")
+    private LocalDateTime laborCollectedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "labor_collected_by_id")
+    private User laborCollectedBy;
 
     @Lob
     @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")

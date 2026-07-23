@@ -54,7 +54,7 @@ public class VehicleServiceImpl implements VehicleService {
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy xe"));
         if (!vehicle.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Vehicle does not belong to current user");
+            throw new RuntimeException("Xe này không thuộc về người dùng hiện tại.");
         }
         for (Booking booking : bookingRepository.findByVehicle(vehicle)) {
             booking.setVehicle(null);
