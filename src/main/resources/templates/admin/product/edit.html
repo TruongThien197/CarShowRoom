@@ -20,7 +20,7 @@
 
             <div class="row justify-content-center">
                 <div class="col-lg-10">
-                    <form class="surface-card gs-stripe-top p-4 p-md-5" th:action="@{/admin/products/edit/{id}(id=${product.id})}" method="post" enctype="multipart/form-data">
+                    <form class="surface-card gs-stripe-top p-4 p-md-5" th:action="@{/admin/products/edit/{id}(id=${product.id})}" method="post">
                         <div class="row g-4 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Tên phụ tùng *</label>
@@ -81,20 +81,10 @@
                             <img th:src="${product.imageUrl}" alt="Ảnh sản phẩm" class="img-thumbnail" style="max-height: 180px">
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Thay ảnh trên Firebase</label>
-                            <div class="gs-file-drop">
-                                <i class="bi bi-cloud-arrow-up gs-file-drop-icon"></i>
-                                <input type="file" class="form-control gs-file-drop-input" name="imageFile"
-                                       accept="image/jpeg,image/png,image/webp,image/gif">
-                            </div>
-                            <div class="form-text">Để trống để giữ ảnh hiện tại. Hỗ trợ JPG, PNG, WebP hoặc GIF; tối đa 5 MB.</div>
-                        </div>
-
                         <div class="mb-4">
                             <label class="form-label fw-semibold">URL ảnh (không bắt buộc)</label>
-                            <input type="text" class="form-control" name="imageUrl" th:value="${product.imageUrl}" placeholder="/images/turbocharger.jpg hoặc https://...">
-                            <div class="form-text">Tệp mới tải lên (nếu có) sẽ được ưu tiên hơn URL này.</div>
+                            <input type="text" class="form-control" name="imageUrl" th:value="${product.imageUrl}" placeholder="https://... hoặc /images/turbocharger.jpg">
+                            <div class="form-text">Để trống để giữ ảnh hiện tại.</div>
                         </div>
 
                         <div class="mb-4">
@@ -112,8 +102,5 @@
         </section>
     </div>
 </main>
-
-<div th:replace="~{fragments/footer :: footer}"></div>
-<div th:replace="~{fragments/footer :: scripts}"></div>
 </body>
 </html>

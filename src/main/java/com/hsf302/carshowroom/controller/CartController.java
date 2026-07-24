@@ -32,6 +32,7 @@ public class CartController {
         List<CartItem> cartItems = cartService.getCartItems(user);
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("subtotal", cartService.calculateSubtotal(cartItems));
+        model.addAttribute("cartFulfillmentType", cartItems.isEmpty() ? null : cartItems.get(0).getFulfillmentType());
         return "cart/index";
     }
 
@@ -65,27 +66,8 @@ public class CartController {
         }
         try {
             cartService.updateQuantity(user, cartItemId, quantity);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật giỏ hàng.");
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-        return "redirect:/cart";
-    }
-
-    @PostMapping("/fulfillment")
-    public String updateFulfillment(@RequestParam Integer cartItemId,
-                                    @RequestParam String fulfillmentType,
-                                    RedirectAttributes redirectAttributes) {
-        User user = currentUserOrNull();
-        if (user == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng đăng nhập để cập nhật giỏ hàng.");
-            return "redirect:/auth/login";
-        }
-        try {
-            cartService.updateFulfillmentType(user, cartItemId, fulfillmentType);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật hình thức nhận hàng.");
-        } catch (RuntimeException exception) {
-            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
         return "redirect:/cart";
     }
@@ -99,7 +81,10 @@ public class CartController {
             return "redirect:/auth/login";
         }
         cartService.removeItem(user, cartItemId);
-        redirectAttributes.addFlashAttribute("successMessage", "Đã xóa sản phẩm khỏi giỏ hàng.");
+        redirectAttributes.addFlashAttribute(
+                "successMessage",
+                "Đã xóa sản phẩm khỏi giỏ hàng."
+        );
         return "redirect:/cart";
     }
 

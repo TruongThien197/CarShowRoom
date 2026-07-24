@@ -19,9 +19,13 @@ import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
 import com.hsf302.carshowroom.service.RefundPayoutService;
 import com.hsf302.carshowroom.service.SchedulingService;
+import com.hsf302.carshowroom.service.SystemSettingService;
+import com.hsf302.carshowroom.service.RefundService;
+import com.hsf302.carshowroom.service.OrderWorkflowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,21 +36,21 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements com.hsf302.carshowroom.service.BookingService {
-    private static final BigDecimal DEPOSIT_RATE = BigDecimal.valueOf(0.20);
-    private static final BigDecimal MIN_DEPOSIT = BigDecimal.valueOf(2_000);
-    private static final BigDecimal MAX_DEPOSIT = BigDecimal.valueOf(10_000);
-
     private final BookingRepository bookingRepository;
     private final BookingServiceRepository bookingServiceRepository;
     private final ServiceRepository serviceRepository;
     private final VehicleRepository vehicleRepository;
     private final SchedulingService schedulingService;
+    private final SystemSettingService settingService;
+    private final RefundService refundService;
+    private final OrderWorkflowService orderWorkflowService;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final RefundPayoutService refundPayoutService;
 
+    /** Tạo lịch hẹn mới, tính tiền cọc, giữ khung giờ và lưu snapshot dịch vụ. */
     @Override
-    @Transactional
-    public synchronized Booking createBooking(User user, BookingForm form) {
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public Booking createBooking(User user, BookingForm form) {
         if (form.getVehicleId() == null) {
             throw new RuntimeException("Vui lòng chọn xe trước khi đặt lịch.");
         }
@@ -78,7 +82,8 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
         booking.setBookingType(BookingType.REPAIR_SERVICE);
         booking.setPaymentStatus(PaymentStatus.PENDING);
-        booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
+        booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(
+                settingService.getInt(SystemSettingServiceImpl.PAYMENT_HOLD_MINUTES)));
         booking.setNotes(form.getNotes());
         schedulingService.holdSlot(booking);
         Booking savedBooking = bookingRepository.save(booking);
@@ -95,26 +100,33 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         return savedBooking;
     }
 
+    /** Tính tiền cọc từ giá tối thiểu của dịch vụ theo tỷ lệ, mức sàn và mức trần cấu hình. */
     private BigDecimal calculateDeposit(BigDecimal estimatedMinAmount) {
+        BigDecimal minimumDeposit = BigDecimal.valueOf(settingService.getInt(SystemSettingServiceImpl.MIN_DEPOSIT_AMOUNT));
         if (estimatedMinAmount == null) {
-            return MIN_DEPOSIT;
+            return minimumDeposit;
         }
-        return estimatedMinAmount.multiply(DEPOSIT_RATE)
-                .max(MIN_DEPOSIT)
-                .min(MAX_DEPOSIT)
+        return estimatedMinAmount.multiply(BigDecimal.valueOf(
+                        settingService.getInt(SystemSettingServiceImpl.DEPOSIT_RATE_PERCENT)))
+                .movePointLeft(2)
+                .max(minimumDeposit)
+                .min(BigDecimal.valueOf(settingService.getInt(SystemSettingServiceImpl.MAX_DEPOSIT_AMOUNT)))
                 .setScale(0, java.math.RoundingMode.UP);
     }
 
+    /** Lấy các lịch hẹn của một khách hàng theo ngày giảm dần. */
     @Override
     public List<Booking> getBookings(User user) {
         return bookingRepository.findByUserOrderByBookingDateDesc(user);
     }
 
+    /** Lấy toàn bộ lịch hẹn cho màn hình quản trị. */
     @Override
     public List<Booking> getAllBookings() {
         return bookingRepository.findAllByOrderByBookingDateDesc();
     }
 
+    /** Lấy chi tiết lịch hẹn và kiểm tra lịch đó thuộc khách hàng đang xem. */
     @Override
     public Booking getBookingDetail(User user, Integer bookingId) {
         Booking booking = getBookingDetail(bookingId);
@@ -124,12 +136,14 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         return booking;
     }
 
+    /** Lấy chi tiết lịch hẹn theo mã cho các luồng nội bộ và quản trị. */
     @Override
     public Booking getBookingDetail(Integer bookingId) {
         return bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch hẹn."));
     }
 
+    /** Hủy lịch hẹn của khách, tạo yêu cầu hoàn cọc khi đủ điều kiện và hủy đơn phụ tùng liên quan. */
     @Override
     @Transactional
     public void cancelBooking(User user, Integer bookingId) {
@@ -141,21 +155,20 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
                 || booking.getBookingStatus() == BookingStatus.EXPIRED_NO_SHOW) {
             throw new RuntimeException("Không thể hủy lịch hẹn ở trạng thái hiện tại.");
         }
-        if (booking.getRefundStatus() == RefundStatus.REQUESTED) {
-            throw new IllegalStateException("Yêu cầu hủy đã đang chờ xử lý.");
+        if (booking.getPaymentStatus() == PaymentStatus.PAID
+                && booking.getRefundStatus() == RefundStatus.NONE) {
+            BigDecimal refundAmount = calculateCancellationRefund(booking);
+            if (refundAmount.signum() > 0) {
+                refundService.requestBookingRefund(booking, refundAmount, "Khách hàng hủy lịch hẹn.");
+            }
         }
-        booking.setRefundStatus(RefundStatus.REQUESTED);
-        booking.setCancellationRequestedAt(LocalDateTime.now());
-        bookingRepository.save(booking);
-    }
-
-    @Override
-    @Transactional
-    public void approveCancellation(Integer bookingId, User processedBy, String assessmentNote) {
-        Booking booking = getBookingDetail(bookingId);
-        if (booking.getRefundStatus() != RefundStatus.REQUESTED) throw new IllegalStateException("Lịch hẹn không có yêu cầu hủy đang chờ duyệt.");
-        if (requiresManualCancellationAssessment(booking) && (assessmentNote == null || assessmentNote.isBlank())) {
-            throw new IllegalArgumentException("Việc hủy lịch hẹn muộn tại xưởng cần có ghi chú đánh giá của nhân viên.");
+        booking.setBookingStatus(BookingStatus.CANCELED);
+        if (booking.getRelatedOrder() != null) {
+            orderWorkflowService.cancelOrder(booking.getRelatedOrder());
+        }
+        if (booking.getPaymentStatus() == PaymentStatus.PAID
+                && booking.getRefundStatus() == RefundStatus.NONE) {
+            booking.setRefundStatus(RefundStatus.REQUESTED);
         }
         booking.setBookingStatus(BookingStatus.CANCELED);
         if (booking.getRemainingPaymentStatus() != PaymentStatus.PAID) booking.setRemainingPaymentStatus(PaymentStatus.CANCELED);
@@ -167,6 +180,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         bookingRepository.save(booking);
     }
 
+    /** Nhân viên hoàn tất hoàn tiền cọc sau khi kiểm tra thông tin tài khoản và người nhận. */
     @Override
     @Transactional
     public void rejectCancellation(Integer bookingId, User processedBy, String reason) {
@@ -221,23 +235,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         bookingRepository.save(booking);
     }
 
-    private void applyBookingRefundResult(Booking booking, RefundTransaction refundTransaction) {
-        if (refundTransaction.getStatus() == RefundPayoutStatus.SUCCEEDED) {
-            booking.setRefundStatus(RefundStatus.COMPLETED);
-            booking.setPaymentStatus(PaymentStatus.REFUNDED);
-            booking.setRefundedAt(refundTransaction.getRefundedAt() == null ? LocalDateTime.now() : refundTransaction.getRefundedAt());
-            paymentTransactionRepository.findByBooking(booking).forEach(transaction -> {
-                transaction.setStatus(PaymentStatus.REFUNDED);
-                paymentTransactionRepository.save(transaction);
-            });
-        } else if (refundTransaction.getStatus() == RefundPayoutStatus.FAILED) {
-            booking.setRefundStatus(RefundStatus.FAILED);
-            booking.setRefundNote(refundTransaction.getErrorMessage());
-        } else {
-            booking.setRefundStatus(RefundStatus.PROCESSING);
-        }
-    }
-
+    /** Khách hàng bổ sung tài khoản nhận tiền cho yêu cầu hoàn cọc đang chờ xử lý. */
     @Override
     @Transactional
     public void submitRefundAccount(User user, Integer bookingId, String bankName, String bankBin,
@@ -264,11 +262,27 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         bookingRepository.save(booking);
     }
 
+    /** So sánh hai họ tên sau khi bỏ khoảng trắng thừa, không phân biệt hoa thường. */
     private boolean samePerson(String first, String second) {
         return first.trim().replaceAll("\\s+", " ").equalsIgnoreCase(
                 second == null ? "" : second.trim().replaceAll("\\s+", " "));
     }
 
+    /** Tính số tiền cọc được hoàn khi hủy, dựa trên thời điểm hủy và chính sách cấu hình. */
+    private BigDecimal calculateCancellationRefund(Booking booking) {
+        BigDecimal deposit = booking.getDepositAmount() == null ? BigDecimal.ZERO : booking.getDepositAmount();
+        LocalDateTime appointment = LocalDateTime.of(booking.getBookingDate(), booking.getStartTime());
+        LocalDateTime freeCancellationDeadline = appointment.minusHours(
+                settingService.getInt(SystemSettingServiceImpl.CANCELLATION_FREE_HOURS));
+        if (!LocalDateTime.now().isAfter(freeCancellationDeadline)) {
+            return deposit;
+        }
+        return deposit.multiply(BigDecimal.valueOf(
+                settingService.getInt(SystemSettingServiceImpl.LATE_CANCEL_REFUND_PERCENT)))
+                .movePointLeft(2);
+    }
+
+    /** Cập nhật trạng thái lịch hẹn sau khi kiểm tra luồng chuyển trạng thái hợp lệ. */
     @Override
     @Transactional
     public void checkIn(Integer bookingId) {
@@ -377,6 +391,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         bookingRepository.save(booking);
     }
 
+    /** Bảo vệ các quy tắc chuyển trạng thái của vòng đời lịch hẹn. */
     private void validateStatusTransition(Booking booking, BookingStatus nextStatus) {
         BookingStatus currentStatus = booking.getBookingStatus();
         if (nextStatus == BookingStatus.CANCELED) {
@@ -421,6 +436,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         }
     }
 
+    /** Lấy xe được chọn và bảo đảm xe đó thuộc đúng khách hàng đặt lịch. */
     private Vehicle resolveVehicle(User user, Integer vehicleId) {
         if (vehicleId == null) {
             return null;
@@ -433,6 +449,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         return vehicle;
     }
 
+    /** Trích giờ bắt đầu từ chuỗi khung giờ khách chọn. */
     private LocalTime parseStartTime(String timeSlot) {
         if (timeSlot == null || timeSlot.isBlank()) {
             throw new RuntimeException("Vui lòng chọn thời gian hẹn.");

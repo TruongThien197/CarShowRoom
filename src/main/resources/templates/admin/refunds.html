@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: head('Yêu cầu hoàn tiền | Quản trị')}"></head>
+<body class="ops-shell admin-fixed-shell">
+<div th:replace="~{fragments/header :: navbar('admin')}"></div>
+<main class="container-fluid admin-page"><div class="row min-vh-100">
+    <aside th:replace="~{fragments/sidebar :: adminSidebar('refunds')}"></aside>
+    <section class="col-lg-9 col-xl-10 admin-content">
+        <h1 class="admin-page-title mb-1">Yêu cầu hoàn tiền</h1>
+        <p class="text-secondary mb-4">Ưu tiên xử lý các yêu cầu có thời hạn gần nhất.</p>
+        <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+        <div class="admin-table-card p-0 overflow-hidden"><div class="table-responsive"><table class="table align-middle mb-0">
+            <thead class="table-light"><tr><th>Đối tượng</th><th>Số tiền</th><th>Lý do</th><th>Hạn xử lý</th><th></th></tr></thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(refunds)}"><td colspan="5" class="text-secondary text-center py-4">Không có yêu cầu hoàn tiền đang chờ xử lý.</td></tr>
+            <tr th:each="refund : ${refunds}">
+                <td th:text="${refund.order != null ? 'Đơn hàng #' + refund.order.id : 'Lịch hẹn #' + refund.booking.id}">Đối tượng</td>
+                <td class="gs-mono" th:text="${#numbers.formatDecimal(refund.refundAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
+                <td th:text="${refund.reason}">Lý do</td>
+                <td class="gs-mono" th:text="${#temporals.format(refund.refundDeadline, 'dd-MM-yyyy HH:mm')}">Hạn</td>
+                <td><form th:action="@{/admin/refunds/{id}/complete(id=${refund.id})}" method="post" class="d-flex gap-2"><input class="form-control form-control-sm" name="note" required placeholder="Mã giao dịch hoặc ghi chú"><button class="btn btn-success btn-sm">Đã hoàn</button></form></td>
+            </tr>
+            </tbody>
+        </table></div></div>
+    </section>
+</div></main>
+<div th:replace="~{fragments/footer :: scripts}"></div>
+</body></html>

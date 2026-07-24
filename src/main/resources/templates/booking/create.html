@@ -48,23 +48,16 @@
                             <option th:each="service : ${services}"
                                     th:value="${service.id}"
                                     th:attr="data-min=${service.minPrice},data-max=${service.maxPrice},data-duration=${service.durationMinutes},data-description=${service.description}"
-                                    th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' - ' + #numbers.formatDecimal(service.maxPrice, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}"> Dịch vụ </option>
+                                    th:text="${service.serviceName}"> Dịch vụ </option>
                         </select>
                         <div class="text-danger small" th:if="${#fields.hasErrors('vehicleId')}" th:errors="*{vehicleId}"></div>
-                        <div class="alert alert-primary py-2 px-3 mt-3 mb-0">
-                            <i class="bi bi-shield-check me-2"></i>
-                            <strong>Tiền cọc giữ chỗ:</strong>
-                            <span id="serviceDepositNotice" class="gs-mono d-none">2.000 VNĐ</span>
-                            <span id="depositPlaceholder">Chọn dịch vụ để xem số tiền cọc</span>
-                            <div class="small">Cọc bằng 20% giá dịch vụ, tối thiểu 2.000 và tối đa 10.000 VNĐ.</div>
-                        </div>
                         <div class="text-danger small" th:if="${#fields.hasErrors('serviceId')}" th:errors="*{serviceId}"></div>
                     </div>
 
                     <div class="col-12">
                         <div id="serviceSummary" class="surface-card gs-stripe-top p-3 d-none">
                             <div class="row g-3 align-items-center">
-                                <div class="col-md-4">
+                                <div class="col-md-5">
                                     <div class="small text-secondary">Khoảng giá dịch vụ</div>
                                     <div class="fs-5 fw-bold text-primary gs-mono">
                                         <span id="serviceMinGiá">0 VNĐ</span>
@@ -73,17 +66,13 @@
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="small text-secondary">Giá khởi điểm dự kiến</div>
-                                    <div class="fw-bold gs-mono" id="servicePayable">0 VNĐ</div>
-                                </div>
-                                <div class="col-md-2">
                                     <div class="small text-secondary"> Thời lượng </div>
-                                    <div class="fw-bold"><span class="gs-mono" id="serviceDuration">0</span> min</div>
+                                    <div class="fw-bold"><span class="gs-mono" id="serviceDuration">0</span> phút</div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <div class="small text-secondary">Tiền cọc cần thanh toán</div>
                                     <div class="fw-bold text-primary gs-mono" id="serviceDeposit">2.000 VNĐ</div>
-                                    <div class="small text-secondary">Cọc 20%, tối thiểu 2.000 và tối đa 10.000 VNĐ.</div>
+                                    <div class="small text-secondary" th:text="'Cọc ' + ${depositRatePercent} + '%, tối thiểu ' + ${#numbers.formatDecimal(minDepositAmount, 0, 'COMMA', 0, 'POINT')} + ' và tối đa ' + ${#numbers.formatDecimal(maxDepositAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ.'">Thông tin tiền cọc</div>
                                 </div>
                             </div>
                             <div class="small text-secondary mt-2" id="serviceDescription"></div>
@@ -100,6 +89,7 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold"> Ngày hẹn </label>
                         <input class="form-control gs-mono" type="date" th:field="*{bookingDate}" required>
+                        <div class="form-text" th:text="'Vui lòng đặt lịch trước ít nhất ' + ${minBookingLeadMinutes} + ' phút.'">Vui lòng đặt lịch trước ít nhất 60 phút.</div>
                         <div class="text-danger small" th:if="${#fields.hasErrors('bookingDate')}" th:errors="*{bookingDate}"></div>
                     </div>
                     <div class="col-md-6">
@@ -113,7 +103,7 @@
 
                     <div class="col-12">
                         <label class="form-label fw-semibold"> Ghi chú </label>
-                        <textarea class="form-control" rows="4" th:field="*{notes}" placeholder="Describe the issue, noise, or vehicle condition..."></textarea>
+                        <textarea class="form-control" rows="4" th:field="*{notes}" placeholder="Mô tả tình trạng xe, tiếng ồn hoặc yêu cầu cần kiểm tra..."></textarea>
                     </div>
 
                     <div class="col-12 d-flex flex-wrap gap-2 justify-content-end align-items-center">
@@ -129,22 +119,22 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 <div th:replace="~{fragments/footer :: scripts}"></div>
-<script>
+<script th:inline="javascript">
     (() => {
         const select = document.getElementById('serviceSelect');
         const summary = document.getElementById('serviceSummary');
         const minPrice = document.getElementById('serviceMinGiá');
         const maxPrice = document.getElementById('serviceMaxGiá');
-        const payable = document.getElementById('servicePayable');
         const deposit = document.getElementById('serviceDeposit');
-        const depositNotice = document.getElementById('serviceDepositNotice');
-        const depositPlaceholder = document.getElementById('depositPlaceholder');
         const duration = document.getElementById('serviceDuration');
         const description = document.getElementById('serviceDescription');
         const dateInput = document.getElementById('bookingDate');
         const slotSelect = document.getElementById('timeSlot');
         const slotHelp = document.getElementById('slotHelp');
         const formatter = new Intl.NumberFormat('vi-VN');
+        const depositRatePercent = /*[[${depositRatePercent}]]*/ 20;
+        const minDepositAmount = /*[[${minDepositAmount}]]*/ 2000;
+        const maxDepositAmount = /*[[${maxDepositAmount}]]*/ 10000;
         dateInput.min = new Date().toLocaleDateString('en-CA');
 
         const toNumber = (value) => Number(String(value || '0').replace(/,/g, ''));
@@ -154,8 +144,6 @@
             const option = select.options[select.selectedIndex];
             if (!option || !option.value) {
                 summary.classList.add('d-none');
-                depositNotice.classList.add('d-none');
-                depositPlaceholder.classList.remove('d-none');
                 return;
             }
 
@@ -163,12 +151,8 @@
             const max = toNumber(option.dataset.max);
             minPrice.textContent = money(min);
             maxPrice.textContent = money(max);
-            payable.textContent = money(min);
-            const depositAmount = Math.min(10000, Math.max(2000, Math.ceil(min * 0.2)));
+            const depositAmount = Math.min(maxDepositAmount, Math.max(minDepositAmount, Math.ceil(min * depositRatePercent / 100)));
             deposit.textContent = money(depositAmount);
-            depositNotice.textContent = money(depositAmount);
-            depositNotice.classList.remove('d-none');
-            depositPlaceholder.classList.add('d-none');
             duration.textContent = option.dataset.duration || '0';
             description.textContent = option.dataset.description || '';
             summary.classList.remove('d-none');

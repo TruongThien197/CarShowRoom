@@ -22,6 +22,7 @@ public class VehicleServiceImpl implements VehicleService {
     private final BookingRepository bookingRepository;
     private final CarModelRepository carModelRepository;
 
+    /** Thêm xe cho khách hàng, ưu tiên đồng bộ thông tin từ dòng xe đã chọn. */
     @Override
     @Transactional
     public Vehicle addVehicle(User user, VehicleForm form) {
@@ -43,11 +44,13 @@ public class VehicleServiceImpl implements VehicleService {
         return vehicleRepository.save(vehicle);
     }
 
+    /** Lấy danh sách xe thuộc sở hữu của một khách hàng. */
     @Override
     public List<Vehicle> getVehicles(User user) {
         return vehicleRepository.findByUser(user);
     }
 
+    /** Xóa xe của khách hàng và gỡ liên kết xe khỏi các lịch hẹn cũ. */
     @Override
     @Transactional
     public void deleteVehicle(User user, Integer vehicleId) {

@@ -6,7 +6,6 @@ import com.hsf302.carshowroom.dto.ServiceForm;
 import com.hsf302.carshowroom.entity.*;
 import com.hsf302.carshowroom.repository.*;
 import com.hsf302.carshowroom.service.BookingService;
-import com.hsf302.carshowroom.service.FirebaseStorageService;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.ProductService;
 import com.hsf302.carshowroom.service.CategoryService;
@@ -14,8 +13,8 @@ import com.hsf302.carshowroom.service.CarModelService;
 import com.hsf302.carshowroom.service.ServiceCatalogService;
 import com.hsf302.carshowroom.service.UserService;
 import com.hsf302.carshowroom.service.AuthService;
-import com.hsf302.carshowroom.service.RefundPayoutService;
-import com.hsf302.carshowroom.service.ShippingFeeRuleManagementService;
+import com.hsf302.carshowroom.service.SystemSettingService;
+import com.hsf302.carshowroom.service.RefundService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,7 +26,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,8 +34,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Controller
@@ -56,15 +56,97 @@ public class AdminController {
     private final OrderService orderService;
     private final BookingService bookingService;
     private final ProductService productService;
-    private final CategoryService categoryService;
-    private final CarModelService carModelService;
-    private final ServiceCatalogService serviceCatalogService;
-    private final FirebaseStorageService firebaseStorageService;
     private final AuthService authService;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final SystemSettingService systemSettingService;
+    private final RefundService refundService;
     private final RefundTransactionRepository refundTransactionRepository;
-    private final RefundPayoutService refundPayoutService;
-    private final ShippingFeeRuleManagementService shippingFeeRuleManagementService;
+    private final SystemSettingAuditRepository systemSettingAuditRepository;
+    private final WorkshopClosedDateRepository workshopClosedDateRepository;
+
+    @GetMapping("/refunds")
+    public String refunds(Model model) {
+        model.addAttribute("refunds", refundTransactionRepository.findByStatusOrderByRefundDeadlineAsc(Enums.RefundStatus.REQUESTED));
+        return "admin/refunds";
+    }
+
+    @PostMapping("/refunds/{id}/complete")
+    public String completeRefund(@PathVariable Long id, @RequestParam String note, RedirectAttributes redirectAttributes) {
+        try {
+            refundService.complete(id, authService.getCurrentUser(), note);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền cho khách hàng.");
+        } catch (RuntimeException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/refunds";
+    }
+
+    @GetMapping("/settings")
+    public String settings(Model model) {
+        List<SystemSetting> settings = systemSettingService.getAll();
+        model.addAttribute("settingGroups", groupSettings(settings));
+        model.addAttribute("settingLabels", settings.stream().collect(Collectors.toMap(
+                SystemSetting::getKey, SystemSetting::getDescription)));
+        model.addAttribute("settingAudits", systemSettingAuditRepository.findTop20ByOrderByUpdatedAtDesc());
+        model.addAttribute("closedDates", workshopClosedDateRepository.findAll(Sort.by(Sort.Direction.ASC, "closedDate")));
+        return "admin/settings";
+    }
+
+    @PostMapping("/settings")
+    public String updateSettings(@RequestParam Map<String, String> values,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            systemSettingService.update(values, authService.getCurrentUser());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật cấu hình hệ thống.");
+        } catch (RuntimeException exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/settings";
+    }
+
+    @PostMapping("/settings/closed-dates")
+    public String addClosedDate(@RequestParam LocalDate closedDate,
+                                @RequestParam(required = false) String reason,
+                                RedirectAttributes redirectAttributes) {
+        if (workshopClosedDateRepository.existsByClosedDate(closedDate)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Ngày nghỉ này đã tồn tại.");
+        } else {
+            WorkshopClosedDate item = new WorkshopClosedDate();
+            item.setClosedDate(closedDate);
+            item.setReason(reason == null ? "" : reason.trim());
+            workshopClosedDateRepository.save(item);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã thêm ngày xưởng nghỉ.");
+        }
+        return "redirect:/admin/settings";
+    }
+
+    @PostMapping("/settings/closed-dates/{id}/delete")
+    public String deleteClosedDate(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        workshopClosedDateRepository.deleteById(id);
+        redirectAttributes.addFlashAttribute("successMessage", "Đã xóa ngày xưởng nghỉ.");
+        return "redirect:/admin/settings";
+    }
+
+    /** Gom các cấu hình theo nghiệp vụ để trang quản trị dễ theo dõi và chỉnh sửa. */
+    private Map<String, List<SystemSetting>> groupSettings(List<SystemSetting> settings) {
+        Map<String, SystemSetting> settingsByKey = settings.stream().collect(Collectors.toMap(
+                SystemSetting::getKey, setting -> setting));
+        Map<String, List<SystemSetting>> groups = new LinkedHashMap<>();
+        groups.put("Thời gian và năng lực xưởng", settingsFor(settingsByKey,
+                "WORK_START_TIME", "WORK_END_TIME", "LUNCH_START_TIME", "LUNCH_END_TIME",
+                "SLOT_STEP_MINUTES", "WORKSHOP_CAPACITY", "MIN_BOOKING_LEAD_MINUTES"));
+        groups.put("Thanh toán và tiền cọc", settingsFor(settingsByKey,
+                "DEPOSIT_RATE_PERCENT", "MIN_DEPOSIT_AMOUNT", "MAX_DEPOSIT_AMOUNT", "PAYMENT_HOLD_MINUTES"));
+        groups.put("Hủy lịch và hoàn tiền", settingsFor(settingsByKey,
+                "CANCELLATION_FREE_HOURS", "LATE_CANCEL_REFUND_PERCENT", "NO_SHOW_GRACE_MINUTES",
+                "NO_SHOW_REFUND_PERCENT", "REFUND_SLA_HOURS"));
+        return groups;
+    }
+
+    /** Lấy cấu hình theo đúng thứ tự hiển thị của từng nhóm. */
+    private List<SystemSetting> settingsFor(Map<String, SystemSetting> settingsByKey, String... keys) {
+        return List.of(keys).stream().map(settingsByKey::get).filter(Objects::nonNull).toList();
+    }
 
     @GetMapping
     public String dashboard(Model model) {
@@ -352,11 +434,9 @@ public class AdminController {
                                       @RequestParam BigDecimal price,
                                       @RequestParam("stockQuantity") Integer physicalStock,
                                       @RequestParam(required = false) String imageUrl,
-                                      @RequestParam(required = false) MultipartFile imageFile,
-                                       @RequestParam(required = false) List<Integer> carModelIds,
-                                       @RequestParam(defaultValue = "ACTIVE") String status,
-                                       @RequestParam(defaultValue = "false") boolean installationSupported,
-                                       RedirectAttributes redirectAttributes) {
+                                      @RequestParam(required = false) List<Integer> carModelIds,
+                                      @RequestParam(defaultValue = "ACTIVE") String status,
+                                      RedirectAttributes redirectAttributes) {
         try {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
@@ -370,7 +450,7 @@ public class AdminController {
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
-            product.setImageUrl(resolveImageUrl(imageFile, imageUrl, null));
+            product.setImageUrl(resolveImageUrl(imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
             product.setInstallationSupported(installationSupported);
             product.getCompatibleCarModels().clear();
@@ -401,11 +481,9 @@ public class AdminController {
                                     @RequestParam BigDecimal price,
                                     @RequestParam("stockQuantity") Integer physicalStock,
                                     @RequestParam(required = false) String imageUrl,
-                                    @RequestParam(required = false) MultipartFile imageFile,
-                                     @RequestParam(required = false) List<Integer> carModelIds,
-                                     @RequestParam(defaultValue = "ACTIVE") String status,
-                                     @RequestParam(defaultValue = "false") boolean installationSupported,
-                                     RedirectAttributes redirectAttributes) {
+                                    @RequestParam(required = false) List<Integer> carModelIds,
+                                    @RequestParam(defaultValue = "ACTIVE") String status,
+                                    RedirectAttributes redirectAttributes) {
         try {
             Product product = productRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
@@ -420,7 +498,7 @@ public class AdminController {
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
-            product.setImageUrl(resolveImageUrl(imageFile, imageUrl, product.getImageUrl()));
+            product.setImageUrl(resolveImageUrl(imageUrl, product.getImageUrl()));
             product.setStatus(Enums.ProductStatus.valueOf(status));
             product.setInstallationSupported(installationSupported);
             product.getCompatibleCarModels().clear();
@@ -452,9 +530,8 @@ public class AdminController {
                                 @RequestParam BigDecimal price,
                                 @RequestParam Integer physicalStock,
                                 @RequestParam(required = false) String imageUrl,
-                                @RequestParam(required = false) MultipartFile imageFile,
-                                 @RequestParam(defaultValue = "ACTIVE") String status,
-                                 RedirectAttributes redirectAttributes) {
+                                @RequestParam(defaultValue = "ACTIVE") String status,
+                                RedirectAttributes redirectAttributes) {
         try {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
@@ -465,7 +542,7 @@ public class AdminController {
             product.setDescription(description);
             product.setPrice(price);
             product.setPhysicalStock(physicalStock);
-            product.setImageUrl(resolveImageUrl(imageFile, imageUrl, null));
+            product.setImageUrl(resolveImageUrl(imageUrl, null));
             product.setStatus(Enums.ProductStatus.valueOf(status));
             productService.createProduct(product);
             redirectAttributes.addFlashAttribute("successMessage", "Thêm sản phẩm thành công!");
@@ -587,7 +664,7 @@ public class AdminController {
         model.addAttribute("booking", booking);
         model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(id));
         model.addAttribute("paymentTransactions", paymentTransactionRepository.findByBooking(booking));
-        model.addAttribute("refundTransactions", refundTransactionRepository.findByBookingOrderByCreatedAtDesc(booking));
+        model.addAttribute("refundTransactions", refundService.getBookingRefunds(booking));
         return "admin/booking/detail";
     }
 
@@ -649,9 +726,14 @@ public class AdminController {
                                         @RequestParam String note,
                                         RedirectAttributes redirectAttributes) {
         try {
-            bookingService.completeRefund(bookingId, authService.getCurrentUser(),
-                    bankName, bankBin, accountHolder, accountNumber, note);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã tạo lệnh chi PayOS cho hoàn tiền cọc.");
+            Booking booking = bookingRepository.findById(bookingId)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lịch hẹn."));
+            RefundTransaction refund = refundService.getBookingRefunds(booking).stream()
+                    .filter(item -> item.getStatus() == Enums.RefundStatus.REQUESTED)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Không có yêu cầu hoàn tiền đang chờ xử lý."));
+            refundService.complete(refund.getId(), authService.getCurrentUser(), note);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền cọc cho lịch hẹn.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -801,10 +883,7 @@ public class AdminController {
         return base + "-" + System.currentTimeMillis();
     }
 
-    private String resolveImageUrl(MultipartFile imageFile, String imageUrl, String currentImageUrl) {
-        if (imageFile != null && !imageFile.isEmpty()) {
-            return firebaseStorageService.uploadProductImage(imageFile);
-        }
+    private String resolveImageUrl(String imageUrl, String currentImageUrl) {
         if (imageUrl != null && !imageUrl.isBlank()) {
             return imageUrl.trim();
         }
@@ -869,7 +948,7 @@ public class AdminController {
         Order order = orderService.getOrderById(id);
         model.addAttribute("order", order);
         model.addAttribute("orderDetails", orderItemRepository.findByOrderId(id));
-        model.addAttribute("refundTransactions", refundTransactionRepository.findByOrderOrderByCreatedAtDesc(order));
+        model.addAttribute("refundTransactions", refundService.getOrderRefunds(orderService.getOrderById(id)));
         return "admin/order/detail";
     }
 
@@ -908,19 +987,13 @@ public class AdminController {
                                       @RequestParam String note,
                                       RedirectAttributes redirectAttributes) {
         try {
-            orderService.completeRefund(id, authService.getCurrentUser(), bankName, bankBin, accountHolder, accountNumber, note);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã tạo lệnh chi PayOS cho hoàn tiền.");
-        } catch (Exception exception) {
-            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
-        }
-        return "redirect:/admin/orders/" + id;
-    }
-
-    @PostMapping("/orders/{id}/cancellation/approve")
-    public String approveOrderCancellation(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
-        try {
-            orderService.approveCancellation(id, authService.getCurrentUser());
-            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request approved.");
+            Order order = orderService.getOrderById(id);
+            RefundTransaction refund = refundService.getOrderRefunds(order).stream()
+                    .filter(item -> item.getStatus() == Enums.RefundStatus.REQUESTED)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Không có yêu cầu hoàn tiền đang chờ xử lý."));
+            refundService.complete(refund.getId(), authService.getCurrentUser(), note);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền.");
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }

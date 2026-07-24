@@ -19,21 +19,25 @@ public class UserServiceImpl implements UserService {
     @Autowired
     BCryptPasswordEncoder passwordEncoder;
 
+    /** Lấy toàn bộ người dùng cho màn hình quản trị. */
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
+    /** Tìm kiếm và phân trang người dùng theo từ khóa, vai trò và trạng thái. */
     @Override
     public Page<User> searchUsers(String keyword, String role, String status, Pageable pageable) {
         return userRepository.searchUsers(normalize(keyword), normalize(role), normalize(status), pageable);
     }
 
+    /** Lấy người dùng theo mã, báo lỗi nếu không tìm thấy. */
     @Override
     public User getUserByid(Integer id) {
         return userRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
     }
 
+    /** Tạo tài khoản quản trị hoặc nhân viên với mật khẩu đã mã hóa. */
     @Override
     public User createUser(String email, String password, String fullName, String phone, String address, String role) {
         if ( userRepository.findByEmail(email) != null ) throw new RuntimeException("Email này đã được đăng ký.");
@@ -49,6 +53,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
+    /** Cập nhật thông tin hồ sơ và vai trò của người dùng. */
     @Override
     public User updateUser(Integer id, String fullName, String phone, String address, String role) {
         User user = getUserByid(id);
@@ -59,6 +64,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
+    /** Chuyển đổi trạng thái hoạt động/khóa của người dùng. */
     @Override
     public void changeStatus(Integer id) {
         User user = getUserByid(id);
@@ -66,6 +72,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    /** Chuẩn hóa chuỗi tìm kiếm; đổi chuỗi rỗng thành null để không áp dụng bộ lọc. */
     private String normalize(String value) {
         if (value == null || value.trim().isEmpty()) {
             return null;
