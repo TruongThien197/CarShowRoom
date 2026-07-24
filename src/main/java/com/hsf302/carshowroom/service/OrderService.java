@@ -6,6 +6,7 @@ import com.hsf302.carshowroom.entity.Order;
 import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.User;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface OrderService {
@@ -30,4 +31,5 @@ public interface OrderService {
                         String accountHolder, String accountNumber, String note);
 
     CheckoutResult choosePaymentMethod(Integer id, User user, String paymentMethod);
+    BigDecimal calculateTotalAmount(Order order);
 }

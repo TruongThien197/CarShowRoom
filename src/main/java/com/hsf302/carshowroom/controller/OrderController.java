@@ -7,7 +7,6 @@ import com.hsf302.carshowroom.dto.CheckoutForm;
 import com.hsf302.carshowroom.dto.CheckoutResult;
 import com.hsf302.carshowroom.entity.CartItem;
 import com.hsf302.carshowroom.entity.Order;
-import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.ShippingFeeRuleRepository;
@@ -28,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.time.LocalTime;
@@ -43,6 +43,7 @@ public class OrderController {
     private final OrderItemRepository orderItemRepository;
     private final VehicleRepository vehicleRepository;
     private final ShippingFeeRuleRepository shippingFeeRuleRepository;
+
 
     @GetMapping("/checkout")
     public String checkout(Model model) {
@@ -97,6 +98,7 @@ public class OrderController {
                         .map(item -> item.getProductNameSnapshot() + " x" + item.getQuantity())
                         .collect(Collectors.joining(", "))
         ));
+
         model.addAttribute("orders", orders);
         model.addAttribute("orderItems", orderItems);
         return "order/history";
@@ -109,6 +111,8 @@ public class OrderController {
             return "redirect:/auth/login";
         }
         Order order = orderService.getOrderForUser(id, user);
+        BigDecimal totalAmount = orderService.calculateTotalAmount(order);
+
         model.addAttribute("order", order);
         model.addAttribute("orderItems", orderItemRepository.findByOrderId(id));
         model.addAttribute("canCancel", order.getOrderStatus() != OrderStatus.SHIPPING
@@ -118,6 +122,7 @@ public class OrderController {
         model.addAttribute("canEditAddress", order.getOrderType() == com.hsf302.carshowroom.common.Enums.OrderType.SHIPPING
                 && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT || order.getOrderStatus() == OrderStatus.PROCESSING));
         model.addAttribute("canRetryPayment", canRetryPayment(order));
+        model.addAttribute("totalAmount", totalAmount);
         return "order/detail";
     }
 
@@ -190,9 +195,12 @@ public class OrderController {
     }
 
     private void populateCheckoutModel(Model model, User user, List<CartItem> cartItems, CheckoutForm form) {
+
         model.addAttribute("user", user);
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("subtotal", cartService.calculateSubtotal(cartItems));
+        model.addAttribute("totalAmount", cartService.calculateTotalAmount(cartItems, BigDecimal.ZERO));
+
         model.addAttribute("checkoutForm", form);
         boolean needsWorkshop = cartItems.stream()
                 .anyMatch(item -> FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));

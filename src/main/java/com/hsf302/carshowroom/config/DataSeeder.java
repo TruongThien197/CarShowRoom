@@ -25,6 +25,8 @@ public class DataSeeder implements CommandLineRunner {
     private final ServiceRepository serviceRepository;
     private final VehicleRepository vehicleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final ShippingFeeRuleRepository shippingFeeRuleRepository;
+
 
     @Override
     public void run(String... args) {
@@ -34,6 +36,7 @@ public class DataSeeder implements CommandLineRunner {
         seedDemoOrders();
         seedServices();
         seedCustomerVehicle();
+//        seedShippingFeeRules();
     }
 
     private void seedUsers() {
@@ -59,14 +62,14 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private List<Category> seedCategories() {
-        createCategoryIfMissing("Engine", "Turbochargers, air filters, spark plugs, exhausts, and engine performance parts.");
-        createCategoryIfMissing("Brakes", "Brake pads, rotors, calipers, and brake upgrade kits.");
-        createCategoryIfMissing("Tires & Wheels", "Performance tires, forged rims, and alignment accessories.");
-        createCategoryIfMissing("Suspension", "Coilovers, springs, sway bars, and parts to improve handling stability.");
-        createCategoryIfMissing("Oil & Fluids", "Engine oil, coolant, brake fluid, and maintenance fluids.");
-        createCategoryIfMissing("Electrical & Sensors", "Sensors, batteries, lights, and vehicle electrical accessories.");
-        createCategoryIfMissing("Interior", "Cabin accessories, floor mats, seats, and trim details.");
-        createCategoryIfMissing("Car Care", "Wash solutions, protective coatings, towels, and detailing tools.");
+        createCategoryIfMissing("Động cơ", "Bộ tăng áp, lọc gió, bugi, hệ thống xả và các phụ tùng nâng cao hiệu suất động cơ.");
+        createCategoryIfMissing("Phanh", "Má phanh, đĩa phanh, cùm phanh và bộ nâng cấp hệ thống phanh.");
+        createCategoryIfMissing("Lốp & Mâm", "Lốp hiệu suất cao, mâm xe và các phụ kiện cân chỉnh bánh xe.");
+        createCategoryIfMissing("Hệ thống treo", "Coilover, lò xo, thanh cân bằng và các bộ phận cải thiện khả năng vận hành.");
+        createCategoryIfMissing("Dầu nhớt & Dung dịch", "Dầu động cơ, nước làm mát, dầu phanh và các dung dịch bảo dưỡng xe.");
+        createCategoryIfMissing("Điện & Cảm biến", "Cảm biến, ắc quy, đèn chiếu sáng và các phụ kiện điện ô tô.");
+        createCategoryIfMissing("Nội thất", "Phụ kiện khoang lái, thảm sàn, ghế ngồi và các chi tiết trang trí nội thất.");
+        createCategoryIfMissing("Chăm sóc xe", "Dung dịch rửa xe, lớp phủ bảo vệ, khăn lau và dụng cụ chăm sóc xe.");
         return categoryRepository.findAll();
     }
 
@@ -87,32 +90,69 @@ public class DataSeeder implements CommandLineRunner {
         if (categories.isEmpty()) {
             return;
         }
-        Category engine = findCategory(categories, "Engine");
-        Category brakes = findCategory(categories, "Brakes");
-        Category wheels = findCategory(categories, "Tires & Wheels");
-        Category suspension = findCategory(categories, "Suspension");
-        Category fluids = findCategory(categories, "Oil & Fluids");
 
-        seedProductIfMissing(createProduct(engine, "Hybrid Series Turbocharger Kit","SKU001",
-                "A direct-fit upgrade turbo kit built for high-output engine setups.",
-                "10000", 8, "/images/turbocharger.jpg"));
-        seedProductIfMissing(createProduct(brakes, "Stage 2 Performance Brake Kit","SKU002",
-                "A street and track brake kit featuring upgraded rotors and pads.",
-                "12000", 12, "/images/suspension-service.jpg"));
-        seedProductIfMissing(createProduct(wheels, "Forged Alloy Rims","SKU003",
-                "Lightweight forged rims finished in satin black.",
-                "14000", 6, "/images/forged-rims.jpg"));
-        seedProductIfMissing(createProduct(wheels, "Track-Ready Tire Set","SKU004",
-                "High-grip tires built for daily-driven and weekend performance cars.",
-                "16000", 16, "/images/track-tire.jpg"));
-        seedProductIfMissing(createProduct(suspension, "Track-Spec Coilover Kit","SKU005",
-                "An adjustable coilover kit that improves handling stability and driving feel.",
-                "18000", 10, "/images/suspension-service.jpg"));
-        seedProductIfMissing(createProduct(fluids, "0W-30 Full Synthetic Oil","SKU006",
-                "Premium engine oil formulated for modern turbocharged engines.",
-                "20000", 50, "/product-images/SKU006.svg"));
+        Category engine = findCategory(categories, "Động cơ");
+        Category brakes = findCategory(categories, "Phanh");
+        Category wheels = findCategory(categories, "Lốp & Mâm");
+        Category suspension = findCategory(categories, "Hệ thống treo");
+        Category fluids = findCategory(categories, "Dầu nhớt & Dung dịch");
+
+
+        seedProductIfMissing(createProduct(
+                engine,
+                "Bộ Turbo Hybrid Series",
+                "SKU001",
+                "Bộ tăng áp lắp đặt trực tiếp, giúp nâng cao hiệu suất động cơ.",
+                "10000",
+                8,
+                "/images/turbocharger.jpg"));
+
+        seedProductIfMissing(createProduct(
+                brakes,
+                "Bộ Phanh Hiệu Suất Stage 2",
+                "SKU002",
+                "Bộ phanh nâng cấp gồm đĩa phanh và má phanh dành cho cả đường phố và đường đua.",
+                "12000",
+                12,
+                "/images/brake_discs_phanh.jpg"));
+
+        seedProductIfMissing(createProduct(
+                wheels,
+                "Mâm Hợp Kim Rèn",
+                "SKU003",
+                "Mâm xe hợp kim rèn trọng lượng nhẹ với lớp sơn đen nhám.",
+                "14000",
+                6,
+                "/images/mam_hop_kim.jpg"));
+
+        seedProductIfMissing(createProduct(
+                wheels,
+                "Bộ Lốp Hiệu Suất Cao",
+                "SKU004",
+                "Bộ lốp bám đường tốt, phù hợp cho xe sử dụng hằng ngày và xe hiệu suất.",
+                "16000",
+                16,
+                "/images/wheel.jpg"));
+
+        seedProductIfMissing(createProduct(
+                suspension,
+                "Bộ Coilover Track-Spec",
+                "SKU005",
+                "Bộ giảm xóc có thể điều chỉnh, cải thiện khả năng vận hành và độ ổn định.",
+                "18000",
+                10,
+                "/images/SKU005.jpg"));
+
+        seedProductIfMissing(createProduct(
+                fluids,
+                "Dầu Động Cơ Tổng Hợp 0W-30",
+                "SKU006",
+                "Dầu nhớt tổng hợp cao cấp dành cho động cơ tăng áp hiện đại.",
+                "20000",
+                50,
+                "/product-images/auth-garage.jpg"));
+
     }
-
     private void seedProductIfMissing(Product product) {
         if (productRepository.findBySkuIgnoreCase(product.getSku()) == null) {
             productRepository.save(product);
@@ -213,4 +253,45 @@ public class DataSeeder implements CommandLineRunner {
         vehicle.setLicensePlate("DEMO-302");
         vehicleRepository.save(vehicle);
     }
+
+//    private void saveShippingRule(String province, String district, int fee) {
+//        ShippingFeeRule rule = new ShippingFeeRule();
+//
+//        rule.setProvince(province);
+//        rule.setDistrict(district);
+//        rule.setFee(BigDecimal.valueOf(fee));
+//        rule.setActive(true);
+//
+//        shippingFeeRuleRepository.save(rule);
+//    }
+
+//    private void seedShippingFeeRules() {
+//        if (shippingFeeRuleRepository.count() > 0) {
+//            return;
+//        }
+//
+//        // Hà Nội
+//        saveShippingRule("Hà Nội", "Ba Đình", 30000);
+//        saveShippingRule("Hà Nội", "Cầu Giấy", 30000);
+//        saveShippingRule("Hà Nội", "Đống Đa", 35000);
+//
+//        // TP Hồ Chí Minh
+//        saveShippingRule("TP. Hồ Chí Minh", "Quận 1", 30000);
+//        saveShippingRule("TP. Hồ Chí Minh", "Quận 3", 30000);
+//        saveShippingRule("TP. Hồ Chí Minh", "Quận 7", 35000);
+//        saveShippingRule("TP. Hồ Chí Minh", "Thủ Đức", 40000);
+//
+//        // Đà Nẵng
+//        saveShippingRule("Đà Nẵng", "Hải Châu", 30000);
+//        saveShippingRule("Đà Nẵng", "Thanh Khê", 30000);
+//        saveShippingRule("Đà Nẵng", "Sơn Trà", 35000);
+//
+//        // Cần Thơ
+//        saveShippingRule("Cần Thơ", "Ninh Kiều", 35000);
+//        saveShippingRule("Cần Thơ", "Bình Thủy", 35000);
+//
+//        // Hải Phòng
+//        saveShippingRule("Hải Phòng", "Hồng Bàng", 35000);
+//        saveShippingRule("Hải Phòng", "Ngô Quyền", 35000);
+//    }
 }

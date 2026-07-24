@@ -304,6 +304,22 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public BigDecimal calculateTotalAmount(Order order) {
+        System.out.println("ORDER ID: " + order.getId());
+        System.out.println("PRODUCT: " + order.getProductTotal());
+        System.out.println("SHIP: " + order.getShippingFee());
+        BigDecimal productTotal = order.getProductTotal() != null
+                ? order.getProductTotal()
+                : BigDecimal.ZERO;
+
+        BigDecimal shippingFee = order.getShippingFee() != null
+                ? order.getShippingFee()
+                : BigDecimal.ZERO;
+
+        return productTotal.add(shippingFee);
+    }
+
+    @Override
     @Transactional
     public void updateOrderStatus(Integer id, String status) {
         Order order = getOrderById(id);
@@ -524,4 +540,6 @@ public class OrderServiceImpl implements OrderService {
                 && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT
                 || order.getOrderStatus() == OrderStatus.EXPIRED_PAYMENT);
     }
+
+
 }
