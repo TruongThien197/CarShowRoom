@@ -170,13 +170,24 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
                 && booking.getRefundStatus() == RefundStatus.NONE) {
             booking.setRefundStatus(RefundStatus.REQUESTED);
         }
-        booking.setBookingStatus(BookingStatus.CANCELED);
         if (booking.getRemainingPaymentStatus() != PaymentStatus.PAID) booking.setRemainingPaymentStatus(PaymentStatus.CANCELED);
-        booking.setRefundStatus(booking.getPaymentStatus() == PaymentStatus.PAID ? RefundStatus.APPROVED : RefundStatus.NONE);
+        bookingRepository.save(booking);
+    }
+
+    /** Nhân viên duyệt yêu cầu hủy lịch đã được khách gửi và cho phép xử lý hoàn cọc. */
+    @Override
+    @Transactional
+    public void approveCancellation(Integer bookingId, User processedBy, String assessmentNote) {
+        Booking booking = getBookingDetail(bookingId);
+        if (booking.getRefundStatus() != RefundStatus.REQUESTED) {
+            throw new IllegalStateException("Lịch hẹn không có yêu cầu hủy đang chờ duyệt.");
+        }
+        booking.setRefundStatus(booking.getPaymentStatus() == PaymentStatus.PAID
+                ? RefundStatus.APPROVED : RefundStatus.NONE);
         booking.setCancellationProcessedBy(processedBy);
         booking.setCancellationProcessedAt(LocalDateTime.now());
         booking.setCancellationDecisionNote(assessmentNote == null || assessmentNote.isBlank()
-                ? "Đã duyệt do hủy trước hạn 24 giờ." : assessmentNote.trim());
+                ? "Đã duyệt yêu cầu hủy lịch." : assessmentNote.trim());
         bookingRepository.save(booking);
     }
 
@@ -266,6 +277,21 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     private boolean samePerson(String first, String second) {
         return first.trim().replaceAll("\\s+", " ").equalsIgnoreCase(
                 second == null ? "" : second.trim().replaceAll("\\s+", " "));
+    }
+
+    /** Đồng bộ trạng thái hoàn tiền của lịch hẹn theo kết quả payout từ cổng thanh toán. */
+    private void applyBookingRefundResult(Booking booking, RefundTransaction refundTransaction) {
+        RefundPayoutStatus payoutStatus = refundTransaction.getPayoutStatus();
+        if (payoutStatus == RefundPayoutStatus.SUCCEEDED) {
+            booking.setRefundStatus(RefundStatus.COMPLETED);
+            booking.setPaymentStatus(PaymentStatus.REFUNDED);
+            booking.setRefundedAt(refundTransaction.getRefundedAt());
+        } else if (payoutStatus == RefundPayoutStatus.FAILED) {
+            booking.setRefundStatus(RefundStatus.FAILED);
+            booking.setRefundNote(refundTransaction.getErrorMessage());
+        } else {
+            booking.setRefundStatus(RefundStatus.PROCESSING);
+        }
     }
 
     /** Tính số tiền cọc được hoàn khi hủy, dựa trên thời điểm hủy và chính sách cấu hình. */

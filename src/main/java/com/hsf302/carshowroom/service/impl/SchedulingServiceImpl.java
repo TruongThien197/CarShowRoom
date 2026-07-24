@@ -21,6 +21,10 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class SchedulingServiceImpl implements SchedulingService {
+    private static final int INSTALLATION_DURATION_MINUTES = 45;
+    private static final List<LocalTime> INSTALLATION_SLOT_STARTS = List.of(
+            LocalTime.of(8, 0), LocalTime.of(10, 0), LocalTime.of(13, 0), LocalTime.of(15, 0));
+
     private final BookingRepository bookingRepository;
     private final ServiceRepository serviceRepository;
     private final SystemSettingService settingService;

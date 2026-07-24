@@ -24,6 +24,7 @@ import com.hsf302.carshowroom.repository.CartItemRepository;
 import com.hsf302.carshowroom.repository.InventoryReservationRepository;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.OrderRepository;
+import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
 import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.repository.UserRepository;
@@ -73,11 +74,15 @@ class CriticalWorkflowTests {
     @Mock private BookingRepository bookingRepository;
     @Mock private BookingServiceRepository bookingServiceRepository;
     @Mock private InventoryReservationService inventoryReservationService;
+    @Mock private CartInventoryValidationService cartInventoryValidationService;
     @Mock private SchedulingService schedulingService;
     @Mock private PaymentService paymentService;
     @Mock private OrderWorkflowService orderWorkflowService;
     @Mock private RefundPayoutService refundPayoutService;
     @Mock private ShippingFeeService shippingFeeService;
+    @Mock private PaymentTransactionRepository paymentTransactionRepository;
+    @Mock private RefundService refundService;
+    @Mock private SystemSettingService settingService;
     @InjectMocks private OrderServiceImpl orderService;
     @InjectMocks private CartServiceImpl cartService;
     @InjectMocks private InventoryReservationServiceImpl inventoryReservationServiceImpl;
@@ -143,7 +148,7 @@ class CriticalWorkflowTests {
     }
 
     @Test
-    void workshopCheckoutCreatesInstallationBookingWithoutARepairServiceOrDeposit() {
+    void workshopCheckoutCreatesInstallationBookingWithFixedServiceAndDeposit() {
         User user = new User();
         user.setId(1);
         Vehicle vehicle = new Vehicle();
@@ -165,9 +170,22 @@ class CriticalWorkflowTests {
         form.setBookingDate(LocalDate.now().plusDays(1));
         form.setStartTime(LocalTime.of(8, 0));
 
+        com.hsf302.carshowroom.entity.Service installationService = new com.hsf302.carshowroom.entity.Service();
+        installationService.setServiceName("Thay thế phụ tùng");
+        installationService.setStatus(com.hsf302.carshowroom.common.Enums.ServiceStatus.ACTIVE);
+        installationService.setDurationMinutes(120);
+        installationService.setMinPrice(BigDecimal.valueOf(50_000));
+        installationService.setMaxPrice(BigDecimal.valueOf(150_000));
+
         when(cartItemRepository.findByUser(user)).thenReturn(List.of(cartItem));
         when(vehicleRepository.findById(3)).thenReturn(Optional.of(vehicle));
         when(productRepository.findById(8)).thenReturn(Optional.of(product));
+        when(serviceRepository.findFirstByServiceNameIgnoreCase("Thay thế phụ tùng"))
+                .thenReturn(Optional.of(installationService));
+        when(settingService.getInt(com.hsf302.carshowroom.service.impl.SystemSettingServiceImpl.DEPOSIT_RATE_PERCENT)).thenReturn(20);
+        when(settingService.getInt(com.hsf302.carshowroom.service.impl.SystemSettingServiceImpl.MIN_DEPOSIT_AMOUNT)).thenReturn(2_000);
+        when(settingService.getInt(com.hsf302.carshowroom.service.impl.SystemSettingServiceImpl.MAX_DEPOSIT_AMOUNT)).thenReturn(10_000);
+        when(settingService.getInt(com.hsf302.carshowroom.service.impl.SystemSettingServiceImpl.PAYMENT_HOLD_MINUTES)).thenReturn(15);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
             Order order = invocation.getArgument(0);
             order.setId(70);
@@ -184,9 +202,10 @@ class CriticalWorkflowTests {
         verify(bookingRepository).save(bookingCaptor.capture());
         Booking booking = bookingCaptor.getValue();
         assertEquals(BookingType.PART_INSTALLATION, booking.getBookingType());
-        assertEquals(BigDecimal.ZERO, booking.getDepositAmount());
+        assertEquals(BigDecimal.valueOf(10_000), booking.getDepositAmount());
         assertEquals(120, booking.getTotalDurationMinutes());
-        verifyNoInteractions(serviceRepository, bookingServiceRepository);
+        verify(serviceRepository).findFirstByServiceNameIgnoreCase("Thay thế phụ tùng");
+        verify(bookingServiceRepository).save(any(com.hsf302.carshowroom.entity.BookingService.class));
     }
 
     @Test

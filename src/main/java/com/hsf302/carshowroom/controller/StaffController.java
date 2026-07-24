@@ -84,7 +84,7 @@ public class StaffController {
         model.addAttribute("booking", booking);
         model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(id));
         model.addAttribute("paymentTransactions", paymentTransactionRepository.findByBooking(booking));
-        model.addAttribute("refundTransactions", refundTransactionRepository.findByBookingOrderByCreatedAtDesc(booking));
+        model.addAttribute("refundTransactions", refundTransactionRepository.findByBookingOrderByRequestedAtDesc(booking));
         return "staff/booking-detail";
     }
 
@@ -123,7 +123,7 @@ public class StaffController {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng."));
         model.addAttribute("order", order);
         model.addAttribute("orderDetails", orderItemRepository.findByOrderId(id));
-        model.addAttribute("refundTransactions", refundTransactionRepository.findByOrderOrderByCreatedAtDesc(order));
+        model.addAttribute("refundTransactions", refundTransactionRepository.findByOrderOrderByRequestedAtDesc(order));
         return "staff/order-detail";
     }
 

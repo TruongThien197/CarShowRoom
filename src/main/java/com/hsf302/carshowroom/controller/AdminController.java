@@ -13,8 +13,10 @@ import com.hsf302.carshowroom.service.CarModelService;
 import com.hsf302.carshowroom.service.ServiceCatalogService;
 import com.hsf302.carshowroom.service.UserService;
 import com.hsf302.carshowroom.service.AuthService;
+import com.hsf302.carshowroom.service.RefundPayoutService;
 import com.hsf302.carshowroom.service.SystemSettingService;
 import com.hsf302.carshowroom.service.RefundService;
+import com.hsf302.carshowroom.service.ShippingFeeRuleManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -56,6 +58,9 @@ public class AdminController {
     private final OrderService orderService;
     private final BookingService bookingService;
     private final ProductService productService;
+    private final CategoryService categoryService;
+    private final CarModelService carModelService;
+    private final ServiceCatalogService serviceCatalogService;
     private final AuthService authService;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final SystemSettingService systemSettingService;
@@ -63,6 +68,8 @@ public class AdminController {
     private final RefundTransactionRepository refundTransactionRepository;
     private final SystemSettingAuditRepository systemSettingAuditRepository;
     private final WorkshopClosedDateRepository workshopClosedDateRepository;
+    private final RefundPayoutService refundPayoutService;
+    private final ShippingFeeRuleManagementService shippingFeeRuleManagementService;
 
     @GetMapping("/refunds")
     public String refunds(Model model) {
@@ -435,6 +442,7 @@ public class AdminController {
                                       @RequestParam("stockQuantity") Integer physicalStock,
                                       @RequestParam(required = false) String imageUrl,
                                       @RequestParam(required = false) List<Integer> carModelIds,
+                                      @RequestParam(defaultValue = "false") boolean installationSupported,
                                       @RequestParam(defaultValue = "ACTIVE") String status,
                                       RedirectAttributes redirectAttributes) {
         try {
@@ -482,6 +490,7 @@ public class AdminController {
                                     @RequestParam("stockQuantity") Integer physicalStock,
                                     @RequestParam(required = false) String imageUrl,
                                     @RequestParam(required = false) List<Integer> carModelIds,
+                                    @RequestParam(defaultValue = "false") boolean installationSupported,
                                     @RequestParam(defaultValue = "ACTIVE") String status,
                                     RedirectAttributes redirectAttributes) {
         try {
