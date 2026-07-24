@@ -21,4 +21,6 @@ public interface CartService {
     void updateFulfillmentType(User user, Integer itemId, String fulfillmentType);
     void updateQuantity(User user, Integer itemId, Integer quantity);
     void removeItem(User user, Integer itemId);
+    BigDecimal calculateTotalAmount(List<CartItem> items, BigDecimal shippingFee);
 }
+

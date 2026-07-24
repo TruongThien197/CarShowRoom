@@ -31,7 +31,13 @@
                     <td th:text="${order.user.fullName}">Khách hàng</td>
                     <td th:text="${orderItems[order.id]}">Sản phẩm</td>
                     <td><span class="gs-badge" th:classappend="${order.orderStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${order.orderStatus.name() == 'CANCELED' or order.orderStatus.name() == 'EXPIRED_PAYMENT'} ? 'gs-badge--danger' : (${order.orderStatus.name() == 'PROCESSING' or order.orderStatus.name() == 'SHIPPING'} ? 'gs-badge--info' : 'gs-badge--neutral'))" th:text="${order.orderStatus}">Chờ xử lý</span></td>
-                    <td class="text-end fw-bold gs-mono" th:text="${#numbers.formatDecimal(order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
+                    <td class="text-end fw-bold gs-mono" th:text="${#numbers.formatDecimal(order.productTotal+order.shippingFee, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
+<!--                    <td class="text-end fw-bold gs-mono"-->
+<!--                        th:text="${orderTotals != null and orderTotals[order.id] != null-->
+<!--        ? #numbers.formatDecimal(orderTotals[order.id], 0, 'COMMA', 0, 'POINT') + ' VNĐ'-->
+<!--        : '0 VNĐ'}">-->
+<!--                        0 VNĐ-->
+<!--                    </td>-->
                     <td class="text-end"><a class="btn btn-outline-primary btn-sm" th:href="@{/staff/orders/{id}(id=${order.id})}"><i class="bi bi-eye me-1"></i>Chi tiết</a></td>
                 </tr>
                 </tbody>

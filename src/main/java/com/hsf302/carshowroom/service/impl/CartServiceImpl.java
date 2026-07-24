@@ -166,6 +166,17 @@ public class CartServiceImpl implements CartService {
 
     /** Tính tổng tiền phụ tùng của các dòng giỏ hàng. */
     @Override
+    public BigDecimal calculateTotalAmount(List<CartItem> items, BigDecimal shippingFee) {
+        BigDecimal subtotal = calculateSubtotal(items);
+
+        if (shippingFee == null) {
+            shippingFee = BigDecimal.ZERO;
+        }
+
+        return subtotal.add(shippingFee);
+    }
+
+    @Override
     public BigDecimal calculateSubtotal(List<CartItem> items) {
         if (items == null || items.isEmpty()) {
             return BigDecimal.ZERO;

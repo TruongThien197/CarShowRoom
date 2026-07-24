@@ -114,9 +114,9 @@
 
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mt-4" th:if="${userPage != null}">
                 <div class="text-secondary small">
-                    Showing up to 10 users per page, <span th:text="${userPage.totalElements}">0</span> users found
+                    Hiển thị tối đa 10 người dùng mỗi trang, <span th:text="${userPage.totalElements}">0</span> người dùng tìm thấy
                     <span th:if="${userPage.totalPages > 0}">
-                        &middot; Page <span th:text="${userPage.number + 1}">1</span> of
+                        &middot; Page <span th:text="${userPage.number + 1}">1</span> của
                         <span th:text="${userPage.totalPages}">1</span>
                     </span>
                 </div>
@@ -124,7 +124,7 @@
                     <ul class="pagination mb-0">
                         <li class="page-item" th:classappend="${userPage.first} ? 'disabled'">
                             <a class="page-link" th:href="@{/admin/users(keyword=${keyword}, role=${selectedRole}, status=${selectedStatus}, page=${userPage.number - 1})}">
-                                Previous
+                                Trước
                             </a>
                         </li>
                         <li class="page-item" th:each="pageNumber : ${#numbers.sequence(0, userPage.totalPages - 1)}" th:classappend="${pageNumber == userPage.number} ? 'active'">
@@ -132,7 +132,7 @@
                         </li>
                         <li class="page-item" th:classappend="${userPage.last} ? 'disabled'">
                             <a class="page-link" th:href="@{/admin/users(keyword=${keyword}, role=${selectedRole}, status=${selectedStatus}, page=${userPage.number + 1})}">
-                                Next
+                                Tiếp
                             </a>
                         </li>
                     </ul>
