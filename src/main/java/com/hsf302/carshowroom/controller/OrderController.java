@@ -7,7 +7,6 @@ import com.hsf302.carshowroom.dto.CheckoutForm;
 import com.hsf302.carshowroom.dto.CheckoutResult;
 import com.hsf302.carshowroom.entity.CartItem;
 import com.hsf302.carshowroom.entity.Order;
-import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.exception.InsufficientStockException;
 import com.hsf302.carshowroom.exception.MixedFulfillmentException;
@@ -54,6 +53,7 @@ public class OrderController {
     private final ServiceRepository serviceRepository;
     private final RefundService refundService;
     private final SystemSettingService settingService;
+
 
     @GetMapping("/checkout")
     public String checkout(Model model) {
@@ -117,6 +117,7 @@ public class OrderController {
                         .map(item -> item.getProductNameSnapshot() + " x" + item.getQuantity())
                         .collect(Collectors.joining(", "))
         ));
+
         model.addAttribute("orders", orders);
         model.addAttribute("orderItems", orderItems);
         return "order/history";
@@ -129,6 +130,8 @@ public class OrderController {
             return "redirect:/auth/login";
         }
         Order order = orderService.getOrderForUser(id, user);
+        BigDecimal totalAmount = orderService.calculateTotalAmount(order);
+
         model.addAttribute("order", order);
         model.addAttribute("orderItems", orderItemRepository.findByOrderId(id));
         model.addAttribute("refundTransactions", refundService.getOrderRefunds(order));
@@ -139,6 +142,7 @@ public class OrderController {
         model.addAttribute("canEditAddress", order.getOrderType() == com.hsf302.carshowroom.common.Enums.OrderType.SHIPPING
                 && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT || order.getOrderStatus() == OrderStatus.PROCESSING));
         model.addAttribute("canRetryPayment", canRetryPayment(order));
+        model.addAttribute("totalAmount", totalAmount);
         return "order/detail";
     }
 
@@ -212,9 +216,12 @@ public class OrderController {
 
     /** Chuẩn bị dữ liệu hiển thị cho checkout, gồm tiền cọc và khoảng chi phí lắp đặt. */
     private void populateCheckoutModel(Model model, User user, List<CartItem> cartItems, CheckoutForm form) {
+
         model.addAttribute("user", user);
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("subtotal", cartService.calculateSubtotal(cartItems));
+        model.addAttribute("totalAmount", cartService.calculateTotalAmount(cartItems, BigDecimal.ZERO));
+
         model.addAttribute("checkoutForm", form);
         boolean needsWorkshop = cartItems.stream()
                 .anyMatch(item -> FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
