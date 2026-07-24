@@ -9,10 +9,12 @@ import com.hsf302.carshowroom.repository.CarModelRepository;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.OrderRepository;
 import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
+import com.hsf302.carshowroom.repository.RefundTransactionRepository;
 import com.hsf302.carshowroom.service.BookingService;
 import com.hsf302.carshowroom.service.OrderService;
 import com.hsf302.carshowroom.service.ProductService;
 import com.hsf302.carshowroom.service.AuthService;
+import com.hsf302.carshowroom.service.RefundPayoutService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
@@ -41,11 +43,13 @@ public class StaffController {
     private final BookingRepository bookingRepository;
     private final BookingServiceRepository bookingServiceRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final RefundTransactionRepository refundTransactionRepository;
     private final CarModelRepository carModelRepository;
     private final OrderService orderService;
     private final BookingService bookingService;
     private final ProductService productService;
     private final AuthService authService;
+    private final RefundPayoutService refundPayoutService;
 
     @GetMapping
     public String dashboard(Model model) {
@@ -80,6 +84,7 @@ public class StaffController {
         model.addAttribute("booking", booking);
         model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(id));
         model.addAttribute("paymentTransactions", paymentTransactionRepository.findByBooking(booking));
+        model.addAttribute("refundTransactions", refundTransactionRepository.findByBookingOrderByCreatedAtDesc(booking));
         return "staff/booking-detail";
     }
 
@@ -118,6 +123,7 @@ public class StaffController {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng."));
         model.addAttribute("order", order);
         model.addAttribute("orderDetails", orderItemRepository.findByOrderId(id));
+        model.addAttribute("refundTransactions", refundTransactionRepository.findByOrderOrderByCreatedAtDesc(order));
         return "staff/order-detail";
     }
 
@@ -187,6 +193,19 @@ public class StaffController {
         return "redirect:/staff/bookings/" + bookingId;
     }
 
+    @PostMapping("/bookings/labor-collection")
+    public String recordLaborCollection(@RequestParam Integer bookingId,
+                                        @RequestParam BigDecimal laborFee,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            bookingService.recordLaborCollection(bookingId, authService.getCurrentUser(), laborFee);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã ghi nhận tiền công lắp đặt đã thu tại xưởng.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/staff/bookings/" + bookingId;
+    }
+
     @PostMapping("/bookings/no-show")
     public String markBookingNoShow(@RequestParam Integer bookingId, RedirectAttributes redirectAttributes) {
         try {
@@ -201,14 +220,15 @@ public class StaffController {
     @PostMapping("/bookings/refund")
     public String completeBookingRefund(@RequestParam Integer bookingId,
                                         @RequestParam String bankName,
+                                        @RequestParam String bankBin,
                                         @RequestParam String accountHolder,
                                         @RequestParam String accountNumber,
                                         @RequestParam String note,
                                         RedirectAttributes redirectAttributes) {
         try {
             bookingService.completeRefund(bookingId, authService.getCurrentUser(),
-                    bankName, accountHolder, accountNumber, note);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền cọc cho lịch hẹn.");
+                    bankName, bankBin, accountHolder, accountNumber, note);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã tạo lệnh chi PayOS cho hoàn tiền cọc.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -217,15 +237,64 @@ public class StaffController {
 
     @PostMapping("/orders/refund")
     public String completeRefund(@RequestParam Integer orderId,
+                                 @RequestParam String bankName,
+                                 @RequestParam String bankBin,
+                                 @RequestParam String accountHolder,
+                                 @RequestParam String accountNumber,
                                  @RequestParam String note,
                                  RedirectAttributes redirectAttributes) {
         try {
-            orderService.completeRefund(orderId, authService.getCurrentUser(), note);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền cho đơn hàng.");
+            orderService.completeRefund(orderId, authService.getCurrentUser(), bankName, bankBin, accountHolder, accountNumber, note);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã tạo lệnh chi PayOS cho hoàn tiền.");
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
         return "redirect:/staff/orders/" + orderId;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/approve")
+    public String approveOrderCancellation(@PathVariable Integer id, RedirectAttributes attributes) {
+        try { orderService.approveCancellation(id, authService.getCurrentUser()); attributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu hủy đơn."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/orders/" + id;
+    }
+
+    @PostMapping("/orders/{id}/cancellation/reject")
+    public String rejectOrderCancellation(@PathVariable Integer id, @RequestParam String reason, RedirectAttributes attributes) {
+        try { orderService.rejectCancellation(id, authService.getCurrentUser(), reason); attributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu hủy đơn."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/orders/" + id;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/approve")
+    public String approveBookingCancellation(@PathVariable Integer id, @RequestParam(required = false) String assessmentNote, RedirectAttributes attributes) {
+        try { bookingService.approveCancellation(id, authService.getCurrentUser(), assessmentNote); attributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu hủy lịch."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/bookings/" + id;
+    }
+
+    @PostMapping("/bookings/{id}/cancellation/reject")
+    public String rejectBookingCancellation(@PathVariable Integer id, @RequestParam String reason, RedirectAttributes attributes) {
+        try { bookingService.rejectCancellation(id, authService.getCurrentUser(), reason); attributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu hủy lịch."); }
+        catch (Exception exception) { attributes.addFlashAttribute("errorMessage", exception.getMessage()); }
+        return "redirect:/staff/bookings/" + id;
+    }
+
+    @PostMapping("/refunds/{id}/sync")
+    public String syncRefund(@PathVariable Long id,
+                             @RequestParam String returnUrl,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            refundPayoutService.syncRefundTransaction(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã đồng bộ trạng thái lệnh chi PayOS.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:" + safeLocalReturnUrl(returnUrl);
+    }
+
+    private String safeLocalReturnUrl(String returnUrl) {
+        return returnUrl != null && returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : "/staff";
     }
 
     private long countOrderStatus(List<Order> orders, String status) {

@@ -60,28 +60,65 @@ public class Order {
 
     @Column(name = "product_total", nullable = false)
     private BigDecimal productTotal = BigDecimal.ZERO;
+
+    @Column(name = "shipping_fee", nullable = false)
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+
+    @Column(name = "shipping_province", columnDefinition = "NVARCHAR(100)")
+    private String shippingProvince;
+
+    @Column(name = "shipping_district", columnDefinition = "NVARCHAR(100)")
+    private String shippingDistrict;
+
+    @Column(name = "shipping_ward", columnDefinition = "NVARCHAR(100)")
+    private String shippingWard;
     
-    @Column(name = "shipping_address")
+    @Column(name = "shipping_address",columnDefinition = "NVARCHAR(MAX)")
     private String shippingAddress;
 
-    @Column(name = "receiver_phone")
+    @Column(name = "receiver_phone",columnDefinition = "NVARCHAR(MAX)")
     private String receiverPhone;
 
-    @Column(name = "cancellation_reason")
+    @Column(name = "cancellation_reason",columnDefinition = "NVARCHAR(MAX)")
     private String cancellationReason;
 
-    @Column(name = "shipping_carrier")
+    @Column(name = "cancellation_requested_at")
+    private LocalDateTime cancellationRequestedAt;
+
+    @Column(name = "cancellation_processed_at")
+    private LocalDateTime cancellationProcessedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancellation_processed_by_id")
+    private User cancellationProcessedBy;
+
+    @Column(name = "cancellation_decision_note", columnDefinition = "NVARCHAR(MAX)")
+    private String cancellationDecisionNote;
+
+    @Column(name = "shipping_carrier",columnDefinition = "NVARCHAR(MAX)")
     private String shippingCarrier;
 
-    @Column(name = "tracking_code")
+    @Column(name = "tracking_code",columnDefinition = "NVARCHAR(MAX)")
     private String trackingCode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "refund_status", nullable = false)
     private RefundStatus refundStatus = RefundStatus.NONE;
 
-    @Column(name = "refund_note", length = 500)
+    @Column(name = "refund_note",columnDefinition = "NVARCHAR(MAX)")
     private String refundNote;
+
+    @Column(name = "refund_bank_name", length = 100)
+    private String refundBankName;
+
+    @Column(name = "refund_bank_bin", length = 20)
+    private String refundBankBin;
+
+    @Column(name = "refund_account_holder", length = 150)
+    private String refundAccountHolder;
+
+    @Column(name = "refund_account_number", length = 50)
+    private String refundAccountNumber;
 
     @Column(name = "refunded_at")
     private LocalDateTime refundedAt;

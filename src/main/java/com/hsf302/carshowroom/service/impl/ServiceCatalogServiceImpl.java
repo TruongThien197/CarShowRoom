@@ -29,7 +29,7 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
     public Service update(Integer id, ServiceForm form) {
         validate(form);
         Service service = serviceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Service does not exist."));
+                .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không tồn tại."));
         apply(service, form);
         return serviceRepository.save(service);
     }
@@ -38,7 +38,7 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
     @Transactional
     public void delete(Integer id) {
         Service service = serviceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Service does not exist."));
+                .orElseThrow(() -> new IllegalArgumentException("Dịch vụ không tồn tại."));
         service.setStatus(com.hsf302.carshowroom.common.Enums.ServiceStatus.INACTIVE);
         serviceRepository.save(service);
     }
@@ -53,7 +53,7 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
 
     private void validate(ServiceForm form) {
         if (form == null || form.getServiceName() == null || form.getServiceName().isBlank()) {
-            throw new IllegalArgumentException("Service name must not be empty.");
+            throw new IllegalArgumentException("Tên dịch vụ không được để trống.");
         }
         BigDecimal minPrice = form.getMinPrice();
         BigDecimal maxPrice = form.getMaxPrice();
@@ -61,10 +61,10 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
                 || minPrice.signum() < 0
                 || maxPrice.signum() < 0
                 || minPrice.compareTo(maxPrice) > 0) {
-            throw new IllegalArgumentException("Service price range is invalid.");
+            throw new IllegalArgumentException("Khoảng giá dịch vụ không hợp lệ.");
         }
         if (form.getDurationMinutes() == null || form.getDurationMinutes() <= 0) {
-            throw new IllegalArgumentException("Service duration must be greater than zero.");
+            throw new IllegalArgumentException("Thời lượng dịch vụ phải lớn hơn 0.");
         }
     }
 }

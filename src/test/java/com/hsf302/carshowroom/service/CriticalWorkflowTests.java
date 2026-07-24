@@ -5,6 +5,13 @@ import com.hsf302.carshowroom.common.Enums.OrderType;
 import com.hsf302.carshowroom.common.Enums.PaymentMethod;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.common.Enums.ProductStatus;
+import com.hsf302.carshowroom.common.Enums.FulfillmentType;
+import com.hsf302.carshowroom.common.Enums.BookingType;
+import com.hsf302.carshowroom.dto.CheckoutForm;
+import com.hsf302.carshowroom.entity.Booking;
+import com.hsf302.carshowroom.entity.CartItem;
+import com.hsf302.carshowroom.entity.PaymentTransaction;
+import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.dto.CheckoutResult;
 import com.hsf302.carshowroom.entity.InventoryReservation;
 import com.hsf302.carshowroom.entity.OrderItem;
@@ -25,6 +32,7 @@ import com.hsf302.carshowroom.service.impl.AuthServiceImpl;
 import com.hsf302.carshowroom.service.impl.CartServiceImpl;
 import com.hsf302.carshowroom.service.impl.InventoryReservationServiceImpl;
 import com.hsf302.carshowroom.service.impl.OrderServiceImpl;
+import com.hsf302.carshowroom.service.impl.BookingServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,13 +43,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.Optional;
 import java.math.BigDecimal;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,9 +76,12 @@ class CriticalWorkflowTests {
     @Mock private SchedulingService schedulingService;
     @Mock private PaymentService paymentService;
     @Mock private OrderWorkflowService orderWorkflowService;
+    @Mock private RefundPayoutService refundPayoutService;
+    @Mock private ShippingFeeService shippingFeeService;
     @InjectMocks private OrderServiceImpl orderService;
     @InjectMocks private CartServiceImpl cartService;
     @InjectMocks private InventoryReservationServiceImpl inventoryReservationServiceImpl;
+    @InjectMocks private BookingServiceImpl bookingServiceImpl;
 
     @Test
     void inactiveAccountCannotLogin() {
@@ -113,6 +129,107 @@ class CriticalWorkflowTests {
     }
 
     @Test
+    void cartRejectsWorkshopInstallationForAnUnsupportedProduct() {
+        User user = new User();
+        user.setId(1);
+        Product product = new Product();
+        product.setId(6);
+        product.setStatus(ProductStatus.ACTIVE);
+        product.setInstallationSupported(false);
+        when(productRepository.findById(6)).thenReturn(Optional.of(product));
+
+        assertThrows(RuntimeException.class, () -> cartService.addToCart(user, 6, 1, FulfillmentType.AT_WORKSHOP.name()));
+        verify(cartItemRepository, never()).save(any());
+    }
+
+    @Test
+    void workshopCheckoutCreatesInstallationBookingWithoutARepairServiceOrDeposit() {
+        User user = new User();
+        user.setId(1);
+        Vehicle vehicle = new Vehicle();
+        vehicle.setId(3);
+        vehicle.setUser(user);
+        Product product = new Product();
+        product.setId(8);
+        product.setPrice(BigDecimal.valueOf(150_000));
+        product.setPhysicalStock(5);
+        product.setReservedStock(0);
+        product.setInstallationSupported(true);
+        CartItem cartItem = new CartItem();
+        cartItem.setProduct(product);
+        cartItem.setQuantity(1);
+        cartItem.setFulfillmentType(FulfillmentType.AT_WORKSHOP);
+        CheckoutForm form = new CheckoutForm();
+        form.setPaymentMethod("PAYOS");
+        form.setVehicleId(3);
+        form.setBookingDate(LocalDate.now().plusDays(1));
+        form.setStartTime(LocalTime.of(8, 0));
+
+        when(cartItemRepository.findByUser(user)).thenReturn(List.of(cartItem));
+        when(vehicleRepository.findById(3)).thenReturn(Optional.of(vehicle));
+        when(productRepository.findById(8)).thenReturn(Optional.of(product));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            Order order = invocation.getArgument(0);
+            order.setId(70);
+            return order;
+        });
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        PaymentTransaction transaction = new PaymentTransaction();
+        transaction.setCheckoutUrl("https://payos.example/checkout");
+        when(paymentService.createPaymentLink(any())).thenReturn(transaction);
+
+        orderService.checkout(user, form);
+
+        org.mockito.ArgumentCaptor<Booking> bookingCaptor = forClass(Booking.class);
+        verify(bookingRepository).save(bookingCaptor.capture());
+        Booking booking = bookingCaptor.getValue();
+        assertEquals(BookingType.PART_INSTALLATION, booking.getBookingType());
+        assertEquals(BigDecimal.ZERO, booking.getDepositAmount());
+        assertEquals(120, booking.getTotalDurationMinutes());
+        verifyNoInteractions(serviceRepository, bookingServiceRepository);
+    }
+
+    @Test
+    void workshopCheckoutRejectsAStartTimeOutsideTheFixedInstallationSlots() {
+        User user = new User();
+        Product product = new Product();
+        product.setInstallationSupported(true);
+        CartItem cartItem = new CartItem();
+        cartItem.setProduct(product);
+        cartItem.setFulfillmentType(FulfillmentType.AT_WORKSHOP);
+        CheckoutForm form = new CheckoutForm();
+        form.setPaymentMethod("PAYOS");
+        form.setVehicleId(1);
+        form.setBookingDate(LocalDate.now().plusDays(1));
+        form.setStartTime(LocalTime.of(9, 0));
+        when(cartItemRepository.findByUser(user)).thenReturn(List.of(cartItem));
+
+        assertThrows(RuntimeException.class, () -> orderService.checkout(user, form));
+        verifyNoInteractions(vehicleRepository);
+    }
+
+    @Test
+    void installationBookingCannotCompleteUntilLaborIsCollected() {
+        Booking booking = new Booking();
+        booking.setId(91);
+        booking.setBookingType(BookingType.PART_INSTALLATION);
+        booking.setBookingStatus(com.hsf302.carshowroom.common.Enums.BookingStatus.IN_PROGRESS);
+        booking.setPaymentStatus(PaymentStatus.PAID);
+        User staff = new User();
+        staff.setId(7);
+        when(bookingRepository.findById(91)).thenReturn(Optional.of(booking));
+
+        assertThrows(IllegalStateException.class, () -> bookingServiceImpl.updateStatus(91, "COMPLETED"));
+
+        bookingServiceImpl.recordLaborCollection(91, staff, BigDecimal.valueOf(180_000));
+        bookingServiceImpl.updateStatus(91, "COMPLETED");
+
+        assertEquals(BigDecimal.valueOf(180_000), booking.getLaborFee());
+        assertEquals(staff, booking.getLaborCollectedBy());
+        assertEquals(com.hsf302.carshowroom.common.Enums.BookingStatus.COMPLETED, booking.getBookingStatus());
+    }
+
+    @Test
     void secondReservationFailsWhenTwoOrdersCompeteForSameLastItem() {
         Product product = new Product();
         product.setId(8);
@@ -136,7 +253,7 @@ class CriticalWorkflowTests {
     }
 
     @Test
-    void expiredUnpaidOrderCanChoosePaymentAgain() {
+    void expiredUnpaidOrderRejectsCodPaymentMethod() {
         User user = new User();
         user.setId(1);
         Order order = new Order();
@@ -148,11 +265,11 @@ class CriticalWorkflowTests {
         order.setProductTotal(BigDecimal.valueOf(5000));
         when(orderRepository.findById(44)).thenReturn(Optional.of(order));
 
-        CheckoutResult result = orderService.choosePaymentMethod(44, user, "COD");
+        assertThrows(IllegalArgumentException.class,
+                () -> orderService.choosePaymentMethod(44, user, "COD"));
 
-        assertNull(result.checkoutUrl());
-        verify(inventoryReservationService).reserveStock(List.of(order));
-        verify(orderWorkflowService).processOrder(order);
+        verify(inventoryReservationService, never()).reserveStock(List.of(order));
+        verify(orderWorkflowService, never()).processOrder(order);
     }
 
     private Order orderWithSingleItem(Product product, int quantity, int orderId) {

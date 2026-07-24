@@ -32,7 +32,7 @@
             <div>
                 <h1 class="gs-h2 text-dark mb-3" th:text="${product.productName}">Tên phụ tùng</h1>
                 <div class="price gs-mono mb-4" style="font-size: 2rem;"
-                     th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</div>
+                     th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</div>
 
                 <h2 class="gs-h4 text-uppercase text-secondary mb-2">Mô tả sản phẩm</h2>
                 <p class="lead text-secondary fs-6 mb-4 lh-lg"
@@ -50,7 +50,9 @@
                     <div class="col-sm-6">
                         <div class="surface-card p-3 text-center">
                             <div class="small text-secondary mb-1"><i class="bi bi-tag me-1"></i> Danh mục </div>
-                            <strong class="fs-6 text-dark" th:text="${product.category.categoryName}">Parts</strong>
+                            <strong class="fs-6 text-dark"
+                                    th:text="${product.category != null ? product.category.categoryName : 'Chưa phân loại'}">Phụ tùng
+                            </strong>
                         </div>
                     </div>
                 </div>

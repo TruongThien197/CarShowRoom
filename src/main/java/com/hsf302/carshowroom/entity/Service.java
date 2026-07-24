@@ -23,12 +23,12 @@ public class Service {
     @Size(max = 150)
     @NotNull
     @Nationalized
-    @Column(name = "service_name", nullable = false, length = 150)
+    @Column(name = "service_name", nullable = false,columnDefinition = "NVARCHAR(150)")
     private String serviceName;
 
     @Nationalized
     @Lob
-    @Column(name = "description")
+    @Column(name = "description",columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @NotNull

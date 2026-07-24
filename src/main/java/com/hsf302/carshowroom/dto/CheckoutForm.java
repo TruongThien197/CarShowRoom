@@ -1,6 +1,5 @@
 package com.hsf302.carshowroom.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,17 +9,19 @@ import java.time.LocalTime;
 @Getter
 @Setter
 public class CheckoutForm {
-    @NotBlank
+    private String shippingProvince;
+
+    private String shippingDistrict;
+
+    private String shippingWard;
+
     private String shippingAddress;
 
     private String phone;
 
-    @NotBlank
     private String paymentMethod = "PAYOS";
 
     private Integer vehicleId;
-
-    private Integer serviceId;
 
     private LocalDate bookingDate;
 

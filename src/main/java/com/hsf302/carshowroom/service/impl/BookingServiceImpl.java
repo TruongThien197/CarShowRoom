@@ -1,12 +1,15 @@
 package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.BookingType;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
+import com.hsf302.carshowroom.common.Enums.RefundPayoutStatus;
 import com.hsf302.carshowroom.common.Enums.RefundStatus;
 import com.hsf302.carshowroom.common.Enums.ServiceStatus;
 import com.hsf302.carshowroom.dto.BookingForm;
 import com.hsf302.carshowroom.entity.Booking;
 import com.hsf302.carshowroom.entity.BookingService;
+import com.hsf302.carshowroom.entity.RefundTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.repository.BookingRepository;
@@ -14,6 +17,7 @@ import com.hsf302.carshowroom.repository.BookingServiceRepository;
 import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
+import com.hsf302.carshowroom.service.RefundPayoutService;
 import com.hsf302.carshowroom.service.SchedulingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,6 +42,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     private final VehicleRepository vehicleRepository;
     private final SchedulingService schedulingService;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final RefundPayoutService refundPayoutService;
 
     @Override
     @Transactional
@@ -71,6 +76,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         booking.setFinalAmount(null);
         booking.setDepositAmount(calculateDeposit(selectedService.getMinPrice()));
         booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
+        booking.setBookingType(BookingType.REPAIR_SERVICE);
         booking.setPaymentStatus(PaymentStatus.PENDING);
         booking.setPaymentDeadline(LocalDateTime.now().plusMinutes(15));
         booking.setNotes(form.getNotes());
@@ -135,62 +141,115 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
                 || booking.getBookingStatus() == BookingStatus.EXPIRED_NO_SHOW) {
             throw new RuntimeException("Không thể hủy lịch hẹn ở trạng thái hiện tại.");
         }
-        booking.setBookingStatus(BookingStatus.CANCELED);
-        if (booking.getRemainingPaymentStatus() != PaymentStatus.PAID) {
-            booking.setRemainingPaymentStatus(PaymentStatus.CANCELED);
+        if (booking.getRefundStatus() == RefundStatus.REQUESTED) {
+            throw new IllegalStateException("Yêu cầu hủy đã đang chờ xử lý.");
         }
-        if (booking.getPaymentStatus() == PaymentStatus.PAID
-                && booking.getRefundStatus() == RefundStatus.NONE) {
-            booking.setRefundStatus(RefundStatus.REQUESTED);
-        }
+        booking.setRefundStatus(RefundStatus.REQUESTED);
+        booking.setCancellationRequestedAt(LocalDateTime.now());
         bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
+    public void approveCancellation(Integer bookingId, User processedBy, String assessmentNote) {
+        Booking booking = getBookingDetail(bookingId);
+        if (booking.getRefundStatus() != RefundStatus.REQUESTED) throw new IllegalStateException("Lịch hẹn không có yêu cầu hủy đang chờ duyệt.");
+        if (requiresManualCancellationAssessment(booking) && (assessmentNote == null || assessmentNote.isBlank())) {
+            throw new IllegalArgumentException("Việc hủy lịch hẹn muộn tại xưởng cần có ghi chú đánh giá của nhân viên.");
+        }
+        booking.setBookingStatus(BookingStatus.CANCELED);
+        if (booking.getRemainingPaymentStatus() != PaymentStatus.PAID) booking.setRemainingPaymentStatus(PaymentStatus.CANCELED);
+        booking.setRefundStatus(booking.getPaymentStatus() == PaymentStatus.PAID ? RefundStatus.APPROVED : RefundStatus.NONE);
+        booking.setCancellationProcessedBy(processedBy);
+        booking.setCancellationProcessedAt(LocalDateTime.now());
+        booking.setCancellationDecisionNote(assessmentNote == null || assessmentNote.isBlank()
+                ? "Đã duyệt do hủy trước hạn 24 giờ." : assessmentNote.trim());
+        bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
+    public void rejectCancellation(Integer bookingId, User processedBy, String reason) {
+        Booking booking = getBookingDetail(bookingId);
+        if (booking.getRefundStatus() != RefundStatus.REQUESTED) throw new IllegalStateException("Lịch hẹn không có yêu cầu hủy đang chờ duyệt.");
+        if (reason == null || reason.isBlank()) throw new IllegalArgumentException("Vui lòng nhập lý do từ chối.");
+        booking.setRefundStatus(RefundStatus.REJECTED);
+        booking.setCancellationProcessedBy(processedBy);
+        booking.setCancellationProcessedAt(LocalDateTime.now());
+        booking.setCancellationDecisionNote(reason.trim());
+        bookingRepository.save(booking);
+    }
+
+    private boolean requiresManualCancellationAssessment(Booking booking) {
+        if (booking.getBookingDate() == null || booking.getStartTime() == null) {
+            return true;
+        }
+        LocalDateTime appointmentStart = LocalDateTime.of(booking.getBookingDate(), booking.getStartTime());
+        return !LocalDateTime.now().isBefore(appointmentStart.minusHours(24));
     }
 
     @Override
     @Transactional
     public void completeRefund(Integer bookingId, User processedBy, String bankName,
-                               String accountHolder, String accountNumber, String note) {
+                               String bankBin, String accountHolder, String accountNumber, String note) {
         Booking booking = getBookingDetail(bookingId);
         if (booking.getBookingStatus() != BookingStatus.CANCELED
-                || booking.getRefundStatus() != RefundStatus.REQUESTED
+                || (booking.getRefundStatus() != RefundStatus.APPROVED && booking.getRefundStatus() != RefundStatus.FAILED)
                 || booking.getPaymentStatus() != PaymentStatus.PAID) {
             throw new IllegalStateException("Lịch hẹn không có yêu cầu hoàn tiền đang chờ xử lý.");
         }
         if (bankName == null || bankName.isBlank()
+                || bankBin == null || bankBin.isBlank()
                 || accountHolder == null || accountHolder.isBlank()
                 || accountNumber == null || accountNumber.isBlank()
                 || note == null || note.isBlank()) {
-            throw new IllegalArgumentException("Vui lòng nhập đầy đủ ngân hàng, chủ tài khoản, số tài khoản và mã giao dịch.");
+            throw new IllegalArgumentException("Vui lòng nhập đầy đủ ngân hàng, mã BIN, chủ tài khoản, số tài khoản và ghi chú hoàn tiền.");
         }
         if (!samePerson(accountHolder, booking.getUser().getFullName())) {
             throw new IllegalArgumentException("Tên người nhận tiền phải trùng với khách hàng đã thanh toán tiền cọc.");
         }
-        booking.setRefundStatus(RefundStatus.COMPLETED);
-        booking.setPaymentStatus(PaymentStatus.REFUNDED);
         booking.setRefundNote(note.trim());
         booking.setRefundBankName(bankName.trim());
+        booking.setRefundBankBin(bankBin.trim());
         booking.setRefundAccountHolder(accountHolder.trim());
         booking.setRefundAccountNumber(accountNumber.trim());
-        booking.setRefundedAt(LocalDateTime.now());
         booking.setRefundedBy(processedBy);
-        paymentTransactionRepository.findByBooking(booking).forEach(transaction -> {
-            transaction.setStatus(PaymentStatus.REFUNDED);
-            paymentTransactionRepository.save(transaction);
-        });
+        RefundTransaction refundTransaction = refundPayoutService.payoutBookingRefund(booking, processedBy,
+                booking.getRefundBankName(), booking.getRefundBankBin(),
+                booking.getRefundAccountHolder(), booking.getRefundAccountNumber(), booking.getRefundNote());
+        applyBookingRefundResult(booking, refundTransaction);
         bookingRepository.save(booking);
+    }
+
+    private void applyBookingRefundResult(Booking booking, RefundTransaction refundTransaction) {
+        if (refundTransaction.getStatus() == RefundPayoutStatus.SUCCEEDED) {
+            booking.setRefundStatus(RefundStatus.COMPLETED);
+            booking.setPaymentStatus(PaymentStatus.REFUNDED);
+            booking.setRefundedAt(refundTransaction.getRefundedAt() == null ? LocalDateTime.now() : refundTransaction.getRefundedAt());
+            paymentTransactionRepository.findByBooking(booking).forEach(transaction -> {
+                transaction.setStatus(PaymentStatus.REFUNDED);
+                paymentTransactionRepository.save(transaction);
+            });
+        } else if (refundTransaction.getStatus() == RefundPayoutStatus.FAILED) {
+            booking.setRefundStatus(RefundStatus.FAILED);
+            booking.setRefundNote(refundTransaction.getErrorMessage());
+        } else {
+            booking.setRefundStatus(RefundStatus.PROCESSING);
+        }
     }
 
     @Override
     @Transactional
-    public void submitRefundAccount(User user, Integer bookingId, String bankName,
+    public void submitRefundAccount(User user, Integer bookingId, String bankName, String bankBin,
                                     String accountHolder, String accountNumber) {
         Booking booking = getBookingDetail(user, bookingId);
         if (booking.getBookingStatus() != BookingStatus.CANCELED
-                || booking.getRefundStatus() != RefundStatus.REQUESTED
+                || booking.getRefundStatus() != RefundStatus.APPROVED
                 || booking.getPaymentStatus() != PaymentStatus.PAID) {
             throw new IllegalStateException("Booking này không cần bổ sung thông tin hoàn tiền.");
         }
         if (bankName == null || bankName.isBlank()
+                || bankBin == null || bankBin.isBlank()
                 || accountHolder == null || accountHolder.isBlank()
                 || accountNumber == null || accountNumber.isBlank()) {
             throw new IllegalArgumentException("Vui lòng nhập đầy đủ thông tin tài khoản nhận tiền.");
@@ -199,6 +258,7 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
             throw new IllegalArgumentException("Tên người nhận tiền phải trùng với tên khách hàng đã thanh toán tiền cọc.");
         }
         booking.setRefundBankName(bankName.trim());
+        booking.setRefundBankBin(bankBin.trim());
         booking.setRefundAccountHolder(booking.getUser().getFullName());
         booking.setRefundAccountNumber(accountNumber.trim());
         bookingRepository.save(booking);
@@ -226,6 +286,9 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
     @Transactional
     public void setFinalAmount(Integer bookingId, BigDecimal finalAmount) {
         Booking booking = getBookingDetail(bookingId);
+        if (booking.getBookingType() == BookingType.PART_INSTALLATION) {
+            throw new IllegalStateException("Đơn lắp đặt tại xưởng không dùng giá dịch vụ cuối. Vui lòng nhập tiền công lắp đặt.");
+        }
         if (booking.getBookingStatus() != BookingStatus.IN_PROGRESS) {
             throw new IllegalStateException("Chỉ có thể nhập giá cuối sau khi đã tiếp nhận xe.");
         }
@@ -238,6 +301,29 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         }
         booking.setFinalAmount(finalAmount);
         booking.setRemainingPaymentStatus(PaymentStatus.PENDING);
+        bookingRepository.save(booking);
+    }
+
+    @Override
+    @Transactional
+    public void recordLaborCollection(Integer bookingId, User staff, BigDecimal laborFee) {
+        Booking booking = getBookingDetail(bookingId);
+        if (booking.getBookingType() != BookingType.PART_INSTALLATION) {
+            throw new IllegalStateException("Chỉ lịch lắp đặt phụ tùng tại xưởng mới dùng tiền công lắp đặt.");
+        }
+        if (booking.getBookingStatus() != BookingStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Chỉ có thể thu tiền công khi lắp đặt đang được thực hiện.");
+        }
+        if (staff == null || staff.getId() == null) {
+            throw new IllegalArgumentException("Không xác định được nhân viên thu tiền công.");
+        }
+        if (laborFee == null || laborFee.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Tiền công phải lớn hơn hoặc bằng 0.");
+        }
+        booking.setLaborFee(laborFee);
+        booking.setLaborCollected(true);
+        booking.setLaborCollectedAt(LocalDateTime.now());
+        booking.setLaborCollectedBy(staff);
         bookingRepository.save(booking);
     }
 
@@ -320,9 +406,15 @@ public class BookingServiceImpl implements com.hsf302.carshowroom.service.Bookin
         if (nextStatus == BookingStatus.COMPLETED && currentStatus != BookingStatus.IN_PROGRESS) {
             throw new IllegalStateException("Lịch hẹn phải ở trạng thái đang thực hiện trước khi hoàn tất.");
         }
-        if (nextStatus == BookingStatus.COMPLETED
-                && booking.getFinalAmount() == null) {
-            throw new IllegalStateException("Cần nhập giá cuối trước khi chuyển lịch sang hoàn thành.");
+        if (nextStatus == BookingStatus.COMPLETED) {
+            if (booking.getBookingType() == BookingType.PART_INSTALLATION
+                    && (booking.getLaborFee() == null || !booking.isLaborCollected())) {
+                throw new IllegalStateException("Cần nhập và xác nhận đã thu tiền công trước khi hoàn tất lắp đặt.");
+            }
+            if (booking.getBookingType() != BookingType.PART_INSTALLATION
+                    && booking.getFinalAmount() == null) {
+                throw new IllegalStateException("Cần nhập giá cuối trước khi chuyển lịch sang hoàn thành.");
+            }
         }
         if (nextStatus != BookingStatus.IN_PROGRESS && nextStatus != BookingStatus.COMPLETED) {
             throw new IllegalStateException("Trạng thái lịch hẹn không được phép cập nhật thủ công.");

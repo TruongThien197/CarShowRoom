@@ -52,8 +52,8 @@ public class CategoryServiceImpl implements CategoryService {
         long productCount = productRepository.countByCategory_Id(id);
         if (productCount > 0) {
             throw new IllegalStateException(
-                    "Cannot delete this category because it is used by "
-                            + productCount + " product(s)."
+                    "Không thể xóa danh mục này vì nó đang được sử dụng bởi "
+                            + productCount + " sản phẩm."
             );
         }
         categoryRepository.deleteById(id);
@@ -62,10 +62,10 @@ public class CategoryServiceImpl implements CategoryService {
     private void validateCategory(Category category) {
         if (category == null || category.getCategoryName() == null
                 || category.getCategoryName().isBlank()) {
-            throw new IllegalArgumentException("Category name must not be empty.");
+            throw new IllegalArgumentException("Tên danh mục không được để trống.");
         }
         if (category.getCategoryName().trim().length() > 100) {
-            throw new IllegalArgumentException("Category name must not exceed 100 characters.");
+            throw new IllegalArgumentException("Tên danh mục không được vượt quá 100 ký tự.");
         }
         category.setCategoryName(category.getCategoryName().trim());
     }

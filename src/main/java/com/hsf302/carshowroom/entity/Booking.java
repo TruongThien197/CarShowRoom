@@ -1,6 +1,7 @@
 package com.hsf302.carshowroom.entity;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.BookingType;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.common.Enums.RefundStatus;
 import jakarta.persistence.*;
@@ -74,16 +75,32 @@ public class Booking {
     @Column(name = "refund_status")
     private RefundStatus refundStatus = RefundStatus.NONE;
 
-    @Column(name = "refund_note", length = 500)
+    @Column(name = "refund_note",columnDefinition = "NVARCHAR(MAX)")
     private String refundNote;
 
-    @Column(name = "refund_bank_name", length = 100)
+    @Column(name = "cancellation_requested_at")
+    private LocalDateTime cancellationRequestedAt;
+
+    @Column(name = "cancellation_processed_at")
+    private LocalDateTime cancellationProcessedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancellation_processed_by_id")
+    private User cancellationProcessedBy;
+
+    @Column(name = "cancellation_decision_note", columnDefinition = "NVARCHAR(MAX)")
+    private String cancellationDecisionNote;
+
+    @Column(name = "refund_bank_name", columnDefinition = "NVARCHAR(100)")
     private String refundBankName;
 
-    @Column(name = "refund_account_holder", length = 150)
+    @Column(name = "refund_bank_bin",  columnDefinition = "NVARCHAR(20)")
+    private String refundBankBin;
+
+    @Column(name = "refund_account_holder",columnDefinition = "NVARCHAR(150)")
     private String refundAccountHolder;
 
-    @Column(name = "refund_account_number", length = 50)
+    @Column(name = "refund_account_number", columnDefinition = "NVARCHAR(50)")
     private String refundAccountNumber;
 
     @Column(name = "refunded_at")
@@ -96,6 +113,10 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     @Column(name = "booking_status", nullable = false)
     private BookingStatus bookingStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "booking_type", nullable = false)
+    private BookingType bookingType = BookingType.REPAIR_SERVICE;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)
@@ -114,7 +135,21 @@ public class Booking {
     @Column(name = "no_show_at")
     private LocalDateTime noShowAt;
 
+    @Column(name = "labor_fee")
+    private BigDecimal laborFee;
+
+    @Column(name = "labor_collected", nullable = false)
+    private boolean laborCollected = false;
+
+    @Column(name = "labor_collected_at")
+    private LocalDateTime laborCollectedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "labor_collected_by_id")
+    private User laborCollectedBy;
+
     @Lob
+    @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     private String notes;
 
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -22,13 +22,13 @@ public class User {
     @Size(max = 255)
     @NotNull
     @Nationalized
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false,columnDefinition = "NVARCHAR(155)")
     private String email;
 
     @Size(max = 255)
     @NotNull
     @Nationalized
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash", nullable = false,columnDefinition = "NVARCHAR(255)")
     private String passwordHash;
 
     @Nationalized
@@ -39,7 +39,7 @@ public class User {
     @Size(max = 150)
     @NotNull
     @Nationalized
-    @Column(name = "full_name", nullable = false, length = 150)
+    @Column(name = "full_name", nullable = false,columnDefinition = "NVARCHAR(150)")
     private String fullName;
 
     @Size(max = 20)
@@ -49,20 +49,20 @@ public class User {
 
     @Size(max = 255)
     @Nationalized
-    @Column(name = "address")
+    @Column(name = "address",columnDefinition = "NVARCHAR(255)")
     private String address;
 
     @Size(max = 50)
     @NotNull
     @Nationalized
-    @Column(name = "role", nullable = false, length = 50)
+    @Column(name = "role", nullable = false,columnDefinition = "NVARCHAR(50)")
     private String role;
 
     @Size(max = 50)
     @NotNull
     @Nationalized
     @ColumnDefault("'ACTIVE'")
-    @Column(name = "status", nullable = false, length = 50)
+    @Column(name = "status", nullable = false, columnDefinition = "NVARCHAR(50)")
     private String status;
 
 

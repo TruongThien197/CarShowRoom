@@ -7,10 +7,9 @@ import com.hsf302.carshowroom.dto.CheckoutForm;
 import com.hsf302.carshowroom.dto.CheckoutResult;
 import com.hsf302.carshowroom.entity.CartItem;
 import com.hsf302.carshowroom.entity.Order;
-import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
-import com.hsf302.carshowroom.repository.ServiceRepository;
+import com.hsf302.carshowroom.repository.ShippingFeeRuleRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.AuthService;
 import com.hsf302.carshowroom.service.CartService;
@@ -28,8 +27,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalTime;
 import java.util.stream.Collectors;
 
 @Controller
@@ -41,7 +42,8 @@ public class OrderController {
     private final OrderService orderService;
     private final OrderItemRepository orderItemRepository;
     private final VehicleRepository vehicleRepository;
-    private final ServiceRepository serviceRepository;
+    private final ShippingFeeRuleRepository shippingFeeRuleRepository;
+
 
     @GetMapping("/checkout")
     public String checkout(Model model) {
@@ -96,6 +98,7 @@ public class OrderController {
                         .map(item -> item.getProductNameSnapshot() + " x" + item.getQuantity())
                         .collect(Collectors.joining(", "))
         ));
+
         model.addAttribute("orders", orders);
         model.addAttribute("orderItems", orderItems);
         return "order/history";
@@ -108,6 +111,8 @@ public class OrderController {
             return "redirect:/auth/login";
         }
         Order order = orderService.getOrderForUser(id, user);
+        BigDecimal totalAmount = orderService.calculateTotalAmount(order);
+
         model.addAttribute("order", order);
         model.addAttribute("orderItems", orderItemRepository.findByOrderId(id));
         model.addAttribute("canCancel", order.getOrderStatus() != OrderStatus.SHIPPING
@@ -117,6 +122,7 @@ public class OrderController {
         model.addAttribute("canEditAddress", order.getOrderType() == com.hsf302.carshowroom.common.Enums.OrderType.SHIPPING
                 && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT || order.getOrderStatus() == OrderStatus.PROCESSING));
         model.addAttribute("canRetryPayment", canRetryPayment(order));
+        model.addAttribute("totalAmount", totalAmount);
         return "order/detail";
     }
 
@@ -163,7 +169,7 @@ public class OrderController {
         }
         try {
             orderService.cancelOrderForUser(id, user, reason);
-            attributes.addFlashAttribute("successMessage", "Đã hủy đơn hàng và hoàn lại số lượng hàng đã giữ. Nếu đơn đã thanh toán, nhân viên sẽ liên hệ hỗ trợ hoàn tiền.");
+            attributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu hủy đơn. Nhân viên sẽ duyệt trước khi hủy đơn và xử lý hoàn tiền.");
         } catch (Exception exception) {
             attributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -189,16 +195,25 @@ public class OrderController {
     }
 
     private void populateCheckoutModel(Model model, User user, List<CartItem> cartItems, CheckoutForm form) {
+
         model.addAttribute("user", user);
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("subtotal", cartService.calculateSubtotal(cartItems));
+        model.addAttribute("totalAmount", cartService.calculateTotalAmount(cartItems, BigDecimal.ZERO));
+
         model.addAttribute("checkoutForm", form);
         boolean needsWorkshop = cartItems.stream()
                 .anyMatch(item -> FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
+        boolean hasShipping = cartItems.stream()
+                .anyMatch(item -> !FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
         model.addAttribute("needsWorkshop", needsWorkshop);
+        model.addAttribute("hasShipping", hasShipping);
         model.addAttribute("vehicles", vehicleRepository.findByUser(user));
-        model.addAttribute("services", serviceRepository.findByStatusOrderByServiceNameAsc(
-                com.hsf302.carshowroom.common.Enums.ServiceStatus.ACTIVE));
+        model.addAttribute("shippingFeeRules", shippingFeeRuleRepository.findByActiveTrueOrderByProvinceAscDistrictAsc());
+        model.addAttribute("shippingProvinces", shippingFeeRuleRepository.findByActiveTrueOrderByProvinceAscDistrictAsc()
+                .stream().map(rule -> rule.getProvince()).distinct().toList());
+        model.addAttribute("workshopSlots", List.of(
+                LocalTime.of(8, 0), LocalTime.of(10, 0), LocalTime.of(13, 0), LocalTime.of(15, 0)));
     }
 
     private User currentUserOrNull() {

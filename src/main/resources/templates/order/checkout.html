@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('Thanh toán an toàn | GearShift Pro')}"></head>
+<head th:replace="~{fragments :: head('Xác nhận thanh toán | GearShift Pro')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar('shop')}"></div>
 
@@ -16,7 +16,6 @@
     <div class="row g-4" th:if="${!#lists.isEmpty(cartItems)}">
         <div class="col-lg-8">
             <form class="surface-card p-4 needs-validation" th:action="@{/orders/checkout}" th:object="${checkoutForm}" method="post">
-                <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">1</span>Liên hệ và giao hàng<span class="gs-chevron-divider" th:if="${needsWorkshop}"></span></h4>
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label class="form-label"> Họ và tên </label>
@@ -30,19 +29,46 @@
                         <label class="form-label"> Số điện thoại </label>
                         <input class="form-control" type="tel" th:field="*{phone}">
                     </div>
-                    <div class="col-12">
-                        <label class="form-label">Địa chỉ giao hàng</label>
-                        <input class="form-control" type="text" th:field="*{shippingAddress}" required>
-                        <div class="text-danger small" th:if="${#fields.hasErrors('shippingAddress')}" th:errors="*{shippingAddress}"></div>
+                </div>
+
+                <div th:if="${hasShipping}" class="mb-4">
+                    <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">1</span>Liên hệ và giao hàng<span class="gs-chevron-divider" th:if="${needsWorkshop}"></span></h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tỉnh/thành phố</label>
+                            <select class="form-select" th:field="*{shippingProvince}" id="shippingProvince" required>
+                                <option value="">Chọn tỉnh/thành phố</option>
+                                <option th:each="province : ${shippingProvinces}"
+                                        th:value="${province}" th:text="${province}">Tỉnh/thành phố</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Quận/huyện</label>
+                            <select class="form-select" th:field="*{shippingDistrict}" id="shippingDistrict" required>
+                                <option value="">Chọn quận/huyện</option>
+                                <option th:each="rule : ${shippingFeeRules}"
+                                        th:value="${rule.district}" th:text="${rule.district}"
+                                        th:attr="data-province=${rule.province},data-fee=${rule.fee}">Quận/huyện</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phường/xã</label>
+                            <input class="form-control" type="text" th:field="*{shippingWard}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Địa chỉ chi tiết</label>
+                            <input class="form-control" type="text" th:field="*{shippingAddress}" required>
+                        </div>
+                        <div class="col-12 small text-secondary">Phí ship được tính theo tỉnh/thành phố và quận/huyện đã chọn, trước khi tạo thanh toán PayOS.</div>
                     </div>
                 </div>
 
                 <div th:if="${needsWorkshop}" class="mb-4">
-                    <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2">2</span>Lịch lắp đặt tại xưởng<span class="gs-chevron-divider"></span></h4>
+                    <h4 class="fw-bold mb-3 d-flex align-items-center"><span class="step-pill me-2" th:text="${hasShipping ? 2 : 1}">2</span>Lịch lắp đặt tại xưởng<span class="gs-chevron-divider"></span></h4>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label"> Xe </label>
-                            <select class="form-select" th:field="*{vehicleId}" required>
+                            <select class="form-select" th:field="*{vehicleId}" th:required="${needsWorkshop}">
                                 <option value=""> Chọn xe </option>
                                 <option th:each="vehicle : ${vehicles}"
                                         th:value="${vehicle.id}"
@@ -50,53 +76,29 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label"> Dịch vụ </label>
-                            <select class="form-select" th:field="*{serviceId}" required>
-                                <option value=""> Chọn dịch vụ </option>
-                                <option th:each="service : ${services}"
-                                        th:value="${service.id}"
-                                        th:text="${service.serviceName + ' - ' + #numbers.formatDecimal(service.minPrice, 0, 'COMMA', 0, 'POINT') + ' VND'}"> Dịch vụ </option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label"> Ngày hẹn </label>
-                            <input class="form-control" type="date" th:field="*{bookingDate}" required>
+                            <input class="form-control" type="date" th:field="*{bookingDate}" id="installationDate" th:required="${needsWorkshop}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label"> Giờ bắt đầu </label>
-                            <input class="form-control" type="time" th:field="*{startTime}" required>
+                            <label class="form-label"> Khung giờ cố định </label>
+                            <select class="form-select" th:field="*{startTime}" id="installationSlot" th:required="${needsWorkshop}">
+                                <option value="">Chọn ngày trước</option>
+                                <option th:each="slot : ${workshopSlots}" th:value="${slot}" th:text="${slot + ' - ' + slot.plusHours(2)}">08:00 - 10:00</option>
+                            </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label"> Ghi chú </label>
                             <textarea class="form-control" rows="3" th:field="*{notes}"></textarea>
                         </div>
+                        <div class="col-12"><div class="alert alert-info mb-0 small">Tiền công lắp đặt chưa bao gồm trong thanh toán này. Nhân viên sẽ báo và thu tiền công tại xưởng sau khi hoàn tất, tùy theo xe.</div></div>
                     </div>
                 </div>
 
-                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${needsWorkshop ? 3 : 2}">2</span> Phương thức thanh toán </h4>
-                <div class="border rounded p-3 mb-3">
-                    <div class="form-check">
-                        <input id="payos" class="form-check-input" type="radio" th:field="*{paymentMethod}" value="PAYOS">
-                        <label class="form-check-label" for="payos">
-                            <strong>Thanh toán trực tuyến qua PayOS</strong>
-                            <span class="d-block small text-secondary">Thanh toán ngay bằng mã QR hoặc tài khoản ngân hàng.</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="border rounded p-3 mb-3" th:classappend="${needsWorkshop} ? 'opacity-50 bg-light' : ''">
-                    <div class="form-check">
-                        <input id="cod" class="form-check-input" type="radio" th:field="*{paymentMethod}" value="COD" th:disabled="${needsWorkshop}">
-                        <label class="form-check-label" for="cod">
-                            <strong>Thanh toán khi nhận hàng (COD)</strong>
-                            <span class="d-block small text-secondary">Thanh toán cho nhân viên giao hàng khi nhận phụ tùng.</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="alert alert-info mb-4" th:if="${!needsWorkshop}">
-                    Bạn có thể chọn PayOS hoặc thanh toán khi nhận hàng. Hàng sẽ được giữ sau khi đặt đơn.
-                </div>
-                <div class="alert alert-warning mb-4" th:if="${needsWorkshop}">
-                    Đơn có dịch vụ lắp đặt tại xưởng cần thanh toán trực tuyến qua PayOS.
+                <h4 class="fw-bold mb-3"><span class="step-pill me-2" th:text="${hasShipping and needsWorkshop ? 3 : 2}">2</span> Phương thức thanh toán </h4>
+                <div class="border rounded p-3 mb-4">
+                    <input type="hidden" th:field="*{paymentMethod}" value="PAYOS">
+                    <strong>Thanh toán trực tuyến qua PayOS</strong>
+                    <span class="d-block small text-secondary">Thanh toán ngay bằng mã QR hoặc tài khoản ngân hàng.</span>
                 </div>
                 <button class="btn btn-primary btn-lg" type="submit"> Đặt hàng </button>
             </form>
@@ -106,12 +108,16 @@
                 <h4 class="fw-bold">Đơn hàng của bạn</h4>
                 <div class="d-flex justify-content-between my-3" th:each="item : ${cartItems}">
                     <span th:text="${item.product.productName + ' x' + item.quantity}"> Sản phẩm </span>
-                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </strong>
+                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(item.product.price.multiply(T(java.math.BigDecimal).valueOf(item.quantity.longValue())), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"> 0 VNĐ </strong>
+                </div>
+                <div class="d-flex justify-content-between my-3" th:if="${hasShipping}">
+                    <span>Phí giao hàng</span>
+                    <strong id="shippingFeeSummary" class="gs-mono">Chọn khu vực để tính</strong>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between fs-5 mb-4">
                     <span> Tổng cộng </span>
-                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 2, 'POINT')} + ' VND'"> 0 VND </strong>
+                    <strong id="checkoutTotal" class="gs-mono" th:data-subtotal="${subtotal}" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"> 0 VNĐ </strong>
                 </div>
             </div>
         </div>
@@ -120,5 +126,53 @@
 
 <div th:replace="~{fragments :: footer}"></div>
 <div th:replace="~{fragments :: scripts}"></div>
+<script th:if="${hasShipping or needsWorkshop}">
+    (() => {
+        const province = document.getElementById('shippingProvince');
+        const district = document.getElementById('shippingDistrict');
+        const feeSummary = document.getElementById('shippingFeeSummary');
+        const total = document.getElementById('checkoutTotal');
+        const format = value => new Intl.NumberFormat('vi-VN').format(value) + ' VNĐ';
+        const updateDistricts = () => {
+            if (!province || !district) return;
+            [...district.options].forEach(option => {
+                if (!option.dataset.province) return;
+                option.hidden = option.dataset.province !== province.value;
+                option.disabled = option.hidden;
+            });
+            if (district.selectedOptions[0]?.dataset.province !== province.value) district.value = '';
+            updateFee();
+        };
+        const updateFee = () => {
+            if (!district || !feeSummary || !total) return;
+            const fee = Number(district.selectedOptions[0]?.dataset.fee);
+            if (Number.isFinite(fee)) {
+                feeSummary.textContent = format(fee);
+                total.textContent = format(Number(total.dataset.subtotal) + fee);
+            } else {
+                feeSummary.textContent = 'Chọn khu vực để tính';
+                total.textContent = format(Number(total.dataset.subtotal));
+            }
+        };
+        province?.addEventListener('change', updateDistricts);
+        district?.addEventListener('change', updateFee);
+        updateDistricts();
+
+        const date = document.getElementById('installationDate');
+        const slot = document.getElementById('installationSlot');
+        date?.addEventListener('change', async () => {
+            slot.innerHTML = '<option value="">Đang tải khung giờ...</option>';
+            try {
+                const response = await fetch(`/booking/available-installation-slots?date=${encodeURIComponent(date.value)}`);
+                const slots = await response.json();
+                if (!response.ok) throw new Error(slots.message || 'Không thể tải khung giờ.');
+                slot.innerHTML = '<option value="">Chọn khung giờ</option>' + slots.map(item =>
+                    `<option value="${item.startTime}">${item.startTime} - ${item.endTime}</option>`).join('');
+            } catch (error) {
+                slot.innerHTML = `<option value="">${error.message || 'Không thể tải khung giờ'}</option>`;
+            }
+        });
+    })();
+</script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 package com.hsf302.carshowroom.service.impl;
 
 import com.hsf302.carshowroom.common.Enums.BookingStatus;
+import com.hsf302.carshowroom.common.Enums.BookingType;
 import com.hsf302.carshowroom.common.Enums.OrderStatus;
 import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.config.PayOSProperties;
@@ -15,6 +16,7 @@ import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
 import com.hsf302.carshowroom.service.OrderWorkflowService;
 import com.hsf302.carshowroom.service.PaymentService;
 import com.hsf302.carshowroom.service.InventoryReservationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final InventoryReservationService inventoryReservationService;
     private final PayOS payOS;
     private final PayOSProperties properties;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -54,17 +57,17 @@ public class PaymentServiceImpl implements PaymentService {
         requireConfigured();
         BigDecimal paymentAmount = resolvePaymentAmount(request);
         long amount = toPayOSAmount(paymentAmount);
-        long orderCode = generateOrderCode();
+        long orderCode = generateUniqueOrderCode();
         long expiredAt = Instant.now().plusSeconds(15 * 60).getEpochSecond();
 
         CreatePaymentLinkRequest.CreatePaymentLinkRequestBuilder paymentBuilder = CreatePaymentLinkRequest.builder()
                 .orderCode(orderCode)
                 .amount(amount)
-                .description("Order " + orderCode)
+                .description("Đơn hàng " + orderCode)
                 .returnUrl(properties.returnUrl())
                 .cancelUrl(properties.cancelUrl())
                 .item(PaymentLinkItem.builder()
-                        .name("GearShift payment")
+                        .name("Thanh toán GearShift")
                         .quantity(1)
                         .price(amount)
                         .unit("VND")
@@ -79,10 +82,10 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             response = payOS.paymentRequests().create(paymentRequest);
         } catch (RuntimeException exception) {
-            throw new IllegalStateException("PayOS declined to create the payment link. Please check the API key, checksum key, and return/cancel URL configuration.", exception);
+            throw new IllegalStateException("PayOS từ chối tạo link thanh toán. Vui lòng kiểm tra lại cấu hình API key, checksum key và return/cancel URL.", exception);
         }
         if (response == null || !hasText(response.getCheckoutUrl())) {
-            throw new IllegalStateException("PayOS did not return a checkout URL.");
+            throw new IllegalStateException("PayOS không trả về đường dẫn thanh toán.");
         }
 
         PaymentTransaction transaction = new PaymentTransaction();
@@ -105,7 +108,7 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentTransaction syncPaymentStatus(String orderCode) {
         requireConfigured();
         PaymentTransaction transaction = paymentTransactionRepository.findByPayosOrderCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("PayOS transaction not found: " + orderCode));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch PayOS: " + orderCode));
         PaymentLink paymentLink = payOS.paymentRequests().get(Long.valueOf(orderCode));
         validateAmount(transaction, paymentLink.getAmount());
         applyStatus(transaction, paymentLink.getStatus());
@@ -117,11 +120,15 @@ public class PaymentServiceImpl implements PaymentService {
     public void handlePayOSWebhook(PayOSWebhookRequest request) {
         requireConfigured();
         WebhookData data = payOS.webhooks().verify(request);
+        if (!isSuccessfulWebhook(request)) {
+            throw new IllegalArgumentException("Webhook PayOS không phải sự kiện thanh toán thành công.");
+        }
         PaymentTransaction transaction = paymentTransactionRepository
                 .findByPayosOrderCode(String.valueOf(data.getOrderCode()))
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "PayOS transaction not found: " + data.getOrderCode()));
+                        "Không tìm thấy giao dịch PayOS: " + data.getOrderCode()));
         validateAmount(transaction, data.getAmount());
+        transaction.setRawWebhookPayload(writeWebhookPayload(request));
         markPaid(transaction);
         paymentTransactionRepository.save(transaction);
     }
@@ -199,7 +206,9 @@ public class PaymentServiceImpl implements PaymentService {
                 booking.setRemainingPaymentStatus(PaymentStatus.PAID);
             } else {
                 booking.setPaymentStatus(PaymentStatus.PAID);
-                    booking.setBookingStatus(BookingStatus.WAITING_FOR_VEHICLE);
+                booking.setBookingStatus(booking.getBookingType() == BookingType.PART_INSTALLATION
+                        ? BookingStatus.CONFIRMED
+                        : BookingStatus.WAITING_FOR_VEHICLE);
             }
             bookingRepository.save(booking);
         }
@@ -270,9 +279,6 @@ public class PaymentServiceImpl implements PaymentService {
             }
             bookingRepository.save(booking);
         }
-        if (transaction.getOrder() != null) {
-        } else if (parent != null) {
-        }
     }
 
     private void resetOrderForPaymentRetry(Order order) {
@@ -304,6 +310,16 @@ public class PaymentServiceImpl implements PaymentService {
                 + ThreadLocalRandom.current().nextInt(10, 100);
     }
 
+    private long generateUniqueOrderCode() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            long orderCode = generateOrderCode();
+            if (!paymentTransactionRepository.existsByPayosOrderCode(String.valueOf(orderCode))) {
+                return orderCode;
+            }
+        }
+        throw new IllegalStateException("Không thể tạo mã giao dịch PayOS duy nhất.");
+    }
+
     private void requireConfigured() {
         if (!properties.hasCredentials()) {
             throw new IllegalStateException("Thiếu PAYOS_CLIENT_ID, PAYOS_API_KEY hoặc PAYOS_CHECKSUM_KEY.");
@@ -329,7 +345,8 @@ public class PaymentServiceImpl implements PaymentService {
             return finalAmount.subtract(deposit).max(BigDecimal.ZERO);
         }
         if (request.getParentOrder() != null) {
-            BigDecimal amount = request.getParentOrder().getProductTotal();
+            BigDecimal amount = request.getParentOrder().getProductTotal()
+                    .add(resolveShippingFee(request.getSubOrders()));
             if (request.getBooking() != null) {
                 amount = amount.add(resolveBookingDeposit(request.getBooking()));
             }
@@ -337,7 +354,8 @@ public class PaymentServiceImpl implements PaymentService {
         }
         BigDecimal amount = request.getSubOrders() == null ? BigDecimal.ZERO
                 : request.getSubOrders().stream()
-                .map(Order::getProductTotal)
+                .map(order -> order.getProductTotal().add(order.getShippingFee() == null
+                        ? BigDecimal.ZERO : order.getShippingFee()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         if (request.getBooking() != null) {
             amount = amount.add(resolveBookingDeposit(request.getBooking()));
@@ -346,6 +364,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private BigDecimal resolveBookingDeposit(Booking booking) {
+        if (booking.getBookingType() == BookingType.PART_INSTALLATION) {
+            return BigDecimal.ZERO;
+        }
         if (booking.getDepositAmount() != null && booking.getDepositAmount().compareTo(BigDecimal.ZERO) > 0) {
             return booking.getDepositAmount();
         }
@@ -357,12 +378,32 @@ public class PaymentServiceImpl implements PaymentService {
                 .setScale(0, RoundingMode.UP);
     }
 
+    private BigDecimal resolveShippingFee(List<Order> orders) {
+        return orders == null ? BigDecimal.ZERO : orders.stream()
+                .map(order -> order.getShippingFee() == null ? BigDecimal.ZERO : order.getShippingFee())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     private String safePayOSText(String value, int maxLength) {
         if (!hasText(value)) {
             return null;
         }
         String normalized = value.trim();
         return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
+    }
+
+    private boolean isSuccessfulWebhook(PayOSWebhookRequest request) {
+        return request != null
+                && "00".equals(request.getCode())
+                && Boolean.TRUE.equals(request.getSuccess());
+    }
+
+    private String writeWebhookPayload(PayOSWebhookRequest request) {
+        try {
+            return objectMapper.writeValueAsString(request);
+        } catch (Exception exception) {
+            return null;
+        }
     }
 
     private boolean hasText(String value) {

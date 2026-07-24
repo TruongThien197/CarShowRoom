@@ -24,7 +24,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label"> Email </label>
-                        <input class="form-control gs-mono" type="email" th:value="${user.email}" readonly>
+                        <input class="form-control gs-mono" type="email" name="txtEmail" th:value="${user.email}" readonly>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label"> Số điện thoại </label>
@@ -44,7 +44,7 @@
                     </div>
                     <div class="col-12">
                         <button class="btn btn-primary btn-lg" type="submit">
-                            <i class="bi bi-save me-2"></i>Lưu Changes
+                            <i class="bi bi-save me-2"></i>Lưu thay đổi
                         </button>
                     </div>
                 </div>
@@ -52,7 +52,8 @@
         </section>
     </div>
 </main>
-
 <div th:replace="~{fragments :: scripts}"></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+<div th:replace="~{fragments/footer :: scripts}"></div>
 </body>
 </html>

@@ -20,12 +20,12 @@ public class Category {
     @Size(max = 100)
     @NotNull
     @Nationalized
-    @Column(name = "category_name", nullable = false, length = 100)
+    @Column(name = "category_name", nullable = false,columnDefinition = "NVARCHAR(100)")
     private String categoryName;
 
     @Nationalized
     @Lob
-    @Column(name = "description")
+    @Column(name = "description",columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
 

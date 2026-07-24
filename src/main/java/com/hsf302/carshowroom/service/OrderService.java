@@ -6,6 +6,7 @@ import com.hsf302.carshowroom.entity.Order;
 import com.hsf302.carshowroom.entity.PaymentTransaction;
 import com.hsf302.carshowroom.entity.User;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface OrderService {
@@ -20,11 +21,15 @@ public interface OrderService {
     Order getOrderForUser(Integer id, User user);
 
     void cancelOrderForUser(Integer id, User user, String reason);
+    void approveCancellation(Integer id, User processedBy);
+    void rejectCancellation(Integer id, User processedBy, String reason);
 
     void updateShippingAddressForUser(Integer id, User user, String shippingAddress, String receiverPhone);
 
     void updateShipment(Integer id, String shippingCarrier, String trackingCode);
-    void completeRefund(Integer id, User processedBy, String note);
+    void completeRefund(Integer id, User processedBy, String bankName, String bankBin,
+                        String accountHolder, String accountNumber, String note);
 
     CheckoutResult choosePaymentMethod(Integer id, User user, String paymentMethod);
+    BigDecimal calculateTotalAmount(Order order);
 }

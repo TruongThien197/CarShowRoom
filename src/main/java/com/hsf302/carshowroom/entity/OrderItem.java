@@ -40,7 +40,7 @@ public class OrderItem {
     @Column(name = "line_total", nullable = false)
     private BigDecimal lineTotal;
 
-    @Column(name = "product_name_snapshot", nullable = false)
+    @Column(name = "product_name_snapshot", nullable = false,columnDefinition = "NVARCHAR(MAX)")
     private String productNameSnapshot;
 
     @Enumerated(EnumType.STRING)
