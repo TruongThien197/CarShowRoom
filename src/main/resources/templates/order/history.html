@@ -46,6 +46,26 @@
                                 <span class="gs-badge"
                                       th:classappend="${order.orderStatus.name() == 'COMPLETED'} ? 'gs-badge--success' : (${order.orderStatus.name() == 'CANCELED' or order.orderStatus.name() == 'EXPIRED_PAYMENT'} ? 'gs-badge--danger' : (${order.orderStatus.name() == 'PROCESSING' or order.orderStatus.name() == 'SHIPPING'} ? 'gs-badge--info' : 'gs-badge--neutral'))"
                                       th:text="${order.orderStatus}">Chờ xử lý</span>
+                                <div class="small text-warning fw-semibold"
+                                     th:if="${order.refundStatus != null and order.refundStatus.name() == 'REQUESTED'}">
+                                    Yêu cầu hủy đang chờ duyệt
+                                </div>
+                                <div class="small text-info fw-semibold"
+                                     th:if="${order.refundStatus != null and order.refundStatus.name() == 'APPROVED'}">
+                                    Đã duyệt hủy, đang chờ hoàn tiền
+                                </div>
+                                <div class="small text-success fw-semibold"
+                                     th:if="${order.refundStatus != null and order.refundStatus.name() == 'COMPLETED'}">
+                                    Đã hoàn tiền
+                                </div>
+                                <div class="small text-danger fw-semibold"
+                                     th:if="${order.refundStatus != null and order.refundStatus.name() == 'FAILED'}">
+                                    Hoàn tiền chưa thành công, vui lòng liên hệ showroom
+                                </div>
+                                <div class="small text-danger fw-semibold"
+                                     th:if="${order.refundStatus != null and order.refundStatus.name() == 'REJECTED'}">
+                                    Yêu cầu hủy bị từ chối
+                                </div>
                             </td>
                             <td class="text-end fw-bold gs-mono" th:text="${#numbers.formatDecimal(order.shippingFee+order.productTotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</td>
                             <td class="text-end">

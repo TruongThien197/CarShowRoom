@@ -63,7 +63,7 @@
                                       th:text="${booking.bookingStatus.name() == 'PENDING_PAYMENT' ? 'Chờ thanh toán' : (booking.bookingStatus.name() == 'CONFIRMED' ? 'Đã xác nhận' : (booking.bookingStatus.name() == 'IN_PROGRESS' ? 'Đang thực hiện' : (booking.bookingStatus.name() == 'COMPLETED' ? 'Hoàn tất' : (booking.bookingStatus.name() == 'CANCELED' ? 'Đã hủy' : 'Hết hạn'))))}">Chờ xử lý</span>
                                 <div class="small text-warning fw-semibold"
                                      th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Chờ hoàn cọc
+                                    <i class="bi bi-hourglass-split me-1"></i>Yêu cầu hủy chờ duyệt
                                 </div>
                             </td>
                             <td class="text-end pe-4 table-action">
@@ -73,7 +73,7 @@
                                 <a class="btn btn-warning btn-sm"
                                    th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}"
                                    th:href="@{/admin/bookings/{id}(id=${booking.id})}">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Hoàn tiền
+                                    <i class="bi bi-clipboard-check me-1"></i>Xử lý yêu cầu
                                 </a>
                                 <form class="d-inline"
                                       th:if="${booking.bookingStatus.name() != 'COMPLETED'

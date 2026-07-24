@@ -135,10 +135,13 @@ public class Enums {
     }
 
     public enum PaymentMethod {
-        PAYOS;
+        PAYOS,
+        COD;
 
         @Override public String toString() {
-            return "Thanh toán trực tuyến qua PayOS";
+            return this == PAYOS
+                    ? "Thanh toán trực tuyến qua PayOS"
+                    : "Thanh toán khi nhận hàng (COD)";
         }
     }
 

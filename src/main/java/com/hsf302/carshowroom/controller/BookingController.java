@@ -105,6 +105,8 @@ public class BookingController {
             return "redirect:/auth/login";
         }
         List<Booking> bookings = bookingService.getBookings(user);
+        bookings.forEach(booking -> bookingService.expireDepositPaymentIfDue(booking.getId()));
+        bookings = bookingService.getBookings(user);
         model.addAttribute("bookings", bookings);
         model.addAttribute("bookingServices", buildBookingServices(bookings));
         return "booking/my-bookings";
@@ -116,6 +118,7 @@ public class BookingController {
         if (user == null) {
             return "redirect:/auth/login";
         }
+        bookingService.expireDepositPaymentIfDue(id);
         Booking booking = bookingService.getBookingDetail(user, id);
         model.addAttribute("booking", booking);
         model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(booking.getId()));
@@ -129,15 +132,19 @@ public class BookingController {
         if (user == null) {
             return "redirect:/auth/login";
         }
-        bookingService.cancelBooking(user, id);
-        attributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu hủy lịch. Nếu hủy sát giờ, nhân viên sẽ đánh giá thủ công.");
+        try {
+            bookingService.cancelBooking(user, id);
+        } catch (RuntimeException exception) {
+            attributes.addFlashAttribute("errorMessage", exception.getMessage());
+            return "redirect:/booking/my-bookings";
+        }
+        attributes.addFlashAttribute("successMessage", "Đã gửi yêu cầu hủy lịch. Nhân viên sẽ duyệt trước khi hủy lịch và xử lý hoàn tiền cọc.");
         return "redirect:/booking/my-bookings";
     }
 
     @PostMapping("/{id}/refund-account")
     public String submitRefundAccount(@PathVariable Integer id,
                                       @RequestParam String bankName,
-                                      @RequestParam String bankBin,
                                       @RequestParam String accountHolder,
                                       @RequestParam String accountNumber,
                                       RedirectAttributes attributes) {
@@ -146,7 +153,7 @@ public class BookingController {
             return "redirect:/auth/login";
         }
         try {
-            bookingService.submitRefundAccount(user, id, bankName, bankBin, accountHolder, accountNumber);
+            bookingService.submitRefundAccount(user, id, bankName, accountHolder, accountNumber);
             attributes.addFlashAttribute("successMessage", "Đã lưu thông tin tài khoản nhận tiền hoàn.");
         } catch (RuntimeException exception) {
             attributes.addFlashAttribute("errorMessage", exception.getMessage());
@@ -175,13 +182,18 @@ public class BookingController {
     }
 
     @GetMapping("/{id}/payment")
-    public String payment(@PathVariable Integer id, Model model) {
+    public String payment(@PathVariable Integer id, Model model, RedirectAttributes attributes) {
         User user = currentUserOrNull();
         if (user == null) {
             return "redirect:/auth/login";
         }
+        bookingService.expireDepositPaymentIfDue(id);
         Booking booking = bookingService.getBookingDetail(user, id);
         if (booking.getPaymentStatus() == com.hsf302.carshowroom.common.Enums.PaymentStatus.PAID) {
+            return "redirect:/booking/" + id;
+        }
+        if (booking.getBookingStatus() == BookingStatus.EXPIRED_PAYMENT) {
+            attributes.addFlashAttribute("errorMessage", "Đã hết thời gian giữ chỗ. Vui lòng tạo lịch hẹn mới.");
             return "redirect:/booking/" + id;
         }
         model.addAttribute("booking", booking);
@@ -260,9 +272,10 @@ public class BookingController {
     }
 
     private PaymentTransaction createBookingPayment(User user, Booking booking) {
+        bookingService.expireDepositPaymentIfDue(booking.getId());
+        booking = bookingService.getBookingDetail(user, booking.getId());
         if (booking.getBookingStatus() == BookingStatus.EXPIRED_PAYMENT) {
-            bookingService.reopenDepositPayment(booking.getId());
-            booking = bookingService.getBookingDetail(user, booking.getId());
+            throw new IllegalStateException("Đã hết thời gian giữ chỗ. Vui lòng tạo lịch hẹn mới.");
         }
         if (booking.getPaymentStatus() == com.hsf302.carshowroom.common.Enums.PaymentStatus.PAID) {
             throw new IllegalStateException("Lịch hẹn này đã được thanh toán.");

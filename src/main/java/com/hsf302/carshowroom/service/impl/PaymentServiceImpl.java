@@ -201,6 +201,13 @@ public class PaymentServiceImpl implements PaymentService {
         if (transaction.getStatus() == PaymentStatus.PAID) {
             return;
         }
+        if (!"REMAINING".equalsIgnoreCase(transaction.getPaymentPurpose())
+                && transaction.getPaymentDeadline() != null
+                && !transaction.getPaymentDeadline().isAfter(LocalDateTime.now(APP_ZONE))) {
+            markUnpaidTerminal(transaction, PaymentStatus.EXPIRED,
+                    OrderStatus.EXPIRED_PAYMENT, BookingStatus.EXPIRED_PAYMENT);
+            return;
+        }
         transaction.setStatus(PaymentStatus.PAID);
         transaction.setPaidAt(LocalDateTime.now(APP_ZONE));
 

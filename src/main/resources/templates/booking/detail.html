@@ -81,9 +81,8 @@
             <div class="alert alert-success" th:if="${booking.remainingPaymentStatus != null and booking.remainingPaymentStatus.name() == 'PAID'}">
                 Đã thanh toán đủ chi phí dịch vụ.
             </div>
-            <div class="alert alert-danger d-flex justify-content-between align-items-center" th:if="${booking.bookingStatus.name() == 'EXPIRED_PAYMENT'}">
-                <span>Thanh toán tiền cọc đã hết hạn hoặc chưa thành công.</span>
-                <a class="btn btn-outline-danger" th:href="@{/booking/{id}/payment(id=${booking.id})}">Thanh toán lại</a>
+            <div class="alert alert-danger" th:if="${booking.bookingStatus.name() == 'EXPIRED_PAYMENT'}">
+                Thanh toán tiền cọc đã hết hạn. Khung giờ giữ chỗ đã được giải phóng; vui lòng tạo lịch hẹn mới.
             </div>
             <div id="refund-account" class="surface-card p-4 border border-warning-subtle mb-4"
                  th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'APPROVED'}">
@@ -91,20 +90,16 @@
                 <p class="text-secondary mb-3">Lịch hẹn đã hủy. Vui lòng nhập tài khoản nhận hoàn cọc. Tên người nhận phải trùng với người đã thanh toán tiền cọc.</p>
                 <form th:action="@{/booking/{id}/refund-account(id=${booking.id})}" method="post">
                     <div class="row g-3">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">Ngân hàng</label>
                             <input class="form-control" name="bankName" required placeholder="Ví dụ: Vietcombank" th:value="${booking.refundBankName}">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Mã BIN ngân hàng</label>
-                            <input class="form-control" name="bankBin" required inputmode="numeric" placeholder="Ví dụ: 970436" th:value="${booking.refundBankBin}">
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">Tên người nhận</label>
                             <input class="form-control" name="accountHolder" required readonly th:value="${booking.user.fullName}">
                             <div class="form-text">Tự động lấy theo người thanh toán cọc.</div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">Số tài khoản</label>
                             <input class="form-control" name="accountNumber" required inputmode="numeric" th:value="${booking.refundAccountNumber}">
                         </div>

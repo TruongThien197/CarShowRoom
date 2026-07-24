@@ -117,27 +117,29 @@
                         <div class="d-flex justify-content-between"><span>Khách còn phải thanh toán</span><strong class="gs-mono text-warning" th:text="${#numbers.formatDecimal((booking.finalAmount - (booking.depositAmount ?: 0)), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">24.000 VNĐ</strong></div>
                     </div>
 
-                    <div class="surface-card p-4" th:if="${booking.refundStatus != null and (booking.refundStatus.name() == 'APPROVED' or booking.refundStatus.name() == 'FAILED')}">
+                    <div class="surface-card p-4" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'APPROVED'}">
                         <h5 class="fw-bold mb-3 text-warning">Yêu cầu hoàn tiền cọc</h5>
-                        <form th:action="@{/staff/bookings/refund}" method="post">
+                        <div class="alert alert-warning small" th:if="${booking.refundBankName == null or booking.refundAccountNumber == null}">Đang chờ khách cung cấp tài khoản nhận hoàn tiền.</div>
+                        <form th:if="${booking.refundBankName != null and booking.refundAccountNumber != null}" th:action="@{/staff/bookings/refund}" method="post">
                             <input type="hidden" name="bookingId" th:value="${booking.id}">
-                            <input type="hidden" name="bankName" th:value="${booking.refundBankName}">
-                            <input type="hidden" name="bankBin" th:value="${booking.refundBankBin}">
-                            <input type="hidden" name="accountHolder" th:value="${booking.refundAccountHolder}">
-                            <input type="hidden" name="accountNumber" th:value="${booking.refundAccountNumber}">
-                            <input class="form-control mb-2" name="note" required placeholder="Ghi chú hoàn tiền">
-                            <button class="btn btn-success w-100" type="submit">Tạo lệnh chi PayOS</button>
+                            <div class="alert alert-light border small">
+                                <strong th:text="${booking.refundBankName}">Ngân hàng</strong>
+                                <span> - </span><span th:text="${booking.refundAccountNumber}">Số tài khoản</span>
+                                <span> - </span><span th:text="${booking.refundAccountHolder}">Chủ tài khoản</span>
+                            </div>
+                            <input class="form-control mb-2" name="transactionCode" required placeholder="Mã giao dịch chuyển khoản hoàn tiền">
+                            <button class="btn btn-success w-100" type="submit">Xác nhận đã hoàn tiền</button>
                         </form>
                     </div>
                 </div>
             </div>
 
             <div class="admin-table-card p-0 overflow-hidden mt-4">
-                <div class="p-4 border-bottom"><h5 class="fw-bold mb-0"><i class="bi bi-bank me-2 text-primary"></i>Lệnh chi PayOS</h5></div>
+                <div class="p-4 border-bottom"><h5 class="fw-bold mb-0"><i class="bi bi-bank me-2 text-primary"></i>Lịch sử hoàn tiền</h5></div>
                 <div class="table-responsive"><table class="table align-middle mb-0">
                     <thead class="table-light"><tr><th>Reference</th><th>Payout</th><th>Số tiền</th><th>Trạng thái</th><th>Lỗi</th><th></th></tr></thead>
                     <tbody>
-                    <tr th:if="${#lists.isEmpty(refundTransactions)}"><td colspan="6" class="text-secondary">Chưa có lệnh chi.</td></tr>
+                    <tr th:if="${#lists.isEmpty(refundTransactions)}"><td colspan="6" class="text-secondary">Chưa có giao dịch hoàn tiền.</td></tr>
                     <tr th:each="refund : ${refundTransactions}">
                         <td class="gs-mono" th:text="${refund.referenceId}">REFUND</td>
                         <td class="gs-mono" th:text="${refund.providerPayoutId ?: '-'}">Payout</td>

@@ -52,6 +52,7 @@ public class OrderController {
     private final OrderItemRepository orderItemRepository;
     private final VehicleRepository vehicleRepository;
     private final ServiceRepository serviceRepository;
+    private final ShippingFeeRuleRepository shippingFeeRuleRepository;
     private final RefundService refundService;
     private final SystemSettingService settingService;
 
@@ -139,7 +140,8 @@ public class OrderController {
         model.addAttribute("canCancel", order.getOrderStatus() != OrderStatus.SHIPPING
                 && order.getOrderStatus() != OrderStatus.COMPLETED
                 && order.getOrderStatus() != OrderStatus.CANCELED
-                && order.getOrderStatus() != OrderStatus.EXPIRED_PAYMENT);
+                && order.getOrderStatus() != OrderStatus.EXPIRED_PAYMENT
+                && order.getRefundStatus() != com.hsf302.carshowroom.common.Enums.RefundStatus.REQUESTED);
         model.addAttribute("canEditAddress", order.getOrderType() == com.hsf302.carshowroom.common.Enums.OrderType.SHIPPING
                 && (order.getOrderStatus() == OrderStatus.PENDING_PAYMENT || order.getOrderStatus() == OrderStatus.PROCESSING));
         model.addAttribute("canRetryPayment", canRetryPayment(order));
@@ -197,6 +199,26 @@ public class OrderController {
         return "redirect:/orders/" + id;
     }
 
+    /** Lưu tài khoản khách nhận tiền sau khi nhân viên duyệt yêu cầu hủy đơn đã thanh toán. */
+    @PostMapping("/{id}/refund-account")
+    public String submitRefundAccount(@PathVariable Integer id,
+                                      @RequestParam String bankName,
+                                      @RequestParam String accountHolder,
+                                      @RequestParam String accountNumber,
+                                      RedirectAttributes attributes) {
+        User user = currentUserOrNull();
+        if (user == null) {
+            return "redirect:/auth/login";
+        }
+        try {
+            orderService.submitRefundAccount(user, id, bankName, accountHolder, accountNumber);
+            attributes.addFlashAttribute("successMessage", "Đã lưu thông tin tài khoản nhận tiền hoàn.");
+        } catch (RuntimeException exception) {
+            attributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/orders/" + id;
+    }
+
     @PostMapping("/{id}/shipping-address")
     public String updateShippingAddress(@PathVariable Integer id,
                                         @RequestParam String shippingAddress,
@@ -230,6 +252,12 @@ public class OrderController {
                 .anyMatch(item -> !FulfillmentType.AT_WORKSHOP.equals(item.getFulfillmentType()));
         model.addAttribute("needsWorkshop", needsWorkshop);
         model.addAttribute("hasShipping", hasShipping);
+        var shippingFeeRules = shippingFeeRuleRepository.findByActiveTrueOrderByProvinceAscDistrictAsc();
+        model.addAttribute("shippingFeeRules", shippingFeeRules);
+        model.addAttribute("shippingProvinces", shippingFeeRules.stream()
+                .map(rule -> rule.getProvince())
+                .distinct()
+                .toList());
         model.addAttribute("vehicles", vehicleRepository.findByUser(user));
         if (needsWorkshop) {
             com.hsf302.carshowroom.entity.Service workshopService = getWorkshopInstallationService();

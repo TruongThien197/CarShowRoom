@@ -219,15 +219,12 @@ public class StaffController {
 
     @PostMapping("/bookings/refund")
     public String completeBookingRefund(@RequestParam Integer bookingId,
-                                        @RequestParam String bankName,
-                                        @RequestParam String bankBin,
-                                        @RequestParam String accountHolder,
-                                        @RequestParam String accountNumber,
-                                        @RequestParam String note,
+                                        @RequestParam String transactionCode,
                                         RedirectAttributes redirectAttributes) {
         try {
             bookingService.completeRefund(bookingId, authService.getCurrentUser(),
-                    bankName, bankBin, accountHolder, accountNumber, note);
+                    transactionCode);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền cọc thủ công.");
             redirectAttributes.addFlashAttribute("successMessage", "Đã tạo lệnh chi PayOS cho hoàn tiền cọc.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -237,17 +234,17 @@ public class StaffController {
 
     @PostMapping("/orders/refund")
     public String completeRefund(@RequestParam Integer orderId,
-                                 @RequestParam String bankName,
-                                 @RequestParam String bankBin,
-                                 @RequestParam String accountHolder,
-                                 @RequestParam String accountNumber,
-                                 @RequestParam String note,
+                                 @RequestParam String transactionCode,
                                  RedirectAttributes redirectAttributes) {
         try {
-            orderService.completeRefund(orderId, authService.getCurrentUser(), bankName, bankBin, accountHolder, accountNumber, note);
+            orderService.completeRefund(orderId, authService.getCurrentUser(), transactionCode);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền thủ công.");
             redirectAttributes.addFlashAttribute("successMessage", "Đã tạo lệnh chi PayOS cho hoàn tiền.");
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        if (!redirectAttributes.getFlashAttributes().containsKey("errorMessage")) {
+            redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền thủ công.");
         }
         return "redirect:/staff/orders/" + orderId;
     }
