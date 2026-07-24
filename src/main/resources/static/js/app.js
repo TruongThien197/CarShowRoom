@@ -10,26 +10,72 @@
 
     /**
      * 1) Confirm-before-submit.
-     * Any <form> or <button>/<a> with data-confirm="message" shows a
-     * confirmation dialog before the action proceeds. Replaces scattered
-     * inline onclick="return confirm(...)" with one consistent mechanism.
+     * Any form or link with data-confirm displays a Bootstrap modal instead
+     * of the browser's native confirmation dialog.
      */
     function initConfirmActions() {
+        if (typeof bootstrap === "undefined" || !bootstrap.Modal) return;
+
+        var modalElement = document.createElement("div");
+        modalElement.className = "modal fade";
+        modalElement.id = "confirmActionModal";
+        modalElement.tabIndex = -1;
+        modalElement.setAttribute("aria-labelledby", "confirmActionModalLabel");
+        modalElement.setAttribute("aria-hidden", "true");
+        modalElement.innerHTML =
+            '<div class="modal-dialog modal-dialog-centered">' +
+                '<div class="modal-content">' +
+                    '<div class="modal-header">' +
+                        '<h5 class="modal-title" id="confirmActionModalLabel">Xác nhận thao tác</h5>' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>' +
+                    '</div>' +
+                    '<div class="modal-body" id="confirmActionMessage"></div>' +
+                    '<div class="modal-footer">' +
+                        '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>' +
+                        '<button type="button" class="btn btn-danger" id="confirmActionButton">Xác nhận</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(modalElement);
+
+        var modal = new bootstrap.Modal(modalElement);
+        var messageElement = modalElement.querySelector("#confirmActionMessage");
+        var confirmButton = modalElement.querySelector("#confirmActionButton");
+        var pendingAction = null;
+
+        function showConfirmation(message, action) {
+            messageElement.textContent = message || "Bạn có chắc muốn thực hiện thao tác này?";
+            pendingAction = action;
+            modal.show();
+        }
+
+        confirmButton.addEventListener("click", function () {
+            var action = pendingAction;
+            pendingAction = null;
+            modal.hide();
+            if (action) action();
+        });
+
         document.querySelectorAll("form[data-confirm]").forEach(function (form) {
             form.addEventListener("submit", function (event) {
-                var message = form.getAttribute("data-confirm") || "Are you sure you want to do this?";
-                if (!window.confirm(message)) {
-                    event.preventDefault();
+                if (form.dataset.confirmed === "true") {
+                    delete form.dataset.confirmed;
+                    return;
                 }
+                event.preventDefault();
+                showConfirmation(form.getAttribute("data-confirm"), function () {
+                    form.dataset.confirmed = "true";
+                    form.requestSubmit();
+                });
             });
         });
 
         document.querySelectorAll("a[data-confirm]").forEach(function (link) {
             link.addEventListener("click", function (event) {
-                var message = link.getAttribute("data-confirm") || "Are you sure you want to do this?";
-                if (!window.confirm(message)) {
-                    event.preventDefault();
-                }
+                event.preventDefault();
+                showConfirmation(link.getAttribute("data-confirm"), function () {
+                    window.location.assign(link.href);
+                });
             });
         });
     }

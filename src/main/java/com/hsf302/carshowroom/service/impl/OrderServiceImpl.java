@@ -109,6 +109,9 @@ public class OrderServiceImpl implements OrderService {
         }
         boolean mixed = !shippingItems.isEmpty() && !workshopItems.isEmpty();
         PaymentMethod paymentMethod = parsePaymentMethod(form.getPaymentMethod());
+        if (paymentMethod == PaymentMethod.COD && !workshopItems.isEmpty()) {
+            throw new IllegalArgumentException("Đơn lắp đặt tại xưởng cần thanh toán tiền cọc trực tuyến.");
+        }
         ShippingDetails shippingDetails = shippingItems.isEmpty() ? null : resolveShippingDetails(form);
 
         Order parentOrder = mixed ? createOrder(user, OrderType.PARENT, null, null, form.getPhone(), List.of()) : null;
@@ -145,6 +148,13 @@ public class OrderServiceImpl implements OrderService {
         inventoryReservationService.reserveStock(stockOrders);
         cartItemRepository.deleteByUser(user);
         Integer confirmationOrderId = parentOrder != null ? parentOrder.getId() : stockOrders.get(0).getId();
+        if (paymentMethod == PaymentMethod.COD) {
+            stockOrders.forEach(order -> {
+                order.setPaymentStatus(PaymentStatus.PENDING);
+                orderWorkflowService.processOrder(order);
+            });
+            return new CheckoutResult(confirmationOrderId, null);
+        }
         PaymentTransaction transaction = createPayOSPayment(user, parentOrder, stockOrders, booking);
         return new CheckoutResult(confirmationOrderId, transaction.getCheckoutUrl());
     }
@@ -178,6 +188,16 @@ public class OrderServiceImpl implements OrderService {
         if (!isCustomerCancelable(order)) {
             throw new IllegalStateException("Không thể hủy đơn khi đơn đã được giao, hoàn tất hoặc đã hủy.");
         }
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            if (order.getRefundStatus() == RefundStatus.REQUESTED) {
+                throw new IllegalStateException("Yêu cầu hủy đơn đang chờ nhân viên duyệt.");
+            }
+            order.setCancellationReason(requireText(reason, "Vui lòng nhập lý do hủy đơn."));
+            order.setCancellationRequestedAt(LocalDateTime.now());
+            order.setRefundStatus(RefundStatus.REQUESTED);
+            orderRepository.save(order);
+            return;
+        }
         order.setCancellationReason(requireText(reason, "Vui lòng nhập lý do hủy đơn."));
         if (order.getPaymentStatus() == PaymentStatus.PAID) {
             refundService.requestOrderRefund(order, order.getCancellationReason());
@@ -192,6 +212,16 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void approveCancellation(Integer id, User processedBy) {
         Order order = getOrderById(id);
+        if (order.getRefundStatus() == RefundStatus.REQUESTED) {
+            refundService.requestOrderRefund(order, order.getCancellationReason());
+            cancelOrderAndChildren(order);
+            order.setRefundStatus(RefundStatus.APPROVED);
+            order.setCancellationProcessedBy(processedBy);
+            order.setCancellationProcessedAt(LocalDateTime.now());
+            order.setCancellationDecisionNote("Đã duyệt yêu cầu hủy đơn.");
+            orderRepository.save(order);
+            return;
+        }
         if (order.getRefundStatus() != RefundStatus.REQUESTED) {
             throw new IllegalStateException("Đơn hàng không có yêu cầu hủy đang chờ duyệt.");
         }
@@ -239,6 +269,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void updateShipment(Integer id, String shippingCarrier, String trackingCode) {
         Order order = getOrderById(id);
+        assertNoPendingCancellation(order);
         if (order.getOrderType() != OrderType.SHIPPING) {
             throw new IllegalStateException("Chỉ đơn giao hàng mới có mã vận đơn.");
         }
@@ -258,6 +289,48 @@ public class OrderServiceImpl implements OrderService {
 
     /** Nhân viên xác nhận hoàn tiền cho đơn hàng đã hủy và đồng bộ giao dịch thanh toán. */
     @Override
+    @Transactional
+    public void completeRefund(Integer id, User processedBy, String transactionCode) {
+        Order order = getOrderById(id);
+        if (order.getOrderStatus() != OrderStatus.CANCELED
+                || order.getRefundStatus() != RefundStatus.APPROVED
+                || order.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new IllegalStateException("Đơn hàng không có yêu cầu hoàn tiền đang chờ xử lý.");
+        }
+        if (order.getRefundBankName() == null || order.getRefundBankName().isBlank()
+                || order.getRefundAccountHolder() == null || order.getRefundAccountHolder().isBlank()
+                || order.getRefundAccountNumber() == null || order.getRefundAccountNumber().isBlank()) {
+            throw new IllegalStateException("Khách hàng chưa cung cấp đầy đủ tài khoản nhận hoàn tiền.");
+        }
+        var refund = refundService.getOrderRefunds(order).stream()
+                .filter(item -> item.getStatus() == RefundStatus.REQUESTED)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Không có yêu cầu hoàn tiền đang chờ xử lý."));
+        refundService.complete(refund.getId(), processedBy,
+                requireText(transactionCode, "Vui lòng nhập mã giao dịch hoàn tiền."));
+        orderRepository.save(order);
+    }
+
+    /** Lưu tài khoản nhận tiền cho đơn đã được nhân viên duyệt hoàn. */
+    @Override
+    @Transactional
+    public void submitRefundAccount(User user, Integer id, String bankName,
+                                    String accountHolder, String accountNumber) {
+        Order order = getOrderForUser(id, user);
+        if (order.getOrderStatus() != OrderStatus.CANCELED
+                || order.getRefundStatus() != RefundStatus.APPROVED
+                || order.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new IllegalStateException("Đơn hàng này chưa cần bổ sung thông tin hoàn tiền.");
+        }
+        if (!samePerson(accountHolder, order.getUser().getFullName())) {
+            throw new IllegalArgumentException("Tên người nhận tiền phải trùng với tên khách hàng đã thanh toán.");
+        }
+        order.setRefundBankName(requireText(bankName, "Vui lòng nhập ngân hàng nhận hoàn tiền."));
+        order.setRefundAccountHolder(order.getUser().getFullName());
+        order.setRefundAccountNumber(requireText(accountNumber, "Vui lòng nhập số tài khoản nhận hoàn tiền."));
+        orderRepository.save(order);
+    }
+
     @Transactional
     public void completeRefund(Integer id, User processedBy, String bankName, String bankBin,
                                String accountHolder, String accountNumber, String note) {
@@ -291,6 +364,9 @@ public class OrderServiceImpl implements OrderService {
                 ? List.of(rootOrder)
                 : rootOrder.getSubOrders();
         PaymentMethod paymentMethod = parsePaymentMethod(paymentMethodValue);
+        if (paymentMethod == PaymentMethod.COD) {
+            throw new IllegalArgumentException("COD chỉ được chọn khi đặt đơn mới, không áp dụng cho đơn cần thanh toán lại.");
+        }
         stockOrders.forEach(order -> {
             order.setPaymentMethod(paymentMethod);
             order.setPaymentStatus(PaymentStatus.PENDING);
@@ -333,6 +409,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void updateOrderStatus(Integer id, String status) {
         Order order = getOrderById(id);
+        assertNoPendingCancellation(order);
         OrderStatus nextStatus = OrderStatus.valueOf(status.toUpperCase());
         if (order.getOrderStatus() == nextStatus) {
             return;
@@ -539,10 +616,14 @@ public class OrderServiceImpl implements OrderService {
 
     /** Chuyển chuỗi phương thức thanh toán thành enum hợp lệ. */
     private PaymentMethod parsePaymentMethod(String value) {
-        if (value == null || !PaymentMethod.PAYOS.name().equalsIgnoreCase(value.trim())) {
-            throw new IllegalArgumentException("Chỉ hỗ trợ thanh toán trực tuyến qua PayOS.");
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Vui lòng chọn phương thức thanh toán.");
         }
-        return PaymentMethod.PAYOS;
+        try {
+            return PaymentMethod.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ.");
+        }
     }
 
     /** Kiểm tra quy tắc chuyển trạng thái của đơn hàng trước khi thực hiện thao tác. */
@@ -600,6 +681,13 @@ public class OrderServiceImpl implements OrderService {
         orderWorkflowService.cancelOrder(order);
     }
 
+    /** Ngăn thay đổi xử lý đơn hàng khi khách đang chờ duyệt yêu cầu hủy. */
+    private void assertNoPendingCancellation(Order order) {
+        if (order.getRefundStatus() == RefundStatus.REQUESTED) {
+            throw new IllegalStateException("Đơn hàng đang có yêu cầu hủy chờ duyệt nên chưa thể cập nhật.");
+        }
+    }
+
     /** Kiểm tra đơn hàng thuộc khách hàng đang thao tác. */
     private void assertOrderOwner(Order order, User user) {
         if (!order.getUser().getId().equals(user.getId())) {
@@ -613,6 +701,13 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalArgumentException(errorMessage);
         }
         return value.trim();
+    }
+
+    /** So sánh tên người nhận với khách thanh toán, bỏ khoảng trắng thừa và không phân biệt hoa thường. */
+    private boolean samePerson(String first, String second) {
+        return first != null && second != null
+                && first.trim().replaceAll("\\s+", " ").equalsIgnoreCase(
+                second.trim().replaceAll("\\s+", " "));
     }
 
     /** Xác định khách còn được phép hủy đơn theo trạng thái hiện tại hay không. */

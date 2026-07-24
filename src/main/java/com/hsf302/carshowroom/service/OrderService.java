@@ -27,8 +27,12 @@ public interface OrderService {
     void updateShippingAddressForUser(Integer id, User user, String shippingAddress, String receiverPhone);
 
     void updateShipment(Integer id, String shippingCarrier, String trackingCode);
-    void completeRefund(Integer id, User processedBy, String bankName, String bankBin,
-                        String accountHolder, String accountNumber, String note);
+    /** Xác nhận nhân viên đã chuyển khoản hoàn tiền thủ công và lưu mã giao dịch. */
+    void completeRefund(Integer id, User processedBy, String transactionCode);
+
+    /** Lưu tài khoản khách nhận tiền sau khi yêu cầu hủy đơn đã được duyệt. */
+    void submitRefundAccount(User user, Integer id, String bankName,
+                             String accountHolder, String accountNumber);
 
     CheckoutResult choosePaymentMethod(Integer id, User user, String paymentMethod);
     BigDecimal calculateTotalAmount(Order order);

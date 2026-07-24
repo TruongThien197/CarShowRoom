@@ -23,10 +23,10 @@ public interface BookingService {
 
     void updateStatus(Integer bookingId, String status);
 
-    void completeRefund(Integer bookingId, User processedBy, String bankName,
-                        String bankBin, String accountHolder, String accountNumber, String note);
+    /** Xác nhận nhân viên đã chuyển khoản hoàn cọc thủ công và lưu mã giao dịch. */
+    void completeRefund(Integer bookingId, User processedBy, String transactionCode);
 
-    void submitRefundAccount(User user, Integer bookingId, String bankName, String bankBin,
+    void submitRefundAccount(User user, Integer bookingId, String bankName,
                              String accountHolder, String accountNumber);
 
     void checkIn(Integer bookingId);
@@ -36,5 +36,6 @@ public interface BookingService {
     void recordLaborCollection(Integer bookingId, User staff, java.math.BigDecimal laborFee);
 
     void markNoShow(Integer bookingId);
+    void expireDepositPaymentIfDue(Integer bookingId);
     void reopenDepositPayment(Integer bookingId);
 }

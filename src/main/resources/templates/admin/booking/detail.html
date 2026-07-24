@@ -9,6 +9,14 @@
         <aside th:replace="~{fragments/sidebar :: adminSidebar('bookings')}"></aside>
 
         <section class="col-lg-9 col-xl-10 admin-content">
+            <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${successMessage}">
+                <span th:text="${successMessage}">Thao tác thành công.</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+            </div>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" th:if="${errorMessage}">
+                <span th:text="${errorMessage}">Không thể thực hiện thao tác.</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+            </div>
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div>
                     <a class="btn btn-link p-0 text-secondary text-decoration-none mb-2" th:href="@{/admin/bookings}">
@@ -66,16 +74,46 @@
                     </div>
                     <div class="surface-card p-4 border border-warning-subtle" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'APPROVED'}">
                         <h5 class="fw-bold mb-3"><i class="bi bi-arrow-counterclockwise me-2 text-warning"></i>Yêu cầu hoàn tiền cọc</h5>
-                        <p class="mb-3">Khách đã hủy lịch sau khi thanh toán. Vui lòng hoàn lại tiền cọc trên cổng thanh toán và lưu mã giao dịch.</p>
-                        <form th:action="@{/admin/bookings/refund}" method="post">
-                            <input type="hidden" name="bookingId" th:value="${booking.id}">
-                            <div class="row g-2 mb-2">
-                                <div class="col-md-4"><input class="form-control" name="bankName" required placeholder="Ngân hàng" th:value="${booking.refundBankName}"></div>
-                                <div class="col-md-4"><input class="form-control" name="accountHolder" required readonly th:value="${booking.refundAccountHolder ?: booking.user.fullName}"></div>
-                                <div class="col-md-4"><input class="form-control" name="accountNumber" required placeholder="Số tài khoản" th:value="${booking.refundAccountNumber}"></div>
+                        <p class="mb-3">Khách tự nhập tài khoản nhận tiền sau khi yêu cầu hủy được duyệt. Nhân viên chuyển khoản thủ công rồi xác nhận bằng mã giao dịch.</p>
+                        <div class="alert alert-info border mb-3">
+                            <div class="row g-2 small">
+                                <div class="col-md-4"><span class="text-secondary d-block">Tiền cọc đã thu</span><strong class="gs-mono" th:text="${#numbers.formatDecimal(booking.depositAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</strong></div>
+                                <div class="col-md-3"><span class="text-secondary d-block">Tỷ lệ hoàn áp dụng</span><strong th:text="${refundPreviewRate + '%'}">0%</strong></div>
+                                <div class="col-md-5"><span class="text-secondary d-block">Số tiền cần chuyển</span><strong class="gs-mono text-primary fs-5" th:text="${#numbers.formatDecimal(refundPreviewAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</strong></div>
                             </div>
-                            <textarea class="form-control mb-2" name="note" rows="2" required placeholder="Ghi chú hoặc mã giao dịch hoàn tiền"></textarea>
+                            <hr class="my-2"><div><strong>Lý do tính hoàn:</strong> <span th:text="${refundPreviewExplanation}">Căn cứ chính sách hoàn cọc.</span></div>
+                        </div>
+                        <div class="alert alert-warning mb-0" th:if="${booking.refundBankName == null or booking.refundAccountHolder == null or booking.refundAccountNumber == null}">
+                            Đang chờ khách cung cấp đầy đủ thông tin tài khoản nhận hoàn tiền.
+                        </div>
+                        <form th:if="${booking.refundBankName != null and booking.refundAccountHolder != null and booking.refundAccountNumber != null}"
+                              th:action="@{/admin/bookings/refund}" method="post">
+                            <input type="hidden" name="bookingId" th:value="${booking.id}">
+                            <div class="alert alert-light border small mb-2">
+                                <strong th:text="${booking.refundBankName}">Ngân hàng</strong>
+                                <span> - </span><span th:text="${booking.refundAccountNumber}">Số tài khoản</span>
+                                <span> - </span><span th:text="${booking.refundAccountHolder}">Chủ tài khoản</span>
+                            </div>
+                            <input class="form-control mb-2" name="transactionCode" required placeholder="Mã giao dịch chuyển khoản hoàn tiền">
                             <button class="btn btn-success w-100" type="submit">Xác nhận đã hoàn tiền cọc</button>
+                        </form>
+                    </div>
+                    <div class="surface-card p-4 border border-warning-subtle" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'REQUESTED'}">
+                        <h5 class="fw-bold text-warning">Yêu cầu hủy lịch đang chờ duyệt</h5>
+                        <p class="small mb-3">Duyệt để hủy lịch và tạo yêu cầu hoàn tiền; từ chối thì lịch hẹn vẫn được giữ nguyên.</p>
+                        <div class="alert alert-info border small">
+                            <div class="d-flex flex-wrap justify-content-between gap-2"><span>Tiền cọc: <strong class="gs-mono" th:text="${#numbers.formatDecimal(booking.depositAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</strong></span><span>Tỷ lệ hoàn: <strong th:text="${refundPreviewRate + '%'}">0%</strong></span><span>Số tiền dự kiến hoàn: <strong class="gs-mono text-primary" th:text="${#numbers.formatDecimal(refundPreviewAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</strong></span></div>
+                            <div class="mt-2"><strong>Lý do tính hoàn:</strong> <span th:text="${refundPreviewExplanation}">Căn cứ chính sách hoàn cọc.</span></div>
+                        </div>
+                        <form th:action="@{/admin/bookings/{id}/cancellation/approve(id=${booking.id})}" method="post" class="mb-2">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <textarea class="form-control mb-2" name="assessmentNote" rows="2" placeholder="Ghi chú duyệt (không bắt buộc)"></textarea>
+                            <button class="btn btn-success w-100" type="submit">Duyệt hủy lịch</button>
+                        </form>
+                        <form th:action="@{/admin/bookings/{id}/cancellation/reject(id=${booking.id})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <textarea class="form-control mb-2" name="reason" rows="2" required placeholder="Lý do từ chối"></textarea>
+                            <button class="btn btn-outline-danger w-100" type="submit">Từ chối yêu cầu hủy</button>
                         </form>
                     </div>
                     <div class="surface-card p-4 border border-success-subtle" th:if="${booking.refundStatus != null and booking.refundStatus.name() == 'COMPLETED'}">

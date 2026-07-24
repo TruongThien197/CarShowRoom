@@ -129,6 +129,21 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF COL_LENGTH('orders', 'refunded_by_id') IS NULL ALTER TABLE orders ADD refunded_by_id INT NULL",
                 "IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_orders_cancellation_processed_by') ALTER TABLE orders ADD CONSTRAINT FK_orders_cancellation_processed_by FOREIGN KEY (cancellation_processed_by_id) REFERENCES users(user_id)",
                 "UPDATE orders SET refund_status = 'NONE' WHERE refund_status IS NULL",
+                // Replace old refund status checks so the manual refund workflow can move through approval and completion.
+                "IF OBJECT_ID('orders', 'U') IS NOT NULL AND COL_LENGTH('orders', 'refund_status') IS NOT NULL " +
+                        "BEGIN " +
+                        "DECLARE @dropOrderRefundStatusChecks NVARCHAR(MAX) = N''; " +
+                        "SELECT @dropOrderRefundStatusChecks = @dropOrderRefundStatusChecks + " +
+                        "N'ALTER TABLE [' + OBJECT_SCHEMA_NAME(cc.parent_object_id) + N'].[' + " +
+                        "OBJECT_NAME(cc.parent_object_id) + N'] DROP CONSTRAINT [' + cc.name + N'];' " +
+                        "FROM sys.check_constraints cc " +
+                        "JOIN sys.columns c ON c.object_id = cc.parent_object_id " +
+                        "AND c.column_id = cc.parent_column_id " +
+                        "WHERE cc.parent_object_id = OBJECT_ID('orders') AND c.name = 'refund_status'; " +
+                        "IF LEN(@dropOrderRefundStatusChecks) > 0 EXEC sp_executesql @dropOrderRefundStatusChecks; " +
+                        "ALTER TABLE orders WITH NOCHECK ADD CONSTRAINT CK_orders_refund_status " +
+                        "CHECK (refund_status IN ('NONE', 'REQUESTED', 'APPROVED', 'REJECTED', 'PROCESSING', 'COMPLETED', 'FAILED')); " +
+                        "END",
                 "IF COL_LENGTH('orders', 'order_date') IS NOT NULL EXEC sp_executesql N'UPDATE orders SET created_at = CAST(order_date AS DATETIME2) WHERE created_at IS NULL AND order_date IS NOT NULL'",
                 "UPDATE orders SET updated_at = created_at WHERE updated_at IS NULL",
                 "UPDATE orders SET order_type = 'SHIPPING' WHERE order_type IS NULL",
@@ -169,8 +184,48 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refunded_by_id') IS NULL ALTER TABLE bookings ADD refunded_by_id INT NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_bookings_cancellation_processed_by') ALTER TABLE bookings ADD CONSTRAINT FK_bookings_cancellation_processed_by FOREIGN KEY (cancellation_processed_by_id) REFERENCES users(user_id)",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_status') IS NOT NULL UPDATE bookings SET refund_status = 'NONE' WHERE refund_status IS NULL",
+                // Replace old refund status checks so the manual refund workflow can move through approval and completion.
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'refund_status') IS NOT NULL " +
+                        "BEGIN " +
+                        "DECLARE @dropBookingRefundStatusChecks NVARCHAR(MAX) = N''; " +
+                        "SELECT @dropBookingRefundStatusChecks = @dropBookingRefundStatusChecks + " +
+                        "N'ALTER TABLE [' + OBJECT_SCHEMA_NAME(cc.parent_object_id) + N'].[' + " +
+                        "OBJECT_NAME(cc.parent_object_id) + N'] DROP CONSTRAINT [' + cc.name + N'];' " +
+                        "FROM sys.check_constraints cc " +
+                        "JOIN sys.columns c ON c.object_id = cc.parent_object_id " +
+                        "AND c.column_id = cc.parent_column_id " +
+                        "WHERE cc.parent_object_id = OBJECT_ID('bookings') AND c.name = 'refund_status'; " +
+                        "IF LEN(@dropBookingRefundStatusChecks) > 0 EXEC sp_executesql @dropBookingRefundStatusChecks; " +
+                        "ALTER TABLE bookings WITH NOCHECK ADD CONSTRAINT CK_bookings_refund_status " +
+                        "CHECK (refund_status IN ('NONE', 'REQUESTED', 'APPROVED', 'REJECTED', 'PROCESSING', 'COMPLETED', 'FAILED')); " +
+                        "END",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'remaining_payment_status') IS NOT NULL UPDATE bookings SET remaining_payment_status = 'PENDING' WHERE remaining_payment_status IS NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'booking_status') IS NOT NULL UPDATE bookings SET booking_status = 'PENDING_PAYMENT' WHERE booking_status = 'PENDING_DEPOSIT'",
+                // Replace legacy status checks so payment confirmation can persist every current BookingStatus value.
+                "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'booking_status') IS NOT NULL " +
+                        "BEGIN " +
+                        "UPDATE bookings SET booking_status = CASE UPPER(booking_status) " +
+                        "WHEN 'PENDING' THEN 'PENDING_PAYMENT' " +
+                        "WHEN 'PENDING_DEPOSIT' THEN 'PENDING_PAYMENT' " +
+                        "WHEN 'DEPOSITED' THEN 'CONFIRMED' " +
+                        "WHEN 'SCHEDULED' THEN 'CONFIRMED' " +
+                        "WHEN 'CANCELLED' THEN 'CANCELED' " +
+                        "WHEN 'NO_SHOW' THEN 'EXPIRED_NO_SHOW' " +
+                        "ELSE booking_status END; " +
+                        "DECLARE @dropBookingStatusChecks NVARCHAR(MAX) = N''; " +
+                        "SELECT @dropBookingStatusChecks = @dropBookingStatusChecks + " +
+                        "N'ALTER TABLE [' + OBJECT_SCHEMA_NAME(cc.parent_object_id) + N'].[' + " +
+                        "OBJECT_NAME(cc.parent_object_id) + N'] DROP CONSTRAINT [' + cc.name + N'];' " +
+                        "FROM sys.check_constraints cc " +
+                        "JOIN sys.columns c ON c.object_id = cc.parent_object_id " +
+                        "AND c.column_id = cc.parent_column_id " +
+                        "WHERE cc.parent_object_id = OBJECT_ID('bookings') AND c.name = 'booking_status'; " +
+                        "IF LEN(@dropBookingStatusChecks) > 0 EXEC sp_executesql @dropBookingStatusChecks; " +
+                        "ALTER TABLE bookings WITH NOCHECK ADD CONSTRAINT CK_bookings_booking_status " +
+                        "CHECK (booking_status IN ('CREATED', 'PENDING_PAYMENT', 'CONFIRMED', " +
+                        "'WAITING_FOR_VEHICLE', 'RECEIVING_VEHICLE', 'IN_PROGRESS', 'PENDING_APPROVAL', " +
+                        "'COMPLETED', 'CANCELED', 'EXPIRED_PAYMENT', 'EXPIRED_NO_SHOW')); " +
+                        "END",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NOT NULL " +
                         "EXEC sp_executesql N'UPDATE bookings SET final_amount = COALESCE(final_amount, estimated_min_amount, deposit_amount)'",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'deposit_amount') IS NOT NULL " +
@@ -199,8 +254,6 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "UPDATE orders SET shipping_fee = 0 WHERE shipping_fee IS NULL",
                 "IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'orders' AND COLUMN_NAME = 'shipping_fee' AND IS_NULLABLE = 'YES') ALTER TABLE orders ALTER COLUMN shipping_fee NUMERIC(18, 2) NOT NULL",
                 "IF COL_LENGTH('orders', 'shipping_address') IS NOT NULL ALTER TABLE orders ALTER COLUMN shipping_address NVARCHAR(MAX) NULL",
-                "UPDATE orders SET payment_method = 'PAYOS' WHERE payment_method = 'COD'",
-
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND COL_LENGTH('bookings', 'booking_type') IS NULL ALTER TABLE bookings ADD booking_type VARCHAR(30) NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL UPDATE bookings SET booking_type = 'REPAIR_SERVICE' WHERE booking_type IS NULL",
                 "IF OBJECT_ID('bookings', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'bookings' AND COLUMN_NAME = 'booking_type' AND IS_NULLABLE = 'YES') ALTER TABLE bookings ALTER COLUMN booking_type VARCHAR(30) NOT NULL",
@@ -251,8 +304,11 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         List<String> statements = List.of(
                 "IF COL_LENGTH('cart_item', 'fulfillment_type') IS NULL ALTER TABLE cart_item ADD fulfillment_type VARCHAR(255) NULL",
                 "UPDATE cart_item SET fulfillment_type = 'SHIPPING' WHERE fulfillment_type IS NULL",
-                "IF OBJECT_ID('order_items', 'U') IS NOT NULL AND COL_LENGTH('order_items', 'product_name_snapshot') IS NULL ALTER TABLE order_items ADD product_name_snapshot VARCHAR(255) NULL",
+                "IF OBJECT_ID('order_items', 'U') IS NOT NULL AND COL_LENGTH('order_items', 'product_name_snapshot') IS NULL ALTER TABLE order_items ADD product_name_snapshot NVARCHAR(255) NULL",
+                "IF OBJECT_ID('order_items', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'order_items' AND COLUMN_NAME = 'product_name_snapshot' AND DATA_TYPE = 'varchar') ALTER TABLE order_items ALTER COLUMN product_name_snapshot NVARCHAR(MAX) NULL",
                 "IF OBJECT_ID('order_items', 'U') IS NOT NULL UPDATE oi SET product_name_snapshot = p.product_name FROM order_items oi JOIN product p ON oi.product_id = p.product_id WHERE oi.product_name_snapshot IS NULL",
+                // Repair old order snapshots that were saved with broken Vietnamese characters.
+                "IF OBJECT_ID('order_items', 'U') IS NOT NULL UPDATE oi SET product_name_snapshot = p.product_name FROM order_items oi JOIN product p ON oi.product_id = p.product_id WHERE oi.product_name_snapshot LIKE N'%?%'",
                 "IF COL_LENGTH('orders', 'parent_order_id') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'orders' AND COLUMN_NAME = 'parent_order_id' AND DATA_TYPE = 'bigint') ALTER TABLE orders ALTER COLUMN parent_order_id INT NULL",
                 "IF OBJECT_ID('order_items', 'U') IS NOT NULL AND EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'order_items' AND COLUMN_NAME = 'order_id' AND DATA_TYPE = 'bigint') ALTER TABLE order_items ALTER COLUMN order_id INT NOT NULL",
                 "IF OBJECT_ID('payment_transactions', 'U') IS NOT NULL AND COL_LENGTH('payment_transactions', 'payment_purpose') IS NULL ALTER TABLE payment_transactions ADD payment_purpose VARCHAR(30) NULL",
@@ -304,6 +360,7 @@ public class SchemaMigrationRunner implements CommandLineRunner {
                 "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'error_message') IS NULL ALTER TABLE refund_transactions ADD error_message NVARCHAR(500) NULL",
                 "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'created_at') IS NOT NULL UPDATE refund_transactions SET created_at = SYSDATETIME() WHERE created_at IS NULL",
                 "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'updated_at') IS NOT NULL UPDATE refund_transactions SET updated_at = created_at WHERE updated_at IS NULL",
+                "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND COL_LENGTH('refund_transactions', 'reference_id') IS NOT NULL UPDATE refund_transactions SET reference_id = CONCAT('LEGACY-REFUND-', id) WHERE reference_id IS NULL OR LTRIM(RTRIM(reference_id)) = ''",
                 "IF OBJECT_ID('refund_transactions', 'U') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('refund_transactions') AND name = 'UX_refund_transactions_reference_id') CREATE UNIQUE INDEX UX_refund_transactions_reference_id ON refund_transactions(reference_id)"
         );
         statements.forEach(statement -> {

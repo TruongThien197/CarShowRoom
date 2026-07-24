@@ -35,8 +35,8 @@
                             </div>
                             <span class="gs-mono badge text-bg-light align-self-start" th:text="${vehicle.licensePlate}">Biển số</span>
                         </div>
-                        <form class="mt-4" th:action="@{/vehicles/{id}/delete(id=${vehicle.id})}" method="post">
-                            <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Bạn có chắc xóa phương tiện này không ?')">
+                        <form class="mt-4" th:action="@{/vehicles/{id}/delete(id=${vehicle.id})}" method="post" data-confirm="Bạn có chắc muốn xóa phương tiện này không?">
+                            <button class="btn btn-outline-danger btn-sm" type="submit">
                                 <i class="bi bi-trash me-1"></i> Xóa </button>
                         </form>
                     </div>

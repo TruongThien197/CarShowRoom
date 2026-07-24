@@ -30,7 +30,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -80,7 +82,15 @@ public class AdminController {
     @PostMapping("/refunds/{id}/complete")
     public String completeRefund(@PathVariable Long id, @RequestParam String note, RedirectAttributes redirectAttributes) {
         try {
-            refundService.complete(id, authService.getCurrentUser(), note);
+            RefundTransaction refund = refundTransactionRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy yêu cầu hoàn tiền."));
+            if (refund.getBooking() != null) {
+                bookingService.completeRefund(refund.getBooking().getId(), authService.getCurrentUser(), note);
+            } else if (refund.getOrder() != null) {
+                orderService.completeRefund(refund.getOrder().getId(), authService.getCurrentUser(), note);
+            } else {
+                throw new IllegalStateException("Yêu cầu hoàn tiền không có đơn hàng hoặc lịch hẹn liên quan.");
+            }
             redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền cho khách hàng.");
         } catch (RuntimeException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
@@ -670,11 +680,41 @@ public class AdminController {
     public String bookingDetail(@PathVariable Integer id, Model model) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch hẹn"));
+        List<RefundTransaction> refunds = refundService.getBookingRefunds(booking);
         model.addAttribute("booking", booking);
         model.addAttribute("bookingServices", bookingServiceRepository.findByBookingId(id));
         model.addAttribute("paymentTransactions", paymentTransactionRepository.findByBooking(booking));
-        model.addAttribute("refundTransactions", refundService.getBookingRefunds(booking));
+        model.addAttribute("refundTransactions", refunds);
+        addBookingRefundPreview(model, booking, refunds);
         return "admin/booking/detail";
+    }
+
+    /** Chuẩn bị số tiền và căn cứ hoàn cọc để nhân viên duyệt hủy hoặc chuyển khoản thủ công. */
+    private void addBookingRefundPreview(Model model, Booking booking, List<RefundTransaction> refunds) {
+        BigDecimal deposit = booking.getDepositAmount() == null ? BigDecimal.ZERO : booking.getDepositAmount();
+        int freeHours = systemSettingService.getInt("CANCELLATION_FREE_HOURS");
+        int lateRefundPercent = systemSettingService.getInt("LATE_CANCEL_REFUND_PERCENT");
+        LocalDateTime appointment = booking.getBookingDate() == null || booking.getStartTime() == null
+                ? null : LocalDateTime.of(booking.getBookingDate(), booking.getStartTime());
+        LocalDateTime requestedAt = booking.getCancellationRequestedAt() == null
+                ? LocalDateTime.now() : booking.getCancellationRequestedAt();
+        boolean cancelledEarly = appointment != null && !requestedAt.isAfter(appointment.minusHours(freeHours));
+        BigDecimal previewAmount = cancelledEarly ? deposit
+                : deposit.multiply(BigDecimal.valueOf(lateRefundPercent)).movePointLeft(2);
+        RefundTransaction pendingRefund = refunds.stream()
+                .filter(refund -> refund.getStatus() == Enums.RefundStatus.REQUESTED)
+                .findFirst().orElse(null);
+        BigDecimal refundAmount = pendingRefund == null ? previewAmount : pendingRefund.getRefundAmount();
+        int refundRate = deposit.signum() == 0 ? 0 : refundAmount.multiply(BigDecimal.valueOf(100))
+                .divide(deposit, 0, RoundingMode.HALF_UP).intValue();
+        String explanation = cancelledEarly
+                ? "Khách gửi yêu cầu hủy trước ít nhất " + freeHours + " giờ so với giờ hẹn; áp dụng hoàn toàn bộ tiền cọc."
+                : "Khách gửi yêu cầu hủy trong vòng " + freeHours + " giờ trước giờ hẹn; áp dụng tỷ lệ hoàn cọc sát giờ " + lateRefundPercent + "%.";
+
+        model.addAttribute("refundPreviewAmount", refundAmount);
+        model.addAttribute("refundPreviewRate", refundRate);
+        model.addAttribute("refundPreviewExplanation", explanation);
+        model.addAttribute("pendingRefund", pendingRefund);
     }
 
     @PostMapping("/products/status")
@@ -728,11 +768,7 @@ public class AdminController {
 
     @PostMapping("/bookings/refund")
     public String completeBookingRefund(@RequestParam Integer bookingId,
-                                        @RequestParam String bankName,
-                                        @RequestParam String bankBin,
-                                        @RequestParam String accountHolder,
-                                        @RequestParam String accountNumber,
-                                        @RequestParam String note,
+                                        @RequestParam String transactionCode,
                                         RedirectAttributes redirectAttributes) {
         try {
             Booking booking = bookingRepository.findById(bookingId)
@@ -741,7 +777,7 @@ public class AdminController {
                     .filter(item -> item.getStatus() == Enums.RefundStatus.REQUESTED)
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("Không có yêu cầu hoàn tiền đang chờ xử lý."));
-            refundService.complete(refund.getId(), authService.getCurrentUser(), note);
+            bookingService.completeRefund(bookingId, authService.getCurrentUser(), transactionCode);
             redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền cọc cho lịch hẹn.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -755,7 +791,7 @@ public class AdminController {
                                              RedirectAttributes redirectAttributes) {
         try {
             bookingService.approveCancellation(id, authService.getCurrentUser(), assessmentNote);
-            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request approved.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu hủy lịch.");
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -767,7 +803,7 @@ public class AdminController {
                                             RedirectAttributes redirectAttributes) {
         try {
             bookingService.rejectCancellation(id, authService.getCurrentUser(), reason);
-            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request rejected.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu hủy lịch. Lịch hẹn vẫn được giữ nguyên.");
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }
@@ -955,9 +991,13 @@ public class AdminController {
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Integer id, Model model) {
         Order order = orderService.getOrderById(id);
+        List<RefundTransaction> refunds = refundService.getOrderRefunds(order);
         model.addAttribute("order", order);
         model.addAttribute("orderDetails", orderItemRepository.findByOrderId(id));
-        model.addAttribute("refundTransactions", refundService.getOrderRefunds(orderService.getOrderById(id)));
+        model.addAttribute("refundTransactions", refunds);
+        model.addAttribute("pendingRefund", refunds.stream()
+                .filter(refund -> refund.getStatus() == Enums.RefundStatus.REQUESTED)
+                .findFirst().orElse(null));
         return "admin/order/detail";
     }
 
@@ -989,11 +1029,7 @@ public class AdminController {
 
     @PostMapping("/orders/{id}/refund")
     public String completeOrderRefund(@PathVariable Integer id,
-                                      @RequestParam String bankName,
-                                      @RequestParam String bankBin,
-                                      @RequestParam String accountHolder,
-                                      @RequestParam String accountNumber,
-                                      @RequestParam String note,
+                                      @RequestParam String transactionCode,
                                       RedirectAttributes redirectAttributes) {
         try {
             Order order = orderService.getOrderById(id);
@@ -1001,7 +1037,7 @@ public class AdminController {
                     .filter(item -> item.getStatus() == Enums.RefundStatus.REQUESTED)
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("Không có yêu cầu hoàn tiền đang chờ xử lý."));
-            refundService.complete(refund.getId(), authService.getCurrentUser(), note);
+            orderService.completeRefund(id, authService.getCurrentUser(), transactionCode);
             redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận hoàn tiền.");
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
@@ -1014,7 +1050,19 @@ public class AdminController {
                                           RedirectAttributes redirectAttributes) {
         try {
             orderService.rejectCancellation(id, authService.getCurrentUser(), reason);
-            redirectAttributes.addFlashAttribute("successMessage", "Cancellation request rejected.");
+            redirectAttributes.addFlashAttribute("successMessage", "Đã từ chối yêu cầu hủy đơn. Đơn hàng vẫn được giữ nguyên.");
+        } catch (Exception exception) {
+            redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        }
+        return "redirect:/admin/orders/" + id;
+    }
+
+    /** Duyệt yêu cầu hủy đơn đã thanh toán trước khi khách nhập tài khoản nhận tiền hoàn. */
+    @PostMapping("/orders/{id}/cancellation/approve")
+    public String approveOrderCancellation(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            orderService.approveCancellation(id, authService.getCurrentUser());
+            redirectAttributes.addFlashAttribute("successMessage", "Đã duyệt yêu cầu hủy đơn.");
         } catch (Exception exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         }

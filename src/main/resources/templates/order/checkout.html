@@ -174,7 +174,7 @@
                 <hr>
                 <div th:if="${!needsWorkshop}" class="d-flex justify-content-between fs-5 mb-4">
                     <span> Tổng cộng </span>
-                    <strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"> 0 VNĐ </strong>
+                    <strong id="orderTotalSummary" class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"> 0 VNĐ </strong>
                 </div>
                 <div th:if="${needsWorkshop}" class="small">
                     <div class="d-flex justify-content-between mb-2"><span>Tiền phụ tùng</span><strong class="gs-mono" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</strong></div>
@@ -191,6 +191,49 @@
 
 <div th:replace="~{fragments :: footer}"></div>
 <div th:replace="~{fragments :: scripts}"></div>
+<script th:inline="javascript">
+    (() => {
+        const provinceSelect = document.getElementById('shippingProvince');
+        const districtSelect = document.getElementById('shippingDistrict');
+        const shippingFeeSummary = document.getElementById('shippingFeeSummary');
+        const orderTotalSummary = document.getElementById('orderTotalSummary');
+        if (!provinceSelect || !districtSelect || !shippingFeeSummary || !orderTotalSummary) return;
+
+        const subtotal = Number(/*[[${subtotal}]]*/ 0);
+        const formatVnd = (amount) => `${new Intl.NumberFormat('vi-VN').format(amount)} VNĐ`;
+        const districtOptions = Array.from(districtSelect.options).slice(1);
+
+        const updateShippingEstimate = () => {
+            const selectedOption = districtSelect.options[districtSelect.selectedIndex];
+            const fee = Number(selectedOption?.dataset?.fee);
+            if (!Number.isFinite(fee)) {
+                shippingFeeSummary.textContent = 'Chọn khu vực để tính';
+                orderTotalSummary.textContent = formatVnd(subtotal);
+                return;
+            }
+            shippingFeeSummary.textContent = formatVnd(fee);
+            orderTotalSummary.textContent = formatVnd(subtotal + fee);
+        };
+
+        const filterDistricts = () => {
+            const province = provinceSelect.value;
+            districtOptions.forEach(option => {
+                const available = !province || option.dataset.province === province;
+                option.hidden = !available;
+                option.disabled = !available;
+            });
+            const selectedOption = districtSelect.options[districtSelect.selectedIndex];
+            if (selectedOption && selectedOption.value && selectedOption.hidden) {
+                districtSelect.value = '';
+            }
+            updateShippingEstimate();
+        };
+
+        provinceSelect.addEventListener('change', filterDistricts);
+        districtSelect.addEventListener('change', updateShippingEstimate);
+        filterDistricts();
+    })();
+</script>
 <script th:inline="javascript">
     (() => {
         const dateInput = document.getElementById('bookingDate');

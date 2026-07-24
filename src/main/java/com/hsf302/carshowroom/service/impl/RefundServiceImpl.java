@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -106,6 +107,7 @@ public class RefundServiceImpl implements RefundService {
         refund.setBooking(booking);
         refund.setRefundAmount(amount);
         refund.setReason(reason == null || reason.isBlank() ? "Khách hàng yêu cầu hủy." : reason.trim());
+        refund.setReferenceId("MANUAL-REFUND-" + UUID.randomUUID());
         refund.setStatus(RefundStatus.REQUESTED);
         refund.setRefundDeadline(LocalDateTime.now().plusHours(
                 settingService.getInt(SystemSettingServiceImpl.REFUND_SLA_HOURS)));
