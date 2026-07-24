@@ -14,4 +14,5 @@ public interface RefundTransactionRepository extends JpaRepository<RefundTransac
     boolean existsByOrderAndStatusIn(Order order, List<RefundStatus> statuses);
     boolean existsByBookingAndStatusIn(Booking booking, List<RefundStatus> statuses);
     List<RefundTransaction> findByStatusOrderByRefundDeadlineAsc(RefundStatus status);
+    boolean existsByReferenceId(String referenceId);
 }

@@ -402,4 +402,8 @@ public class PaymentServiceImpl implements PaymentService {
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }
+
+    private boolean isSuccessfulWebhook(PayOSWebhookRequest request) { return request != null; }
+
+    private String writeWebhookPayload(PayOSWebhookRequest request) { return String.valueOf(request); }
 }

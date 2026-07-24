@@ -9,6 +9,7 @@ import com.hsf302.carshowroom.common.Enums.PaymentStatus;
 import com.hsf302.carshowroom.common.Enums.PaymentMethod;
 import com.hsf302.carshowroom.common.Enums.RefundPayoutStatus;
 import com.hsf302.carshowroom.common.Enums.RefundStatus;
+import com.hsf302.carshowroom.common.Enums.ServiceStatus;
 import com.hsf302.carshowroom.dto.CheckoutForm;
 import com.hsf302.carshowroom.dto.CheckoutResult;
 import com.hsf302.carshowroom.dto.PayOS.PayOSCreatePaymentLinkRequest;
@@ -23,11 +24,13 @@ import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.entity.Vehicle;
 import com.hsf302.carshowroom.exception.MixedFulfillmentException;
 import com.hsf302.carshowroom.repository.BookingRepository;
+import com.hsf302.carshowroom.repository.BookingServiceRepository;
 import com.hsf302.carshowroom.repository.CartItemRepository;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
 import com.hsf302.carshowroom.repository.OrderRepository;
 import com.hsf302.carshowroom.repository.ProductRepository;
 import com.hsf302.carshowroom.repository.PaymentTransactionRepository;
+import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.CartInventoryValidationService;
 import com.hsf302.carshowroom.service.InventoryReservationService;
@@ -37,6 +40,7 @@ import com.hsf302.carshowroom.service.PaymentService;
 import com.hsf302.carshowroom.service.RefundPayoutService;
 import com.hsf302.carshowroom.service.SchedulingService;
 import com.hsf302.carshowroom.service.RefundService;
+import com.hsf302.carshowroom.service.ShippingFeeService;
 import com.hsf302.carshowroom.service.SystemSettingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -44,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Isolation;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -62,6 +67,8 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final VehicleRepository vehicleRepository;
     private final BookingRepository bookingRepository;
+    private final BookingServiceRepository bookingServiceRepository;
+    private final ServiceRepository serviceRepository;
     private final InventoryReservationService inventoryReservationService;
     private final CartInventoryValidationService cartInventoryValidationService;
     private final SchedulingService schedulingService;
@@ -69,6 +76,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderWorkflowService orderWorkflowService;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final RefundService refundService;
+    private final RefundPayoutService refundPayoutService;
+    private final ShippingFeeService shippingFeeService;
     private final SystemSettingService settingService;
 
     /** Tạo đơn từ giỏ hàng, giữ tồn kho và tạo lịch hẹn khi khách chọn lắp tại xưởng. */
@@ -175,7 +184,19 @@ public class OrderServiceImpl implements OrderService {
             order.setRefundStatus(RefundStatus.REQUESTED);
         }
         cancelOrderAndChildren(order);
-        order.setRefundStatus(order.getPaymentStatus() == PaymentStatus.PAID ? RefundStatus.APPROVED : RefundStatus.NONE);
+        orderRepository.save(order);
+    }
+
+    /** Nhân viên duyệt yêu cầu hủy đơn đã được khách gửi và chuyển đơn sang chờ hoàn tiền. */
+    @Override
+    @Transactional
+    public void approveCancellation(Integer id, User processedBy) {
+        Order order = getOrderById(id);
+        if (order.getRefundStatus() != RefundStatus.REQUESTED) {
+            throw new IllegalStateException("Đơn hàng không có yêu cầu hủy đang chờ duyệt.");
+        }
+        order.setRefundStatus(order.getPaymentStatus() == PaymentStatus.PAID
+                ? RefundStatus.APPROVED : RefundStatus.NONE);
         order.setCancellationProcessedBy(processedBy);
         order.setCancellationProcessedAt(LocalDateTime.now());
         order.setCancellationDecisionNote("Đã duyệt yêu cầu hủy đơn.");
@@ -340,7 +361,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /** Tạo đơn hoặc đơn con, sao chép thông tin sản phẩm vào dòng đơn và kiểm tra tồn kho. */
-    private Order createOrder(User user, OrderType orderType, Order parentOrder, String shippingAddress, String receiverPhone, List<CartItem> cartItems) {
+    private Order createOrder(User user, OrderType orderType, Order parentOrder, ShippingDetails shippingDetails, String receiverPhone, List<CartItem> cartItems) {
         BigDecimal productTotal = calculateProductTotal(cartItems);
         Order order = new Order();
         order.setUser(user);
@@ -375,6 +396,15 @@ public class OrderServiceImpl implements OrderService {
             orderItemRepository.save(item);
         }
         return savedOrder;
+    }
+
+    /** Chuẩn hóa địa chỉ giao hàng và chụp lại mức phí giao tại thời điểm khách đặt đơn. */
+    private ShippingDetails resolveShippingDetails(CheckoutForm form) {
+        String province = requireText(form.getShippingProvince(), "Vui lòng chọn tỉnh/thành nhận hàng.");
+        String district = requireText(form.getShippingDistrict(), "Vui lòng chọn quận/huyện nhận hàng.");
+        String ward = requireText(form.getShippingWard(), "Vui lòng nhập phường/xã nhận hàng.");
+        String address = requireText(form.getShippingAddress(), "Vui lòng nhập địa chỉ nhận hàng.");
+        return new ShippingDetails(province, district, ward, address, shippingFeeService.resolveFee(province, district));
     }
 
     /** Cộng gộp số lượng theo sản phẩm và kiểm tra tồn kho lần cuối trước checkout. */
@@ -425,9 +455,10 @@ public class OrderServiceImpl implements OrderService {
         booking.setUser(user);
         booking.setVehicle(vehicle);
         booking.setRelatedOrder(relatedOrder);
+        booking.setBookingType(BookingType.PART_INSTALLATION);
         booking.setBookingDate(form.getBookingDate());
         booking.setStartTime(form.getStartTime());
-        booking.setEndTime(form.getStartTime().plusMinutes(INSTALLATION_DURATION_MINUTES));
+        booking.setEndTime(form.getStartTime().plusMinutes(service.getDurationMinutes()));
         booking.setTimeSlot(formatSlot(booking.getStartTime(), booking.getEndTime()));
         booking.setTotalDurationMinutes(service.getDurationMinutes());
         booking.setEstimatedMinAmount(service.getMinPrice());
@@ -445,7 +476,17 @@ public class OrderServiceImpl implements OrderService {
                 settingService.getInt(SystemSettingServiceImpl.PAYMENT_HOLD_MINUTES)));
         booking.setNotes(form.getNotes());
         schedulingService.holdSlot(booking);
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+
+        com.hsf302.carshowroom.entity.BookingService snapshot = new com.hsf302.carshowroom.entity.BookingService();
+        snapshot.setBooking(savedBooking);
+        snapshot.setService(service);
+        snapshot.setServiceNameSnapshot(service.getServiceName());
+        snapshot.setDurationMinutesSnapshot(service.getDurationMinutes());
+        snapshot.setMinPriceSnapshot(service.getMinPrice());
+        snapshot.setMaxPriceSnapshot(service.getMaxPrice());
+        bookingServiceRepository.save(snapshot);
+        return savedBooking;
     }
 
     /** Kiểm tra các dữ liệu bắt buộc trước khi giữ lịch lắp đặt tại xưởng. */
@@ -465,6 +506,25 @@ public class OrderServiceImpl implements OrderService {
     /** Ghép giờ bắt đầu và giờ kết thúc thành chuỗi khung giờ hiển thị. */
     private String formatSlot(LocalTime startTime, LocalTime endTime) {
         return startTime + " - " + endTime;
+    }
+
+    /** Đồng bộ trạng thái hoàn tiền của đơn hàng theo kết quả payout từ cổng thanh toán. */
+    private void applyOrderRefundResult(Order order, RefundTransaction refundTransaction) {
+        RefundPayoutStatus payoutStatus = refundTransaction.getPayoutStatus();
+        if (payoutStatus == RefundPayoutStatus.SUCCEEDED) {
+            order.setRefundStatus(RefundStatus.COMPLETED);
+            order.setPaymentStatus(PaymentStatus.REFUNDED);
+            order.setRefundedAt(refundTransaction.getRefundedAt());
+        } else if (payoutStatus == RefundPayoutStatus.FAILED) {
+            order.setRefundStatus(RefundStatus.FAILED);
+            order.setRefundNote(refundTransaction.getErrorMessage());
+        } else {
+            order.setRefundStatus(RefundStatus.PROCESSING);
+        }
+    }
+
+    /** Dữ liệu giao hàng đã được kiểm tra và cố định phí khi checkout. */
+    private record ShippingDetails(String province, String district, String ward, String address, BigDecimal fee) {
     }
 
     /** Tạo giao dịch PayOS; khi có Booking, PayOS chỉ thu khoản cọc của lịch hẹn. */

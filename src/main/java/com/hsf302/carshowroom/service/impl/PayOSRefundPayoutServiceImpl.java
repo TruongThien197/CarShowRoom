@@ -114,7 +114,7 @@ public class PayOSRefundPayoutServiceImpl implements RefundPayoutService {
                     .body(PayOSPayoutResponse.class);
             applyResponse(refund, response, writeJson(response));
         } catch (RuntimeException exception) {
-            refund.setStatus(RefundPayoutStatus.FAILED);
+            refund.setPayoutStatus(RefundPayoutStatus.FAILED);
             refund.setErrorMessage(limit(exception.getMessage(), 500));
             refund.setRawResponse(rawBody);
         }
@@ -140,7 +140,7 @@ public class PayOSRefundPayoutServiceImpl implements RefundPayoutService {
             applyResponse(refund, response, writeJson(response));
             applyLinkedRefundStatus(refund);
         } catch (RuntimeException exception) {
-            refund.setStatus(RefundPayoutStatus.FAILED);
+            refund.setPayoutStatus(RefundPayoutStatus.FAILED);
             refund.setErrorMessage(limit(exception.getMessage(), 500));
             applyLinkedRefundStatus(refund);
         }
@@ -150,13 +150,13 @@ public class PayOSRefundPayoutServiceImpl implements RefundPayoutService {
     private void applyLinkedRefundStatus(RefundTransaction refund) {
         if (refund.getOrder() != null) {
             Order order = refund.getOrder();
-            if (refund.getStatus() == RefundPayoutStatus.SUCCEEDED) {
+            if (refund.getPayoutStatus() == RefundPayoutStatus.SUCCEEDED) {
                 order.setRefundStatus(RefundStatus.COMPLETED);
                 order.setPaymentStatus(PaymentStatus.REFUNDED);
                 order.setRefundedAt(refund.getRefundedAt() == null ? LocalDateTime.now() : refund.getRefundedAt());
                 paymentTransactionRepository.findByOrderOrParentOrder(order, order)
                         .forEach(transaction -> transaction.setStatus(PaymentStatus.REFUNDED));
-            } else if (refund.getStatus() == RefundPayoutStatus.FAILED) {
+            } else if (refund.getPayoutStatus() == RefundPayoutStatus.FAILED) {
                 order.setRefundStatus(RefundStatus.FAILED);
                 order.setRefundNote(refund.getErrorMessage());
             } else {
@@ -165,13 +165,13 @@ public class PayOSRefundPayoutServiceImpl implements RefundPayoutService {
         }
         if (refund.getBooking() != null) {
             Booking booking = refund.getBooking();
-            if (refund.getStatus() == RefundPayoutStatus.SUCCEEDED) {
+            if (refund.getPayoutStatus() == RefundPayoutStatus.SUCCEEDED) {
                 booking.setRefundStatus(RefundStatus.COMPLETED);
                 booking.setPaymentStatus(PaymentStatus.REFUNDED);
                 booking.setRefundedAt(refund.getRefundedAt() == null ? LocalDateTime.now() : refund.getRefundedAt());
                 paymentTransactionRepository.findByBooking(booking)
                         .forEach(transaction -> transaction.setStatus(PaymentStatus.REFUNDED));
-            } else if (refund.getStatus() == RefundPayoutStatus.FAILED) {
+            } else if (refund.getPayoutStatus() == RefundPayoutStatus.FAILED) {
                 booking.setRefundStatus(RefundStatus.FAILED);
                 booking.setRefundNote(refund.getErrorMessage());
             } else {
@@ -186,7 +186,7 @@ public class PayOSRefundPayoutServiceImpl implements RefundPayoutService {
         refund.setReferenceId(nextReferenceId());
         refund.setProvider(PROVIDER);
         refund.setAmount(amount == null ? BigDecimal.ZERO : amount);
-        refund.setStatus(RefundPayoutStatus.PROCESSING);
+        refund.setPayoutStatus(RefundPayoutStatus.PROCESSING);
         refund.setNote(trim(note));
         return refund;
     }
@@ -194,13 +194,13 @@ public class PayOSRefundPayoutServiceImpl implements RefundPayoutService {
     private void applyResponse(RefundTransaction refund, PayOSPayoutResponse response, String rawResponse) {
         refund.setRawResponse(rawResponse);
         if (response == null) {
-            refund.setStatus(RefundPayoutStatus.FAILED);
+            refund.setPayoutStatus(RefundPayoutStatus.FAILED);
             refund.setErrorMessage("PayOS không trả về response.");
             return;
         }
         refund.setErrorMessage(response.desc());
         if (!"00".equals(response.code()) || response.data() == null) {
-            refund.setStatus(RefundPayoutStatus.FAILED);
+            refund.setPayoutStatus(RefundPayoutStatus.FAILED);
             return;
         }
         refund.setProviderPayoutId(response.data().id());
@@ -210,12 +210,12 @@ public class PayOSRefundPayoutServiceImpl implements RefundPayoutService {
             refund.setProviderTransactionId(transaction.id());
         }
         if ("SUCCEEDED".equalsIgnoreCase(state)) {
-            refund.setStatus(RefundPayoutStatus.SUCCEEDED);
+            refund.setPayoutStatus(RefundPayoutStatus.SUCCEEDED);
             refund.setRefundedAt(LocalDateTime.now());
         } else if ("FAILED".equalsIgnoreCase(state) || "REJECTED".equalsIgnoreCase(state)) {
-            refund.setStatus(RefundPayoutStatus.FAILED);
+            refund.setPayoutStatus(RefundPayoutStatus.FAILED);
         } else {
-            refund.setStatus(RefundPayoutStatus.PROCESSING);
+            refund.setPayoutStatus(RefundPayoutStatus.PROCESSING);
         }
     }
 

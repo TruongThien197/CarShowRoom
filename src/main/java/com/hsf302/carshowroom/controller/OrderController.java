@@ -11,6 +11,7 @@ import com.hsf302.carshowroom.entity.User;
 import com.hsf302.carshowroom.exception.InsufficientStockException;
 import com.hsf302.carshowroom.exception.MixedFulfillmentException;
 import com.hsf302.carshowroom.repository.OrderItemRepository;
+import com.hsf302.carshowroom.repository.ServiceRepository;
 import com.hsf302.carshowroom.repository.ShippingFeeRuleRepository;
 import com.hsf302.carshowroom.repository.VehicleRepository;
 import com.hsf302.carshowroom.service.AuthService;

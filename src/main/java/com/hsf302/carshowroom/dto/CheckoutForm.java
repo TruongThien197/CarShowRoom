@@ -22,6 +22,7 @@ public class CheckoutForm {
     private String paymentMethod = "PAYOS";
 
     private Integer vehicleId;
+    private Integer serviceId;
 
     private LocalDate bookingDate;
 
